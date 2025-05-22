@@ -1,0 +1,167 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "build BusBus solution",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"BusBus.sln"
+			],
+			"group": "build",
+			"problemMatcher": [
+				"$msCompile"
+			]
+		},
+		{
+			"label": "test with coverage",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"test",
+				"/p:CollectCoverage=true",
+				"/p:CoverletOutputFormat=cobertura",
+				"/p:CoverletOutput=./TestResults/Coverage/",
+				"/p:Threshold=80"
+			],
+			"problemMatcher": "$msCompile",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "generate coverage report",
+			"command": "reportgenerator",
+			"type": "process",
+			"args": [
+				"-reports:./TestResults/Coverage/coverage.cobertura.xml",
+				"-targetdir:./TestResults/Coverage/Report",
+				"-reporttypes:Html"
+			],
+			"problemMatcher": [],
+			"dependsOn": [
+				"test with coverage"
+			]
+		},
+		{
+			"label": "OmniSharp check Dashboard.cs",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Triggering OmniSharp analysis on Dashboard.cs'; Copy-Item -Path 'c:/Users/steve.mckitrick/Desktop/BusBus/UI/Dashboard.cs' -Destination 'c:/Users/steve.mckitrick/Desktop/BusBus/UI/Dashboard.cs.tmp'; Move-Item -Path 'c:/Users/steve.mckitrick/Desktop/BusBus/UI/Dashboard.cs.tmp' -Destination 'c:/Users/steve.mckitrick/Desktop/BusBus/UI/Dashboard.cs' -Force"
+			],
+			"problemMatcher": "$msCompile",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Show OmniSharp Log",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"if (Test-Path 'C:/Users/steve.mckitrick/Desktop/BusBus/omnisharp.log') { Get-Content 'C:/Users/steve.mckitrick/Desktop/BusBus/omnisharp.log' -Tail 100 } else { Write-Host 'OmniSharp log file not found' -ForegroundColor Red }"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			}
+		},
+		{
+			"label": "Run all tests and generate coverage report",
+			"dependsOn": [
+				"test with coverage",
+				"generate coverage report"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "analyze Dashboard.cs",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"BusBus.csproj",
+				"/p:GenerateFullPaths=true"
+			],
+			"problemMatcher": "$msCompile",
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"dependsOn": [
+				"build BusBus solution"
+			]
+		},
+		{
+			"label": "View OmniSharp Log File",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"if (Test-Path 'C:/Users/steve.mckitrick/Desktop/BusBus/omnisharp.log') { notepad 'C:/Users/steve.mckitrick/Desktop/BusBus/omnisharp.log' } else { Write-Host 'Log file not found. Checking for logs in VS Code directory...' -ForegroundColor Yellow; $logDir = 'C:/Users/steve.mckitrick/AppData/Roaming/Code/logs'; if (Test-Path $logDir) { Get-ChildItem $logDir -Recurse -Filter '*omnisharp*' | Select-Object -First 1 | ForEach-Object { notepad $_.FullName } } else { Write-Host 'No OmniSharp logs found.' -ForegroundColor Red } }"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart OmniSharp",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"Restarting OmniSharp... Please use Command Palette (Ctrl+Shift+P) and type 'OmniSharp: Restart OmniSharp'"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Check C# Extensions",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Checking for C# extensions in VS Code...' -ForegroundColor Cyan; Write-Host '1. Please check that you have the C# extension installed:' -ForegroundColor Yellow; Write-Host '   - Press Ctrl+Shift+X to open Extensions panel' -ForegroundColor White; Write-Host '   - Search for \"C#\" or \"C# Dev Kit\"' -ForegroundColor White; Write-Host '   - Make sure it is installed and enabled' -ForegroundColor White; Write-Host '2. If extension is installed but not working, try:' -ForegroundColor Yellow; Write-Host '   - Press Ctrl+Shift+P and type \"Developer: Reload Window\"' -ForegroundColor White; Write-Host '   - Restart VS Code completely' -ForegroundColor White; Write-Host '3. Newer versions use \"C# Dev Kit\" instead of \"OmniSharp\"' -ForegroundColor Yellow"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Check if OmniSharp is loaded",
+			"type": "process",
+			"command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$omnisharpProcess = Get-Process | Where-Object { $_.ProcessName -like '*omnisharp*' -or $_.ProcessName -like '*dotnetls*' -or $_.ProcessName -like '*razor*' }; if ($omnisharpProcess) { Write-Host 'OmniSharp/C# language service is RUNNING:' -ForegroundColor Green; $omnisharpProcess | Format-Table Id, ProcessName, StartTime -AutoSize } else { Write-Host 'OmniSharp is NOT running!' -ForegroundColor Red }"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"problemMatcher": []
+		}
+	]
+}

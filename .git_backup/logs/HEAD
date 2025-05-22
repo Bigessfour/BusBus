@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 09369e3d6fe2cbb5b2712085f3d9aabf005d923d Steve McKitrick <steve.mckitrick@wileyschool.org> 1747872166 -0600	commit (initial): Initial commit: Add/fix RoutePanel null checks, static StyleButton, FromRoute validation, and new unit tests
+09369e3d6fe2cbb5b2712085f3d9aabf005d923d 1b1cda6c26f760a4e5f18a6b95720b9e36e275da Steve McKitrick <steve.mckitrick@wileyschool.org> 1747875550 -0600	commit: Update project structure, add README and LICENSE, prepare for GitHub sync
+1b1cda6c26f760a4e5f18a6b95720b9e36e275da 9b970faf2a7a155cddbf6003fb036aa4bc1996ae Steve McKitrick <steve.mckitrick@wileyschool.org> 1747876278 -0600	commit: busbus is born
+9b970faf2a7a155cddbf6003fb036aa4bc1996ae 8ebeeff21564a8c889a14e9ae3f8b7b5ead8b748 Steve McKitrick <steve.mckitrick@wileyschool.org> 1747876438 -0600	commit: Update README.md
+8ebeeff21564a8c889a14e9ae3f8b7b5ead8b748 59c5828119ff508ddd3e1d4d362321628f30b5b2 Steve McKitrick <steve.mckitrick@wileyschool.org> 1747876763 -0600	commit: trying to get a build
+59c5828119ff508ddd3e1d4d362321628f30b5b2 96aa613f9cd6d41add23c538063c4c8851f26268 Steve McKitrick <steve.mckitrick@wileyschool.org> 1747878138 -0600	commit: database errors
+96aa613f9cd6d41add23c538063c4c8851f26268 5ed2367666ec327dfba69e6ba23e855fb00d5aed Steve McKitrick <steve.mckitrick@wileyschool.org> 1747878660 -0600	commit (merge): Merge branch 'main' of https://github.com/Bigessfour/BusBus
+5ed2367666ec327dfba69e6ba23e855fb00d5aed b2079f02cb07c08c20ed326745699852a6032f95 Steve McKitrick <steve.mckitrick@wileyschool.org> 1747878666 -0600	commit: freggin license

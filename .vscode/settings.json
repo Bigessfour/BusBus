@@ -1,0 +1,27 @@
+{
+    // Logging settings
+    "omnisharp.loggingLevel": "debug",
+    "csharp.serverLogging.level": "debug",
+    "omnisharp.logFilePath": "C:/Users/steve.mckitrick/Desktop/BusBus/omnisharp.log",
+    // Solution settings
+    "dotnet.defaultSolution": "BusBus.sln",
+    // Testing settings
+    "dotnet-test-explorer.testProjectPath": "**/*Tests.csproj",
+    "dotnet-test-explorer.enableCodeCoverage": true,
+    "dotnet-test-explorer.codeCoverageRunSettings": "CodeCoverage.runsettings",
+    // Editor settings
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "csharp.format.enable": true,
+    // IntelliSense settings
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+    "csharp.inlayHints.enableInlayHintsForImplicitObjectCreation": true,
+    "csharp.inlayHints.enableInlayHintsForLambdaParameterTypes": true,
+    "csharp.inlayHints.enableInlayHintsForTypes": true,
+    // Language server settings - using modern .NET language server now
+    "dotnet.server.useOmnisharp": false,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.enableEditorConfigSupport": true,
+    // Misc settings
+    "output.smartScroll.enabled": true
+}

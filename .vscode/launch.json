@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (BusBus)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build BusBus solution",
+            "program": "${workspaceFolder}/bin/Debug/net8.0-windows/BusBus.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "justMyCode": false,
+            "program": "${workspaceFolder}/bin/Debug/net8.0-windows/BusBus.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "exceptionOptions": {
+                "breakMode": "always",
+                "exceptionTypes": ["System.InvalidOperationException"]
+            }
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+Build/test errors encountered:  
+CS5001: Program does not contain a static 'Main' method suitable for an entry point [BusBus.csproj]  
+This error is expected for class library/test projects if the main project is being built as an executable but lacks a Main method.  
+Test project structure and placeholder files are in place.  
+  
+Next steps:  
+Ensure the main project (BusBus.csproj) is set up as a class library if it is not an executable.  
+Begin implementing tests in the new structure. 
+
+==== GitHub Sync Status (May 21, 2025) ====
+- Verified GitHub repository exists at github.com/Bigessfour/BusBus
+- Updated local Git repository remote URL to point to github.com/Bigessfour/BusBus
+- Created comprehensive README.md with project overview, setup instructions, and usage details
+- Created LICENSE file with MIT License
+- Preparing to push local BusBus project structure to GitHub
+- Project contains proper .gitignore to exclude bin/, obj/, user files, and test results

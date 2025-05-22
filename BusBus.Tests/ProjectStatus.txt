@@ -1,0 +1,514 @@
+ Volume in drive C is Windows 
+ Volume Serial Number is 7298-A795
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests
+
+05/21/2025  06:41 PM    <DIR>          .
+05/21/2025  06:36 PM    <DIR>          ..
+05/21/2025  05:32 AM               168 appsettings.json
+05/21/2025  06:28 PM    <DIR>          bin
+05/21/2025  06:51 PM             1,543 BusBus.Tests.csproj
+05/21/2025  06:41 PM    <DIR>          Common
+05/21/2025  06:28 PM    <DIR>          DataAccess
+05/21/2025  06:23 PM               502 debugging.txt
+05/21/2025  06:49 PM    <DIR>          IntegrationTests
+05/21/2025  06:44 PM    <DIR>          Models
+05/21/2025  06:52 PM    <DIR>          obj
+05/21/2025  06:53 PM                 0 ProjectStatus.txt
+05/21/2025  06:28 PM    <DIR>          Services
+05/21/2025  06:46 PM    <DIR>          UI
+               4 File(s)          2,213 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin
+
+05/21/2025  06:28 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:28 PM    <DIR>          Debug
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug
+
+05/21/2025  06:28 PM    <DIR>          .
+05/21/2025  06:28 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          net8.0-windows
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:28 PM    <DIR>          ..
+05/21/2025  06:52 PM               554 .msCoverageSourceRootsMapping_BusBus.Tests
+05/20/2025  03:43 PM               141 appsettings.json
+02/26/2024  09:24 AM           400,936 Azure.Core.dll
+06/10/2024  10:43 AM           342,960 Azure.Identity.dll
+05/21/2025  06:53 PM            42,950 BusBus.deps.json
+05/21/2025  06:53 PM            75,776 BusBus.dll
+05/21/2025  06:53 PM           139,264 BusBus.exe
+05/21/2025  06:53 PM            33,052 BusBus.pdb
+05/21/2025  06:53 PM               455 BusBus.runtimeconfig.json
+05/21/2025  06:53 PM            62,900 BusBus.Tests.deps.json
+05/21/2025  06:53 PM            26,624 BusBus.Tests.dll
+05/21/2025  06:53 PM            20,992 BusBus.Tests.pdb
+05/21/2025  06:53 PM               456 BusBus.Tests.runtimeconfig.json
+12/30/2022  03:16 AM           385,024 Castle.Core.dll
+05/21/2025  06:52 PM               554 CoverletSourceRootsMapping_BusBus.Tests
+05/21/2025  06:53 PM    <DIR>          cs
+05/21/2025  06:53 PM    <DIR>          de
+05/21/2025  06:53 PM    <DIR>          es
+05/21/2025  06:53 PM    <DIR>          fr
+05/21/2025  06:53 PM    <DIR>          it
+05/21/2025  06:53 PM    <DIR>          ja
+05/21/2025  06:53 PM    <DIR>          ko
+04/14/2020  04:39 PM            14,720 Microsoft.Bcl.AsyncInterfaces.dll
+08/27/2024  12:22 PM           275,984 Microsoft.Data.SqlClient.dll
+04/16/2025  03:15 PM            34,872 Microsoft.EntityFrameworkCore.Abstractions.dll
+04/16/2025  03:15 PM         2,692,152 Microsoft.EntityFrameworkCore.dll
+04/16/2025  03:16 PM           234,528 Microsoft.EntityFrameworkCore.InMemory.dll
+10/29/2024  03:58 AM         2,137,136 Microsoft.EntityFrameworkCore.Relational.dll
+10/29/2024  03:59 AM           610,872 Microsoft.EntityFrameworkCore.SqlServer.dll
+04/15/2025  12:07 PM            36,624 Microsoft.Extensions.Caching.Abstractions.dll
+04/15/2025  12:13 PM            47,368 Microsoft.Extensions.Caching.Memory.dll
+04/15/2025  12:04 PM            28,432 Microsoft.Extensions.Configuration.Abstractions.dll
+04/15/2025  12:08 PM            44,328 Microsoft.Extensions.Configuration.dll
+04/15/2025  12:09 PM            28,456 Microsoft.Extensions.Configuration.FileExtensions.dll
+04/15/2025  12:09 PM            27,400 Microsoft.Extensions.Configuration.Json.dll
+04/15/2025  12:12 PM            65,320 Microsoft.Extensions.DependencyInjection.Abstractions.dll
+04/15/2025  12:12 PM            92,432 Microsoft.Extensions.DependencyInjection.dll
+04/15/2025  12:03 PM            22,824 Microsoft.Extensions.FileProviders.Abstractions.dll
+04/15/2025  12:08 PM            45,328 Microsoft.Extensions.FileProviders.Physical.dll
+04/15/2025  12:03 PM            45,864 Microsoft.Extensions.FileSystemGlobbing.dll
+04/15/2025  12:13 PM            66,320 Microsoft.Extensions.Logging.Abstractions.dll
+04/15/2025  12:13 PM            51,472 Microsoft.Extensions.Logging.dll
+04/15/2025  12:12 PM            65,320 Microsoft.Extensions.Options.dll
+04/15/2025  12:03 PM            44,304 Microsoft.Extensions.Primitives.dll
+06/06/2024  04:09 PM         1,005,600 Microsoft.Identity.Client.dll
+06/06/2024  04:14 PM            66,592 Microsoft.Identity.Client.Extensions.Msal.dll
+11/30/2023  10:56 PM            18,968 Microsoft.IdentityModel.Abstractions.dll
+11/30/2023  10:34 PM           112,576 Microsoft.IdentityModel.JsonWebTokens.dll
+11/30/2023  10:35 PM            36,792 Microsoft.IdentityModel.Logging.dll
+11/30/2023  10:37 PM            39,864 Microsoft.IdentityModel.Protocols.dll
+11/30/2023  10:48 PM           114,104 Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+11/30/2023  10:41 PM           993,312 Microsoft.IdentityModel.Tokens.dll
+01/27/2022  11:19 AM            23,976 Microsoft.SqlServer.Server.dll
+11/16/2024  12:20 AM           137,264 Microsoft.TestPlatform.CommunicationUtilities.dll
+11/16/2024  12:20 AM            97,824 Microsoft.TestPlatform.CoreUtilities.dll
+11/16/2024  12:21 AM           315,416 Microsoft.TestPlatform.CrossPlatEngine.dll
+11/16/2024  12:20 AM            53,280 Microsoft.TestPlatform.PlatformAbstractions.dll
+11/16/2024  12:20 AM            67,104 Microsoft.TestPlatform.Utilities.dll
+09/30/2024  02:48 AM            17,328 Microsoft.VisualStudio.CodeCoverage.Shim.dll
+11/16/2024  12:20 AM           247,856 Microsoft.VisualStudio.TestPlatform.Common.dll
+11/16/2024  12:20 AM           334,888 Microsoft.VisualStudio.TestPlatform.ObjectModel.dll
+11/28/2023  09:30 AM           312,320 Moq.dll
+03/17/2021  02:03 PM           695,336 Newtonsoft.Json.dll
+05/21/2025  06:53 PM    <DIR>          pl
+05/21/2025  06:53 PM    <DIR>          pt-BR
+05/21/2025  06:53 PM    <DIR>          ru
+05/21/2025  06:53 PM    <DIR>          runtimes
+01/03/2024  11:43 AM            28,608 System.ClientModel.dll
+04/15/2025  12:03 PM           173,320 System.Diagnostics.DiagnosticSource.dll
+10/28/2024  08:48 PM            96,056 System.Formats.Asn1.dll
+11/30/2023  10:31 PM            77,344 System.IdentityModel.Tokens.Jwt.dll
+04/15/2025  12:04 PM            77,584 System.IO.Pipelines.dll
+04/08/2021  10:45 AM            21,368 System.Memory.Data.dll
+10/22/2021  05:52 PM            89,200 System.Runtime.Caching.dll
+04/15/2025  12:08 PM            70,952 System.Text.Encodings.Web.dll
+04/15/2025  12:09 PM           643,848 System.Text.Json.dll
+11/16/2024  12:21 AM            48,672 testhost.dll
+11/16/2024  12:21 AM           169,528 testhost.exe
+05/21/2025  06:53 PM    <DIR>          tr
+08/25/2018  01:54 PM            21,928 xunit.abstractions.dll
+01/08/2025  11:29 AM           187,088 xunit.assert.dll
+01/08/2025  11:29 AM            70,352 xunit.core.dll
+01/08/2025  11:30 AM           279,760 xunit.execution.dotnet.dll
+12/22/2023  05:30 PM            83,488 xunit.runner.reporters.netcoreapp10.dll
+12/22/2023  05:30 PM           245,280 xunit.runner.utility.netcoreapp10.dll
+12/22/2023  05:30 PM           178,208 xunit.runner.visualstudio.testadapter.dll
+05/21/2025  06:53 PM    <DIR>          zh-Hans
+05/21/2025  06:53 PM    <DIR>          zh-Hant
+              74 File(s)     15,497,678 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\cs
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,416 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,944 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,032 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            20,552 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            23,592 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)         98,536 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\de
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,936 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,032 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,024 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,136 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        100,056 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\es
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,952 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,032 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,032 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,096 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        100,040 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\fr
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,936 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,024 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,024 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,096 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        100,008 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\it
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,944 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,024 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,024 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,096 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        100,016 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\ja
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            17,440 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            22,072 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,576 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,616 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        102,632 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\ko
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,936 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,536 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,024 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,096 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        100,520 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\pl
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,936 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,536 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,056 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,136 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        100,592 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\pt-BR
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,424 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,024 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            21,024 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            24,136 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)         99,536 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\ru
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            17,440 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            17,440 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            23,080 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            23,080 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            26,152 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)        107,192 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          browser
+05/21/2025  06:53 PM    <DIR>          unix
+05/21/2025  06:53 PM    <DIR>          win
+05/21/2025  06:53 PM    <DIR>          win-arm
+05/21/2025  06:53 PM    <DIR>          win-arm64
+05/21/2025  06:53 PM    <DIR>          win-x64
+05/21/2025  06:53 PM    <DIR>          win-x86
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\browser
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          lib
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\browser\lib
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          net8.0
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\browser\lib\net8.0
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+04/15/2025  12:09 PM            70,928 System.Text.Encodings.Web.dll
+               1 File(s)         70,928 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\unix
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          lib
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\unix\lib
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          net6.0
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\unix\lib\net6.0
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+08/27/2024  12:22 PM         1,559,184 Microsoft.Data.SqlClient.dll
+               1 File(s)      1,559,184 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          lib
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win\lib
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          net6.0
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win\lib\net6.0
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+08/27/2024  12:23 PM         1,643,168 Microsoft.Data.SqlClient.dll
+10/22/2021  05:52 PM            91,240 System.Runtime.Caching.dll
+               2 File(s)      1,734,408 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-arm
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          native
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-arm\native
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+08/11/2023  12:56 PM           381,984 Microsoft.Data.SqlClient.SNI.dll
+               1 File(s)        381,984 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-arm64
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          native
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-arm64\native
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+08/11/2023  12:56 PM           491,552 Microsoft.Data.SqlClient.SNI.dll
+               1 File(s)        491,552 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-x64
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          native
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-x64\native
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+08/11/2023  12:56 PM           504,872 Microsoft.Data.SqlClient.SNI.dll
+               1 File(s)        504,872 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-x86
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM    <DIR>          native
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\runtimes\win-x86\native
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+08/11/2023  12:56 PM           414,248 Microsoft.Data.SqlClient.SNI.dll
+               1 File(s)        414,248 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\tr
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,920 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,936 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            21,040 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            20,520 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            23,584 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)         99,000 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\zh-Hans
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,416 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,928 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            20,008 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            20,000 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            23,112 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)         96,464 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\bin\Debug\net8.0-windows\zh-Hant
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+11/16/2024  12:20 AM            16,416 Microsoft.TestPlatform.CommunicationUtilities.resources.dll
+11/16/2024  12:20 AM            16,920 Microsoft.TestPlatform.CoreUtilities.resources.dll
+11/16/2024  12:21 AM            20,520 Microsoft.TestPlatform.CrossPlatEngine.resources.dll
+11/16/2024  12:20 AM            20,000 Microsoft.VisualStudio.TestPlatform.Common.resources.dll
+11/16/2024  12:20 AM            23,072 Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll
+               5 File(s)         96,928 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\Common
+
+05/21/2025  06:41 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:51 PM               737 TestBase.cs
+05/21/2025  06:52 PM             2,595 TestHelper.cs
+               2 File(s)          3,332 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\DataAccess
+
+05/21/2025  06:28 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:51 PM             3,184 AppDbContextTests.cs
+               1 File(s)          3,184 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\IntegrationTests
+
+05/21/2025  06:49 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:51 PM             3,145 RouteIntegrationTests.cs
+               1 File(s)          3,145 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\Models
+
+05/21/2025  06:44 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:51 PM             1,157 DriverModelTests.cs
+05/21/2025  06:51 PM             1,210 RouteModelTests.cs
+05/21/2025  06:51 PM             1,157 VehicleModelTests.cs
+               3 File(s)          3,524 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\obj
+
+05/21/2025  06:52 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:52 PM             6,676 BusBus.Tests.csproj.nuget.dgspec.json
+05/21/2025  06:51 PM             2,958 BusBus.Tests.csproj.nuget.g.props
+05/21/2025  06:28 PM             1,989 BusBus.Tests.csproj.nuget.g.targets
+05/21/2025  06:40 PM    <DIR>          Debug
+05/21/2025  06:52 PM           181,862 project.assets.json
+05/21/2025  06:52 PM            10,936 project.nuget.cache
+               5 File(s)        204,421 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\obj\Debug
+
+05/21/2025  06:40 PM    <DIR>          .
+05/21/2025  06:52 PM    <DIR>          ..
+05/21/2025  06:40 PM    <DIR>          net8.0
+05/21/2025  06:53 PM    <DIR>          net8.0-windows
+               0 File(s)              0 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\obj\Debug\net8.0
+
+05/21/2025  06:40 PM    <DIR>          .
+05/21/2025  06:40 PM    <DIR>          ..
+05/21/2025  06:51 PM            53,346 BusBus.Tests.assets.cache
+               1 File(s)         53,346 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\obj\Debug\net8.0-windows
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:40 PM    <DIR>          ..
+05/21/2025  06:53 PM                 0 BusBus.T.BC28C6EC.Up2Date
+05/21/2025  06:52 PM            73,289 BusBus.Tests.assets.cache
+05/21/2025  06:53 PM            33,108 BusBus.Tests.csproj.AssemblyReference.cache
+05/21/2025  06:52 PM                66 BusBus.Tests.csproj.CoreCompileInputs.cache
+05/21/2025  06:53 PM            19,580 BusBus.Tests.csproj.FileListAbsolute.txt
+05/21/2025  06:53 PM            26,624 BusBus.Tests.dll
+05/21/2025  06:52 PM               614 BusBus.Tests.GeneratedMSBuildEditorConfig.editorconfig
+05/21/2025  06:53 PM                66 BusBus.Tests.genruntimeconfig.cache
+05/21/2025  06:28 PM               295 BusBus.Tests.GlobalUsings.g.cs
+05/21/2025  06:53 PM            20,992 BusBus.Tests.pdb
+05/21/2025  06:52 PM               159 BusBus.Tests.sourcelink.json
+05/21/2025  06:53 PM    <DIR>          ref
+05/21/2025  06:53 PM    <DIR>          refint
+              11 File(s)        174,793 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\obj\Debug\net8.0-windows\ref
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM            10,752 BusBus.Tests.dll
+               1 File(s)         10,752 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\obj\Debug\net8.0-windows\refint
+
+05/21/2025  06:53 PM    <DIR>          .
+05/21/2025  06:53 PM    <DIR>          ..
+05/21/2025  06:53 PM            10,752 BusBus.Tests.dll
+               1 File(s)         10,752 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\Services
+
+05/21/2025  06:28 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:51 PM             2,005 RouteServiceTests.cs
+               1 File(s)          2,005 bytes
+
+ Directory of c:\Users\steve.mckitrick\Desktop\BusBus\BusBus.Tests\UI
+
+05/21/2025  06:46 PM    <DIR>          .
+05/21/2025  06:41 PM    <DIR>          ..
+05/21/2025  06:51 PM             2,088 DashboardTests.cs
+05/21/2025  06:51 PM             2,185 RoutePanelTests.cs
+               2 File(s)          4,273 bytes
+
+     Total Files Listed:
+             180 File(s)     22,432,114 bytes
+             140 Dir(s)  60,305,698,816 bytes free
