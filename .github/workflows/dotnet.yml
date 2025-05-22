@@ -20,4 +20,4 @@ jobs:
     - name: Build
       run: dotnet build BusBus.sln --configuration Release --no-restore
     - name: Test
-      run: dotnet test BusBus.sln --no-build --verbosity normal
+      run: dotnet test BusBus.sln --verbosity normal
