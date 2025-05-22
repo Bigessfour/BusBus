@@ -9,11 +9,11 @@ using System.Windows.Forms;
 
 namespace BusBus
 {
-public static class Program
-{
-    private static readonly int[] SqlRetryErrorNumbers = new[] { 1205, 10054 };
+    public static class Program
+    {
+        private static readonly int[] SqlRetryErrorNumbers = new[] { 1205, 10054 };
         [STAThread]
-        public static void Main()
+        public static async Task Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -40,6 +40,17 @@ public static class Program
 
             using (var serviceProvider = services.BuildServiceProvider())
             {
+                // Seed the database with sample data if needed
+                var routeService = serviceProvider.GetRequiredService<IRouteService>();
+                try
+                {
+                    await routeService.SeedSampleDataAsync();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    MessageBox.Show($"Failed to seed database: {ex.Message}", "Seeding Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
                 // Resolve and run the main form
                 var dashboard = serviceProvider.GetRequiredService<Dashboard>();
                 Application.Run(dashboard);

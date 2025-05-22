@@ -15,16 +15,14 @@ namespace BusBus.Tests.Models
             var driver = new Driver
             {
                 Id = id,
-                Name = "John Doe",
-                EmployeeId = "EMP12345",
-                LicenseNumber = "DL9876543"
+                FirstName = "John",
+                LastName = "Doe"
             };
 
             // Act & Assert
             Assert.Equal(id, driver.Id);
-            Assert.Equal("John Doe", driver.Name);
-            Assert.Equal("EMP12345", driver.EmployeeId);
-            Assert.Equal("DL9876543", driver.LicenseNumber);
+            Assert.Equal("John", driver.FirstName);
+            Assert.Equal("Doe", driver.LastName);
         }
 
         [Fact]
@@ -33,7 +31,8 @@ namespace BusBus.Tests.Models
             // Arrange
             var driver = new Driver
             {
-                Name = "Jane Smith"
+                FirstName = "Jane",
+                LastName = "Smith"
             };
 
             // Act

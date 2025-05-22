@@ -10,16 +10,13 @@ namespace BusBus.Models
         /// <summary>
         /// Gets or sets the unique identifier for the driver
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Required]
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        /// <summary>
-        /// Gets or sets the first name of the driver
-        /// </summary>
+        [System.ComponentModel.DataAnnotations.Required]
         public string FirstName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Gets or sets the last name of the driver
-        /// </summary>
+        [System.ComponentModel.DataAnnotations.Required]
         public string LastName { get; set; } = string.Empty;
 
         public override string ToString()

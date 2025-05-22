@@ -31,8 +31,8 @@ namespace BusBus.Tests.UI
         public void SetRouteData_SetsFieldsCorrectly()
         {
             var panel = new BusBus.UI.RoutePanel(_mockRouteService.Object);
-            var driver = new Driver { Id = Guid.NewGuid(), Name = "Test Driver" };
-            var vehicle = new Vehicle { Id = Guid.NewGuid(), Name = "Test Vehicle" };
+            var driver = new Driver { Id = Guid.NewGuid(), FirstName = "Test", LastName = "Driver" };
+            var vehicle = new Vehicle { Id = Guid.NewGuid(), BusNumber = "Test Vehicle" };
             var route = new Route
             {
                 RouteDate = new DateTime(2025, 5, 22),
@@ -115,8 +115,8 @@ namespace BusBus.Tests.UI
                 PMStartMileage = 1100,
                 PMEndingMileage = 1200,
                 PMRiders = 30,
-                Driver = new Driver { Name = "Alice" },
-                Vehicle = new Vehicle { Name = "Bus 1" }
+                Driver = new Driver { FirstName = "Alice", LastName = "Smith" },
+                Vehicle = new Vehicle { BusNumber = "Bus 1" }
             };
             // Simulate setting and getting route data (pseudo, as UI controls are private)
             // This would be more detailed with UI test framework

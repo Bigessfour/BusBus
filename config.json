@@ -1,0 +1,5 @@
+{
+    "ConnectionString": "Server=.\\SQLEXPRESS;Database=BusBusDB;Integrated Security=True;TrustServerCertificate=True",
+    "ProjectDir": "C:\\Users\\steve.mckitrick\\Desktop\\BusBus",
+    "DropDatabase": true
+}

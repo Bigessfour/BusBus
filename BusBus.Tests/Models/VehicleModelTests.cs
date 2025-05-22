@@ -15,16 +15,12 @@ namespace BusBus.Tests.Models
             var vehicle = new Vehicle
             {
                 Id = id,
-                Name = "Bus 101",
-                RegistrationNumber = "REG12345",
-                Capacity = 45
+                BusNumber = "Bus 101"
             };
 
             // Act & Assert
             Assert.Equal(id, vehicle.Id);
-            Assert.Equal("Bus 101", vehicle.Name);
-            Assert.Equal("REG12345", vehicle.RegistrationNumber);
-            Assert.Equal(45, vehicle.Capacity);
+            Assert.Equal("Bus 101", vehicle.BusNumber);
         }
 
         [Fact]
@@ -33,7 +29,7 @@ namespace BusBus.Tests.Models
             // Arrange
             var vehicle = new Vehicle
             {
-                Name = "Shuttle 202"
+                BusNumber = "Shuttle 202"
             };
 
             // Act

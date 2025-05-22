@@ -12,22 +12,21 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
-            "console": "internalConsole"
+            "console": "internalConsole",
+            "justMyCode": true,
+            "requireExactSource": false
         },
         {
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
-            "justMyCode": false,
+            "justMyCode": true,
             "program": "${workspaceFolder}/bin/Debug/net8.0-windows/BusBus.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "exceptionOptions": {
-                "breakMode": "always",
-                "exceptionTypes": ["System.InvalidOperationException"]
-            }
+            "requireExactSource": false
         }
     ]
 }

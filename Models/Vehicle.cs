@@ -10,11 +10,10 @@ namespace BusBus.Models
         /// <summary>
         /// Gets or sets the unique identifier for the vehicle
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Required]
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        /// <summary>
-        /// Gets or sets the bus number of the vehicle
-        /// </summary>
+        [System.ComponentModel.DataAnnotations.Required]
         public string BusNumber { get; set; } = string.Empty;
 
         public override string ToString()

@@ -20,13 +20,13 @@ namespace BusBus.Tests.Models
                 PMStartMileage = 200,
                 PMEndingMileage = 300,
                 PMRiders = 15,
-                Driver = new Driver { Name = "Alice" },
-                Vehicle = new Vehicle { Name = "Bus 1" }
+                Driver = new Driver { FirstName = "Alice", LastName = "Smith" },
+                Vehicle = new Vehicle { BusNumber = "Bus 1" }
             };
             var dto = RouteDisplayDTO.FromRoute(route);
             Assert.Equal(route.Id, dto.Id);
             Assert.Equal("Test Route", dto.Name);
-            Assert.Equal("Alice", dto.DriverName);
+            Assert.Equal("Alice Smith", dto.DriverName);
             Assert.Equal("Bus 1", dto.VehicleName);
         }
 

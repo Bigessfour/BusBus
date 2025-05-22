@@ -30,12 +30,13 @@ namespace BusBus.DataAccess
             modelBuilder.Entity<Driver>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).IsRequired();
+                entity.Property(e => e.FirstName).IsRequired();
+                entity.Property(e => e.LastName).IsRequired();
             });
             modelBuilder.Entity<Vehicle>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).IsRequired();
+                entity.Property(e => e.BusNumber).IsRequired();
             });
         }
     }

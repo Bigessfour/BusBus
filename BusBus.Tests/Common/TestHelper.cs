@@ -21,8 +21,8 @@ namespace BusBus.Tests.Common
         {
             var routes = new List<Route>
             {
-                new Route { Id = Guid.NewGuid(), Name = "Downtown Express", RouteDate = DateTime.Today },
-                new Route { Id = Guid.NewGuid(), Name = "Airport Shuttle", RouteDate = DateTime.Today }
+                new Route { Id = Guid.NewGuid(), RouteDate = DateTime.Today },
+                new Route { Id = Guid.NewGuid(), RouteDate = DateTime.Today }
             };
 
             context.Routes.AddRange(routes);
@@ -33,8 +33,8 @@ namespace BusBus.Tests.Common
         {
             var drivers = new List<Driver>
             {
-                new Driver { Id = Guid.NewGuid(), Name = "John Smith", LicenseNumber = "DL12345", EmployeeId = "EMP001" },
-                new Driver { Id = Guid.NewGuid(), Name = "Jane Doe", LicenseNumber = "DL67890", EmployeeId = "EMP002" }
+                new Driver { Id = Guid.NewGuid(), FirstName = "John", LastName = "Smith" },
+                new Driver { Id = Guid.NewGuid(), FirstName = "Jane", LastName = "Doe" }
             };
 
             context.Drivers.AddRange(drivers);
@@ -45,8 +45,8 @@ namespace BusBus.Tests.Common
         {
             var vehicles = new List<Vehicle>
             {
-                new Vehicle { Id = Guid.NewGuid(), Name = "Bus 101", RegistrationNumber = "BUS101", Capacity = 45 },
-                new Vehicle { Id = Guid.NewGuid(), Name = "Bus 102", RegistrationNumber = "BUS102", Capacity = 50 }
+                new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 101" },
+                new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 102" }
             };
 
             context.Vehicles.AddRange(vehicles);

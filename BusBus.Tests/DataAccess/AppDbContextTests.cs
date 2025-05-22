@@ -29,7 +29,6 @@ namespace BusBus.Tests.DataAccess
             var route = new Route
             {
                 Id = Guid.NewGuid(),
-                Name = "Test Route",
                 RouteDate = DateTime.Today
             };
 
@@ -40,7 +39,6 @@ namespace BusBus.Tests.DataAccess
             // Assert
             var retrievedRoute = await context.Routes.FirstOrDefaultAsync(r => r.Id == route.Id);
             Assert.NotNull(retrievedRoute);
-            Assert.Equal(route.Name, retrievedRoute.Name);
             Assert.Equal(route.RouteDate, retrievedRoute.RouteDate);
         }
 
@@ -52,9 +50,8 @@ namespace BusBus.Tests.DataAccess
             var driver = new Driver
             {
                 Id = Guid.NewGuid(),
-                Name = "John Doe",
-                EmployeeId = "EMP12345",
-                LicenseNumber = "DL9876543"
+                FirstName = "John",
+                LastName = "Doe"
             };
 
             // Act
@@ -64,9 +61,8 @@ namespace BusBus.Tests.DataAccess
             // Assert
             var retrievedDriver = await context.Drivers.FirstOrDefaultAsync(d => d.Id == driver.Id);
             Assert.NotNull(retrievedDriver);
-            Assert.Equal(driver.Name, retrievedDriver.Name);
-            Assert.Equal(driver.EmployeeId, retrievedDriver.EmployeeId);
-            Assert.Equal(driver.LicenseNumber, retrievedDriver.LicenseNumber);
+            Assert.Equal(driver.FirstName, retrievedDriver.FirstName);
+            Assert.Equal(driver.LastName, retrievedDriver.LastName);
         }
 
         [Fact]
@@ -77,9 +73,7 @@ namespace BusBus.Tests.DataAccess
             var vehicle = new Vehicle
             {
                 Id = Guid.NewGuid(),
-                Name = "Bus 101",
-                RegistrationNumber = "REG12345",
-                Capacity = 45
+                BusNumber = "Bus 101"
             };
 
             // Act
@@ -89,9 +83,7 @@ namespace BusBus.Tests.DataAccess
             // Assert
             var retrievedVehicle = await context.Vehicles.FirstOrDefaultAsync(v => v.Id == vehicle.Id);
             Assert.NotNull(retrievedVehicle);
-            Assert.Equal(vehicle.Name, retrievedVehicle.Name);
-            Assert.Equal(vehicle.RegistrationNumber, retrievedVehicle.RegistrationNumber);
-            Assert.Equal(vehicle.Capacity, retrievedVehicle.Capacity);
+            Assert.Equal(vehicle.BusNumber, retrievedVehicle.BusNumber);
         }
     }
 }

@@ -384,17 +384,18 @@ namespace BusBus.UI
         {
             try
             {
+                Console.WriteLine($"[Dashboard] LoadView called with view: {view.GetType().Name}");
                 _currentView?.Dispose();
                 _contentPanel.Controls.Clear();
                 _currentView = view;
                 _currentView.Render(_contentPanel);
                 _contentPanel.Visible = true; // Ensure content panel is visible after loading a view
-                System.Diagnostics.Debug.WriteLine($"[Dashboard] Loaded view: {_currentView?.GetType().Name}, Controls in _contentPanel: {_contentPanel.Controls.Count}, Visible: {_contentPanel.Visible}, Size: {_contentPanel.Size}");
+                Console.WriteLine($"[Dashboard] Loaded view: {_currentView?.GetType().Name}, Controls in _contentPanel: {_contentPanel.Controls.Count}, Visible: {_contentPanel.Visible}, Size: {_contentPanel.Size}");
             }
             catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
             {
                 Console.WriteLine($"Error loading view: {ex.Message}");
-
+                MessageBox.Show($"Error loading view: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 var errorLabel = new Label
                 {
                     Text = "Error loading the requested view. Please try again or contact support.",
@@ -403,7 +404,6 @@ namespace BusBus.UI
                     Dock = DockStyle.Fill,
                     TextAlign = ContentAlignment.MiddleCenter
                 };
-
                 _contentPanel.Controls.Clear();
                 _contentPanel.Controls.Add(errorLabel);
             }
