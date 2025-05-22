@@ -67,10 +67,10 @@ namespace BusBus.UI
 
             _routesGrid = new DataGridView
             {
-                ReadOnly = false, // Enable inline editing
+                ReadOnly = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 AutoGenerateColumns = false,
-                AllowUserToAddRows = true, // Allow adding new rows
+                AllowUserToAddRows = true,
                 AllowUserToDeleteRows = false,
                 MultiSelect = false,
                 Visible = true,
@@ -78,18 +78,34 @@ namespace BusBus.UI
                 AutoSize = false,
                 Dock = DockStyle.Fill,
                 Height = 400,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
+                CellBorderStyle = DataGridViewCellBorderStyle.Single,
+                GridColor = System.Drawing.Color.FromArgb(85, 85, 85),
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Font = new System.Drawing.Font("Impact", 12F, System.Drawing.FontStyle.Bold),
+                    BackColor = ThemeManager.CurrentTheme.GridBackground,
+                    ForeColor = System.Drawing.Color.White,
+                    SelectionBackColor = System.Drawing.Color.FromArgb(80, 80, 90),
+                },
+                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+                {
+                    BackColor = System.Drawing.Color.FromArgb(60, 60, 60)
+                },
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Raised,
+                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold),
+                    Alignment = DataGridViewContentAlignment.MiddleCenter
+                }
             };
-
-            _routesGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             var nameCol = new DataGridViewTextBoxColumn { HeaderText = "Name", DataPropertyName = "Name" };
             var dateCol = new DataGridViewTextBoxColumn { HeaderText = "Date", DataPropertyName = "RouteDate" };
-            var amStartCol = new DataGridViewTextBoxColumn { HeaderText = "AM Start", DataPropertyName = "AMStartingMileage" };
-            var amEndCol = new DataGridViewTextBoxColumn { HeaderText = "AM End", DataPropertyName = "AMEndingMileage" };
-            var pmStartCol = new DataGridViewTextBoxColumn { HeaderText = "PM Start", DataPropertyName = "PMStartMileage" };
-            var pmEndCol = new DataGridViewTextBoxColumn { HeaderText = "PM End", DataPropertyName = "PMEndingMileage" };
-            // ComboBox columns for Driver and Vehicle
+            var amStartCol = new DataGridViewTextBoxColumn { HeaderText = "AM Start", DataPropertyName = "AMStartingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } };
+            var amEndCol = new DataGridViewTextBoxColumn { HeaderText = "AM End", DataPropertyName = "AMEndingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } };
+            var pmStartCol = new DataGridViewTextBoxColumn { HeaderText = "PM Start", DataPropertyName = "PMStartMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } };
+            var pmEndCol = new DataGridViewTextBoxColumn { HeaderText = "PM End", DataPropertyName = "PMEndingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } };
             var driverCol = new DataGridViewComboBoxColumn
             {
                 HeaderText = "Driver",
@@ -106,15 +122,6 @@ namespace BusBus.UI
                 FlatStyle = FlatStyle.Flat,
                 Name = "VehicleId"
             };
-
-            nameCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dateCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            amStartCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            amEndCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            pmStartCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            pmEndCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            driverCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            vehicleCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             _routesGrid.Columns.Add(nameCol);
             _routesGrid.Columns.Add(dateCol);
@@ -145,6 +152,39 @@ namespace BusBus.UI
                     ((DataGridViewComboBoxColumn)vehicleCol).DisplayMember = "BusNumber";
                 });
             });
+
+            // Hover effect for rows
+            _routesGrid.RowEnter += (s, e) =>
+            {
+                if (e.RowIndex >= 0 && e.RowIndex < _routesGrid.Rows.Count)
+                {
+                    _routesGrid.Rows[e.RowIndex].DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(70, 70, 90);
+                }
+            };
+            _routesGrid.RowLeave += (s, e) =>
+            {
+                if (e.RowIndex >= 0 && e.RowIndex < _routesGrid.Rows.Count)
+                {
+                    _routesGrid.Rows[e.RowIndex].DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.GridBackground;
+                }
+            };
+
+            // Rider count color accent threshold
+            _routesGrid.CellFormatting += (s, e) =>
+            {
+                if (_routesGrid.Columns[e.ColumnIndex].DataPropertyName == "AMRiders" || _routesGrid.Columns[e.ColumnIndex].DataPropertyName == "PMRiders")
+                {
+                    if (e.Value is int riders && riders > 50)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.FromArgb(255, 215, 0); // Soft yellow
+                    }
+                    else
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.White;
+                    }
+                    e.CellStyle.Format = "D2";
+                }
+            };
 
             _routesGrid.CellDoubleClick += (s, e) =>
             {
