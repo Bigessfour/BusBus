@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -16,6 +17,13 @@ namespace BusBus.UI
     /// </summary>
     public class RoutePanel : Panel, IDisplayable
     {
+        /// <summary>
+        /// Set to true in unit tests to suppress validation dialogs.
+        /// </summary>
+        /// <summary>
+        /// Gets or sets a value indicating whether validation dialogs are suppressed (for unit testing).
+        /// </summary>
+        public static bool SuppressDialogsForTests { get; set; }
         public void RefreshTheme()
         {
             // Apply theme to this panel and its children
@@ -460,7 +468,11 @@ namespace BusBus.UI
         {
             if (!ValidateRouteData(out string errorMessage))
             {
-                MessageBox.Show(errorMessage, "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // Suppress dialog if running in test mode
+                if (!SuppressDialogsForTests && System.Environment.UserInteractive)
+                {
+                    MessageBox.Show(errorMessage, "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
                 return null;
             }
 
