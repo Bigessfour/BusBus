@@ -67,16 +67,18 @@ namespace BusBus.UI
 
             _routesGrid = new DataGridView
             {
-                ReadOnly = true,
+                ReadOnly = false, // Enable inline editing
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 AutoGenerateColumns = false,
-                AllowUserToAddRows = false,
+                AllowUserToAddRows = true, // Allow adding new rows
                 AllowUserToDeleteRows = false,
                 MultiSelect = false,
                 Visible = true,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                AutoSize = true,
-                Anchor = AnchorStyles.None // Center the grid
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Height = 400,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
             };
 
             _routesGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -116,20 +118,106 @@ namespace BusBus.UI
                 }
             };
 
-            _addRouteButton = new Button { Text = "Add Route", Dock = DockStyle.Left, Width = 100 };
-            _editRouteButton = new Button { Text = "Edit Route", Dock = DockStyle.Left, Width = 100 };
+            _addRouteButton = new Button { Text = "New Route Entry", Dock = DockStyle.Left, Width = 120 };
+            _editRouteButton = new Button { Text = "Edit", Dock = DockStyle.Left, Width = 80 };
+            _updateRouteButton = new Button { Text = "Update", Dock = DockStyle.Left, Width = 80 };
+            _deleteRouteButton = new Button { Text = "Delete", Dock = DockStyle.Left, Width = 80 };
             _prevPageButton = new Button { Text = "Previous", Dock = DockStyle.Left, Width = 80 };
             _nextPageButton = new Button { Text = "Next", Dock = DockStyle.Left, Width = 80 };
             _pageInfoLabel = new Label { Text = "Page 1", Dock = DockStyle.Left, Width = 100, TextAlign = ContentAlignment.MiddleLeft };
 
-            _addRouteButton.Click += (s, e) => ShowRoutePanel(null);
+            _addRouteButton.Click += (s, e) =>
+            {
+                // Add a blank row to the DataGridView
+                var list = _routesGrid.DataSource as List<RouteDisplayDTO>;
+                if (list == null)
+                {
+                    list = new List<RouteDisplayDTO>();
+                }
+                var newDto = new RouteDisplayDTO
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "New Route",
+                    RouteDate = DateTime.Today
+                };
+                list.Add(newDto);
+                _routesGrid.DataSource = null;
+                _routesGrid.DataSource = list;
+                _routesGrid.Refresh();
+                // Select the new row
+                if (_routesGrid.Rows.Count > 0)
+                {
+                    _routesGrid.ClearSelection();
+                    _routesGrid.Rows[_routesGrid.Rows.Count - 2].Selected = true; // -2 because of the new row placeholder
+                }
+            };
+
             _editRouteButton.Click += (s, e) =>
             {
                 if (_routesGrid.SelectedRows.Count > 0)
                 {
-                    int idx = _routesGrid.SelectedRows[0].Index;
-                    if (idx >= 0 && idx < _routes.Count)
-                        ShowRoutePanel(_routes[idx]);
+                    var row = _routesGrid.SelectedRows[0];
+                    // Highlight the selected row
+                    foreach (DataGridViewRow r in _routesGrid.Rows)
+                    {
+                        r.DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                    }
+                    row.DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                }
+            };
+
+            _updateRouteButton.Click += async (s, e) =>
+            {
+                if (_routesGrid.SelectedRows.Count > 0)
+                {
+                    var row = _routesGrid.SelectedRows[0];
+                    var dto = row.DataBoundItem as RouteDisplayDTO;
+                    if (dto != null)
+                    {
+                        // Fetch the tracked entity from the database
+                        var trackedRoute = await _routeService.GetRouteByIdAsync(dto.Id);
+                        if (trackedRoute != null)
+                        {
+                            // Update properties from DTO
+                            trackedRoute.Name = dto.Name;
+                            trackedRoute.RouteDate = dto.RouteDate;
+                            trackedRoute.AMStartingMileage = dto.AMStartingMileage;
+                            trackedRoute.AMEndingMileage = dto.AMEndingMileage;
+                            trackedRoute.AMRiders = dto.AMRiders;
+                            trackedRoute.PMStartMileage = dto.PMStartMileage;
+                            trackedRoute.PMEndingMileage = dto.PMEndingMileage;
+                            trackedRoute.PMRiders = dto.PMRiders;
+                            // Note: Driver and Vehicle updates would require lookup by name if editable
+                            await _routeService.UpdateRouteAsync(trackedRoute);
+                            await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Route with ID {dto.Id} not found in the database.", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+            };
+
+            _deleteRouteButton.Click += async (s, e) =>
+            {
+                if (_routesGrid.SelectedRows.Count > 0)
+                {
+                    var row = _routesGrid.SelectedRows[0];
+                    var dto = row.DataBoundItem as RouteDisplayDTO;
+                    if (dto != null && dto.Id != Guid.Empty)
+                    {
+                        await _routeService.DeleteRouteAsync(dto.Id);
+                        var result = MessageBox.Show("Would you like to enter a new route?", "Add New Route", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        if (result == DialogResult.Yes)
+                        {
+                            _addRouteButton.PerformClick();
+                        }
+                        else
+                        {
+                            await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
+                        }
+                    }
                 }
             };
             _prevPageButton.Click += async (s, e) =>
@@ -148,31 +236,75 @@ namespace BusBus.UI
                 }
             };
 
-            var topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 40, FlowDirection = FlowDirection.LeftToRight };
-            topPanel.Controls.Add(_addRouteButton);
-            topPanel.Controls.Add(_editRouteButton);
-
-            var bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 40, FlowDirection = FlowDirection.LeftToRight };
-            bottomPanel.Controls.Add(_prevPageButton);
-            bottomPanel.Controls.Add(_nextPageButton);
-            bottomPanel.Controls.Add(_pageInfoLabel);
-
-            // Center the DataGridView using FlowLayoutPanel
-            var gridLayout = new FlowLayoutPanel
+            var tableLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(10)
+                RowCount = 3,
+                ColumnCount = 1,
+                BackColor = ThemeManager.CurrentTheme.CardBackground
             };
-            gridLayout.Controls.Add(_routesGrid);
+            tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 5F)); // Top spacer
+            tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 85F)); // Grid
+            tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 10F)); // Bottom panel
 
-            this.Controls.Add(topPanel);
-            this.Controls.Add(gridLayout);
-            this.Controls.Add(bottomPanel);
+            // Top row: empty panel for spacing
+            tableLayout.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = ThemeManager.CurrentTheme.CardBackground }, 0, 0);
+
+            // Middle row: grid
+            tableLayout.Controls.Add(_routesGrid, 0, 1);
+
+            // Bottom row: CRUD and pagination
+            var bottomPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 60,
+                RowCount = 1,
+                ColumnCount = 3,
+                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                Visible = true,
+                AutoSize = false,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F)); // Pagination left
+            bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F)); // Centered CRUD
+            bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F)); // Page info right
+
+            // Pagination controls (left)
+            var paginationPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
+            paginationPanel.Controls.Add(_prevPageButton);
+            paginationPanel.Controls.Add(_nextPageButton);
+            bottomPanel.Controls.Add(paginationPanel, 0, 0);
+
+            // Centered CRUD buttons (center)
+            var crudPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Anchor = AnchorStyles.None };
+            crudPanel.Controls.Add(_addRouteButton);
+            crudPanel.Controls.Add(_editRouteButton);
+            crudPanel.Controls.Add(_updateRouteButton);
+            crudPanel.Controls.Add(_deleteRouteButton);
+            bottomPanel.Controls.Add(crudPanel, 1, 0);
+
+            // Page info (right)
+            var pageInfoPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft, AutoSize = true };
+            pageInfoPanel.Controls.Add(_pageInfoLabel);
+            bottomPanel.Controls.Add(pageInfoPanel, 2, 0);
+
+            tableLayout.Controls.Add(bottomPanel, 0, 2);
+            bottomPanel.BringToFront();
+
+            this.Controls.Add(tableLayout);
+            // Inline editing event
+            _routesGrid.CellEndEdit += (s, e) =>
+            {
+                // Optionally, store changes temporarily or mark as dirty
+                // For now, just refresh the grid
+                _routesGrid.Refresh();
+            };
         }
+
+        private readonly Button _updateRouteButton;
+        private readonly Button _deleteRouteButton;
 
         public async Task LoadRoutesAsync(int page, int pageSize, CancellationToken cancellationToken)
         {
@@ -189,11 +321,12 @@ namespace BusBus.UI
                     _totalRoutes = await _routeService.GetRoutesCountAsync(cancellationToken);
                     var routes = await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
 
+                    Console.WriteLine($"[RouteListPanel] Retrieved {routes.Count} routes for page {page}");
                     var routeDisplayList = routes.Select(r => RouteDisplayDTO.FromRoute(r)).ToList();
 
                     _routes = routes.ToList();
-
                     _routesGrid.DataSource = routeDisplayList;
+                    _routesGrid.Refresh();
 
                     foreach (DataGridViewColumn column in _routesGrid.Columns)
                     {
@@ -204,6 +337,16 @@ namespace BusBus.UI
                     _pageInfoLabel.Text = $"Page {_currentPage} of {totalPages}";
                     _prevPageButton.Enabled = _currentPage > 1;
                     _nextPageButton.Enabled = _currentPage < totalPages;
+
+                    // Debug: Check grid state
+                    Console.WriteLine($"[RouteListPanel] _routesGrid.DataSource count: {routeDisplayList.Count}");
+                    Console.WriteLine($"[RouteListPanel] _routesGrid.Controls.Count: {_routesGrid.Controls.Count}");
+                    Console.WriteLine($"[RouteListPanel] _routesGrid.Visible: {_routesGrid.Visible}, Size: {_routesGrid.Size}");
+
+                    if (routeDisplayList.Count == 0)
+                    {
+                        MessageBox.Show("No routes found in the database.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -276,8 +419,10 @@ namespace BusBus.UI
         public void Render(Control container)
         {
             ArgumentNullException.ThrowIfNull(container);
+            Console.WriteLine($"[RouteListPanel] Render called. Container: {container.GetType().Name}, Controls before: {container.Controls.Count}");
             container.Controls.Clear();
             container.Controls.Add(this);
+            Console.WriteLine($"[RouteListPanel] Render complete. Controls after: {container.Controls.Count}");
         }
 
         // Only one Dispose method should exist: override for Panel
@@ -291,6 +436,8 @@ namespace BusBus.UI
                 _pageInfoLabel?.Dispose();
                 _addRouteButton?.Dispose();
                 _editRouteButton?.Dispose();
+                _updateRouteButton?.Dispose();
+                _deleteRouteButton?.Dispose();
             }
             base.Dispose(disposing);
         }

@@ -12,6 +12,12 @@ namespace BusBus.Services
     public interface IRouteService
     {
         /// <summary>
+        /// Seeds the database with sample data if needed
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A task representing the asynchronous operation</returns>
+        Task SeedSampleDataAsync(CancellationToken cancellationToken = default);
+        /// <summary>
         /// Creates a new route
         /// </summary>
         /// <param name="route">The route to create</param>

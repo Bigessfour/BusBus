@@ -137,73 +137,44 @@ namespace BusBus.Services
         public async Task SeedSampleDataAsync(CancellationToken cancellationToken = default)
         {
             // Check if data already exists to avoid duplicates
-            if (await _context.Routes.AnyAsync(cancellationToken) || 
-                await _context.Drivers.AnyAsync(cancellationToken) || 
-                await _context.Vehicles.AnyAsync(cancellationToken))
-            {
-                return; // Database already seeded
-            }
 
-            // Seed Drivers
-            var driver1 = new Driver
-            {
-                Id = Guid.NewGuid(),
-                Name = "John Doe"
-            };
-            var driver2 = new Driver
-            {
-                Id = Guid.NewGuid(),
-                Name = "Jane Smith"
-            };
-            _context.Drivers.AddRange(driver1, driver2);
+            // Only seed if there are no routes for 5/5/2025 with Steve McKitrick
+            var existing = await _context.Routes.AnyAsync(r => r.RouteDate == new DateTime(2025, 5, 5) && r.Driver != null && r.Driver.Name == "Steve McKitrick", cancellationToken);
+            if (existing)
+                return;
 
-            // Seed Vehicles
-            var vehicle1 = new Vehicle
+            // Seed Steve McKitrick and a vehicle
+            var steve = new Driver
             {
                 Id = Guid.NewGuid(),
-                Name = "Bus A"
+                Name = "Steve McKitrick"
             };
-            var vehicle2 = new Vehicle
+            var bus = new Vehicle
             {
                 Id = Guid.NewGuid(),
-                Name = "Bus B"
+                Name = "Bus 99"
             };
-            _context.Vehicles.AddRange(vehicle1, vehicle2);
+            _context.Drivers.Add(steve);
+            _context.Vehicles.Add(bus);
 
-            // Seed Routes
-            var route1 = new Route
+            // Seed the provided route
+            var route = new Route
             {
                 Id = Guid.NewGuid(),
-                Name = "Route 1",
-                RouteDate = DateTime.Today,
-                AMStartingMileage = 1000,
-                AMEndingMileage = 1100,
-                AMRiders = 20,
-                PMStartMileage = 1100,
-                PMEndingMileage = 1200,
-                PMRiders = 15,
-                Driver = driver1,
-                DriverId = driver1.Id,
-                Vehicle = vehicle1,
-                VehicleId = vehicle1.Id
+                Name = "Sample Route 5/5/25",
+                RouteDate = new DateTime(2025, 5, 5),
+                AMStartingMileage = 55358,
+                AMEndingMileage = 55374,
+                AMRiders = 36,
+                PMStartMileage = 55374,
+                PMEndingMileage = 55391,
+                PMRiders = 31,
+                Driver = steve,
+                DriverId = steve.Id,
+                Vehicle = bus,
+                VehicleId = bus.Id
             };
-            var route2 = new Route
-            {
-                Id = Guid.NewGuid(),
-                Name = "Route 2",
-                RouteDate = DateTime.Today.AddDays(-1),
-                AMStartingMileage = 2000,
-                AMEndingMileage = 2100,
-                AMRiders = 25,
-                PMStartMileage = 2100,
-                PMEndingMileage = 2200,
-                PMRiders = 18,
-                Driver = driver2,
-                DriverId = driver2.Id,
-                Vehicle = vehicle2,
-                VehicleId = vehicle2.Id
-            };
-            _context.Routes.AddRange(route1, route2);
+            _context.Routes.Add(route);
 
             await _context.SaveChangesAsync(cancellationToken);
         }
