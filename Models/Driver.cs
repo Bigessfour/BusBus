@@ -13,23 +13,18 @@ namespace BusBus.Models
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
-        /// Gets or sets the name of the driver
+        /// Gets or sets the first name of the driver
         /// </summary>
-        public string Name { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the employee ID of the driver
+        /// Gets or sets the last name of the driver
         /// </summary>
-        public string EmployeeId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the license number of the driver
-        /// </summary>
-        public string LicenseNumber { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
 
         public override string ToString()
         {
-            return Name;
+            return $"{FirstName} {LastName}".Trim();
         }
     }
 }

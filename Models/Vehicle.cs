@@ -13,23 +13,13 @@ namespace BusBus.Models
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
-        /// Gets or sets the name/model of the vehicle
+        /// Gets or sets the bus number of the vehicle
         /// </summary>
-        public string Name { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the registration number of the vehicle
-        /// </summary>
-        public string RegistrationNumber { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the capacity of the vehicle
-        /// </summary>
-        public int Capacity { get; set; }
+        public string BusNumber { get; set; } = string.Empty;
 
         public override string ToString()
         {
-            return Name;
+            return BusNumber;
         }
     }
 }

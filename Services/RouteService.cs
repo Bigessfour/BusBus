@@ -138,21 +138,21 @@ namespace BusBus.Services
         {
             // Check if data already exists to avoid duplicates
 
-            // Only seed if there are no routes for 5/5/2025 with Steve McKitrick
-            var existing = await _context.Routes.AnyAsync(r => r.RouteDate == new DateTime(2025, 5, 5) && r.Driver != null && r.Driver.Name == "Steve McKitrick", cancellationToken);
-            if (existing)
+            // Only seed if there are no drivers or vehicles
+            if (await _context.Drivers.AnyAsync(cancellationToken) || await _context.Vehicles.AnyAsync(cancellationToken))
                 return;
 
-            // Seed Steve McKitrick and a vehicle
+            // Seed Steve McKitrick and a vehicle with simplified fields
             var steve = new Driver
             {
                 Id = Guid.NewGuid(),
-                Name = "Steve McKitrick"
+                FirstName = "Steve",
+                LastName = "McKitrick"
             };
             var bus = new Vehicle
             {
                 Id = Guid.NewGuid(),
-                Name = "Bus 99"
+                BusNumber = "99"
             };
             _context.Drivers.Add(steve);
             _context.Vehicles.Add(bus);

@@ -89,8 +89,23 @@ namespace BusBus.UI
             var amEndCol = new DataGridViewTextBoxColumn { HeaderText = "AM End", DataPropertyName = "AMEndingMileage" };
             var pmStartCol = new DataGridViewTextBoxColumn { HeaderText = "PM Start", DataPropertyName = "PMStartMileage" };
             var pmEndCol = new DataGridViewTextBoxColumn { HeaderText = "PM End", DataPropertyName = "PMEndingMileage" };
-            var driverCol = new DataGridViewTextBoxColumn { HeaderText = "Driver", DataPropertyName = "DriverName" };
-            var vehicleCol = new DataGridViewTextBoxColumn { HeaderText = "Vehicle", DataPropertyName = "VehicleName" };
+            // ComboBox columns for Driver and Vehicle
+            var driverCol = new DataGridViewComboBoxColumn
+            {
+                HeaderText = "Driver",
+                DataPropertyName = "DriverId",
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
+                FlatStyle = FlatStyle.Flat,
+                Name = "DriverId"
+            };
+            var vehicleCol = new DataGridViewComboBoxColumn
+            {
+                HeaderText = "Vehicle",
+                DataPropertyName = "VehicleId",
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
+                FlatStyle = FlatStyle.Flat,
+                Name = "VehicleId"
+            };
 
             nameCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dateCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -109,6 +124,27 @@ namespace BusBus.UI
             _routesGrid.Columns.Add(pmEndCol);
             _routesGrid.Columns.Add(driverCol);
             _routesGrid.Columns.Add(vehicleCol);
+
+            // Load drivers and vehicles for ComboBox columns
+            Task.Run(async () =>
+            {
+                var drivers = await _routeService.GetDriversAsync();
+                var vehicles = await _routeService.GetVehiclesAsync();
+                this.Invoke((MethodInvoker)delegate
+                {
+                    var driverList = new List<object> { new { Id = (Guid?)null, Name = "Unassigned" } };
+                    driverList.AddRange(drivers.Select(d => new { Id = (Guid?)d.Id, Name = $"{d.FirstName} {d.LastName}".Trim() }));
+                    ((DataGridViewComboBoxColumn)driverCol).DataSource = driverList;
+                    ((DataGridViewComboBoxColumn)driverCol).ValueMember = "Id";
+                    ((DataGridViewComboBoxColumn)driverCol).DisplayMember = "Name";
+
+                    var vehicleList = new List<object> { new { Id = (Guid?)null, BusNumber = "Unassigned" } };
+                    vehicleList.AddRange(vehicles.Select(v => new { Id = (Guid?)v.Id, BusNumber = v.BusNumber }));
+                    ((DataGridViewComboBoxColumn)vehicleCol).DataSource = vehicleList;
+                    ((DataGridViewComboBoxColumn)vehicleCol).ValueMember = "Id";
+                    ((DataGridViewComboBoxColumn)vehicleCol).DisplayMember = "BusNumber";
+                });
+            });
 
             _routesGrid.CellDoubleClick += (s, e) =>
             {
@@ -245,7 +281,7 @@ namespace BusBus.UI
             };
             tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 5F)); // Top spacer
             tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 85F)); // Grid
-            tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 10F)); // Bottom panel
+            tableLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F)); // Bottom panel (increased height)
 
             // Top row: empty panel for spacing
             tableLayout.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = ThemeManager.CurrentTheme.CardBackground }, 0, 0);
@@ -257,7 +293,7 @@ namespace BusBus.UI
             var bottomPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Bottom,
-                Height = 60,
+                Height = 50,
                 RowCount = 1,
                 ColumnCount = 3,
                 BackColor = ThemeManager.CurrentTheme.CardBackground,
@@ -267,6 +303,11 @@ namespace BusBus.UI
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
+            // Debug logging for CRUD button visibility and size
+            Console.WriteLine($"[RouteListPanel] CRUD Button Visible: {_addRouteButton.Visible}, Size: {_addRouteButton.Size}");
+            Console.WriteLine($"[RouteListPanel] CRUD Button Visible: {_editRouteButton.Visible}, Size: {_editRouteButton.Size}");
+            Console.WriteLine($"[RouteListPanel] CRUD Button Visible: {_updateRouteButton.Visible}, Size: {_updateRouteButton.Size}");
+            Console.WriteLine($"[RouteListPanel] CRUD Button Visible: {_deleteRouteButton.Visible}, Size: {_deleteRouteButton.Size}");
             bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F)); // Pagination left
             bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F)); // Centered CRUD
             bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F)); // Page info right
@@ -295,10 +336,42 @@ namespace BusBus.UI
 
             this.Controls.Add(tableLayout);
             // Inline editing event
-            _routesGrid.CellEndEdit += (s, e) =>
+            _routesGrid.CellEndEdit += async (s, e) =>
             {
-                // Optionally, store changes temporarily or mark as dirty
-                // For now, just refresh the grid
+                // Validate referential integrity for DriverId and VehicleId
+                var row = _routesGrid.Rows[e.RowIndex];
+                var dto = row.DataBoundItem as RouteDisplayDTO;
+                if (dto != null)
+                {
+                    if (e.ColumnIndex == _routesGrid.Columns["DriverId"].Index)
+                    {
+                        var driverId = dto.DriverId;
+                        if (driverId != null)
+                        {
+                            var driver = (await _routeService.GetDriversAsync()).FirstOrDefault(d => d.Id == driverId);
+                            if (driver == null)
+                            {
+                                MessageBox.Show("Selected driver does not exist", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                dto.DriverId = null;
+                                row.Cells[e.ColumnIndex].Value = null;
+                            }
+                        }
+                    }
+                    if (e.ColumnIndex == _routesGrid.Columns["VehicleId"].Index)
+                    {
+                        var vehicleId = dto.VehicleId;
+                        if (vehicleId != null)
+                        {
+                            var vehicle = (await _routeService.GetVehiclesAsync()).FirstOrDefault(v => v.Id == vehicleId);
+                            if (vehicle == null)
+                            {
+                                MessageBox.Show("Selected vehicle does not exist", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                dto.VehicleId = null;
+                                row.Cells[e.ColumnIndex].Value = null;
+                            }
+                        }
+                    }
+                }
                 _routesGrid.Refresh();
             };
         }
