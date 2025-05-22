@@ -2,6 +2,20 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Reset GitHub Integration",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Resetting GitHub Integration...' -ForegroundColor Cyan; $ghPath = \"$env:APPDATA\\Code\\User\\globalStorage\\github.vscode-pull-request-github\"; if (Test-Path $ghPath) { Get-ChildItem $ghPath | ForEach-Object { Write-Host \"Found: $($_.Name)\" -ForegroundColor Yellow }; $statePath = Join-Path $ghPath 'state.vscgithub'; if (Test-Path $statePath) { Write-Host \"Removing state file...\" -ForegroundColor Yellow; Remove-Item $statePath -Force; Write-Host \"Done! Please reload VS Code window and try GitHub sign-in again.\" -ForegroundColor Green } else { Write-Host \"No state file found. Please try signing in to GitHub.\" -ForegroundColor Yellow } } else { Write-Host \"GitHub extension storage not found.\" -ForegroundColor Red }"
+			],
+			"group": "none",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
 			"type": "shell",
 			"label": "build BusBus solution",
 			"command": "dotnet",
