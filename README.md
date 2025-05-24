@@ -14,7 +14,7 @@ BusBus is a Windows Forms application designed to streamline school bus route ma
 - **Framework**: .NET 8.0 for Windows
 - **UI**: Windows Forms
 - **Data Access**: Entity Framework Core
-- **Testing**: xUnit, Moq
+- **Testing**: NUnit, Moq, NSubstitute
 - **Code Coverage**: Coverlet
 
 ## 📋 Prerequisites
@@ -110,3 +110,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Contact
 
 Project Link: [https://github.com/Bigessfour/BusBus](https://github.com/Bigessfour/BusBus)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Third-party Dependencies
+
+All dependencies use compatible open-source licenses:
+- **Testing Frameworks**: NUnit, Moq, AutoFixture, NSubstitute (MIT/BSD)
+- **Entity Framework**: Microsoft.EntityFrameworkCore (MIT)
+- **Dependency Injection**: Microsoft.Extensions.DependencyInjection (MIT)
+
+## Build Status
+
+To build and test:
+```bash
+dotnet clean
+dotnet build BusBus.sln
+dotnet test BusBus.Tests/BusBus.Tests.csproj
+```

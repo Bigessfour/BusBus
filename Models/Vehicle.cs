@@ -13,12 +13,40 @@ namespace BusBus.Models
         [System.ComponentModel.DataAnnotations.Required]
         public Guid Id { get; set; } = Guid.NewGuid();
 
+
+
         [System.ComponentModel.DataAnnotations.Required]
-        public string BusNumber { get; set; } = string.Empty;
+        public required string Number { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the bus number (for compatibility with existing code)
+        /// </summary>
+        public string BusNumber
+        {
+            get => Number;
+            set => Number = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the display name for the vehicle (for UI and reporting)
+        /// </summary>
+        public string Name
+        {
+            get => Number;
+            set => Number = value;
+        }
+
+        public int Capacity { get; set; }
+
+        public string? Model { get; set; }
+
+        public string? LicensePlate { get; set; }
+
+        public bool IsActive { get; set; } = true;
 
         public override string ToString()
         {
-            return BusNumber;
+            return Number;
         }
     }
 }

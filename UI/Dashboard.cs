@@ -102,28 +102,27 @@ namespace BusBus.UI
             try
             {
                 this.Text = "BusBus Dashboard";
-                this.BackColor = ThemeManager.CurrentTheme.MainBackground;
-
-                var mainTableLayout = new TableLayoutPanel
+                this.BackColor = ThemeManager.CurrentTheme.MainBackground;                var mainTableLayout = new TableLayoutPanel
                 {
                     Dock = DockStyle.Fill,
                     BackColor = ThemeManager.CurrentTheme.MainBackground,
                     RowCount = 2,
                     ColumnCount = 2,
                     Padding = new Padding(0),
-                    Margin = new Padding(0)
+                    Margin = new Padding(0),
+                    CellBorderStyle = TableLayoutPanelCellBorderStyle.None
                 };
-                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80F));
+                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240F)); // Fixed sidebar width
+                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Main area takes remaining space
                 mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 95F));
                 mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 5F));
 
                 _sidePanel.Dock = DockStyle.Fill;
                 _sidePanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
-                mainTableLayout.Controls.Add(_sidePanel, 0, 0);
-
-                _mainPanel.Dock = DockStyle.Fill;
+                mainTableLayout.Controls.Add(_sidePanel, 0, 0);                _mainPanel.Dock = DockStyle.Fill;
                 _mainPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                _mainPanel.Padding = new Padding(0); // Remove padding for edge-to-edge layout
+                _mainPanel.Margin = new Padding(0);
                 mainTableLayout.Controls.Add(_mainPanel, 1, 0);
 
                 _footerPanel.Dock = DockStyle.Fill;
@@ -136,6 +135,9 @@ namespace BusBus.UI
                 SetupSidePanel(_sidePanel);
                 SetupMainPanel(_mainPanel);
                 SetupFooterPanel(_footerPanel);
+                
+                // Apply theme to all controls after initialization
+                ThemeManager.RefreshTheme(this);
             }
             catch (InvalidOperationException ex)
             {
@@ -175,33 +177,32 @@ namespace BusBus.UI
             {
                 Console.WriteLine($"Null reference when applying theme: {ex.Message}");
             }
-        }
-
-        private void SetupSidePanel(Panel sidePanel)
+        }        private void SetupSidePanel(Panel sidePanel)
         {
             sidePanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
-            sidePanel.BorderStyle = BorderStyle.FixedSingle;
-            sidePanel.Padding = new Padding(1);
+            sidePanel.BorderStyle = BorderStyle.None; // Clean edge for seamless transition
+            sidePanel.Padding = new Padding(8, 12, 0, 12); // More refined padding
 
             var buttonPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 300,
+                Height = 320,
                 BackColor = ThemeManager.CurrentTheme.SidePanelBackground,
-                Margin = new Padding(0, 5, 0, 0),
+                Margin = new Padding(0),
+                Padding = new Padding(0),
                 RowCount = 4,
                 ColumnCount = 1
             };
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 70F));
-            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-
-            var routesButton = CreateSidebarButton("🚌 Routes", ThemeManager.CurrentTheme.ButtonFont);
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F)); // More space for main button
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F)); // Better spacing
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));            var routesButton = CreateSidebarButton("🚌 Routes", ThemeManager.CurrentTheme.ButtonFont);
             routesButton.Dock = DockStyle.Fill;
-            routesButton.TextAlign = ContentAlignment.MiddleCenter;
-            routesButton.ImageAlign = ContentAlignment.MiddleCenter;
+            routesButton.TextAlign = ContentAlignment.MiddleLeft;
+            routesButton.ImageAlign = ContentAlignment.MiddleLeft;
+            routesButton.Padding = new Padding(16, 8, 8, 8); // Better internal padding
+            routesButton.Margin = new Padding(0, 4, 8, 4); // Refined margins
             routesButton.Click += async (s, e) =>
             {
                 _settingsPanel.Visible = false;
@@ -216,12 +217,12 @@ namespace BusBus.UI
                     MessageBox.Show($"Error loading routes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
-            buttonPanel.Controls.Add(routesButton, 0, 0);
-
-            var vehiclesButton = CreateSidebarButton("🚐 Vehicles", ThemeManager.CurrentTheme.ButtonFont);
+            buttonPanel.Controls.Add(routesButton, 0, 0);            var vehiclesButton = CreateSidebarButton("🚐 Vehicles", ThemeManager.CurrentTheme.ButtonFont);
             vehiclesButton.Dock = DockStyle.Fill;
-            vehiclesButton.TextAlign = ContentAlignment.MiddleCenter;
-            vehiclesButton.ImageAlign = ContentAlignment.MiddleCenter;
+            vehiclesButton.TextAlign = ContentAlignment.MiddleLeft;
+            vehiclesButton.ImageAlign = ContentAlignment.MiddleLeft;
+            vehiclesButton.Padding = new Padding(16, 8, 8, 8);
+            vehiclesButton.Margin = new Padding(0, 4, 8, 4);
             vehiclesButton.Click += (s, e) =>
             {
                 _settingsPanel.Visible = false;
@@ -231,8 +232,10 @@ namespace BusBus.UI
 
             var driversButton = CreateSidebarButton("👤 Drivers", ThemeManager.CurrentTheme.ButtonFont);
             driversButton.Dock = DockStyle.Fill;
-            driversButton.TextAlign = ContentAlignment.MiddleCenter;
-            driversButton.ImageAlign = ContentAlignment.MiddleCenter;
+            driversButton.TextAlign = ContentAlignment.MiddleLeft;
+            driversButton.ImageAlign = ContentAlignment.MiddleLeft;
+            driversButton.Padding = new Padding(16, 8, 8, 8);
+            driversButton.Margin = new Padding(0, 4, 8, 4);
             driversButton.Click += (s, e) =>
             {
                 _settingsPanel.Visible = false;
@@ -242,8 +245,10 @@ namespace BusBus.UI
 
             _settingsButton = CreateSidebarButton("⚙ Settings", ThemeManager.CurrentTheme.SmallButtonFont);
             _settingsButton.Dock = DockStyle.Fill;
-            _settingsButton.TextAlign = ContentAlignment.MiddleCenter;
-            _settingsButton.ImageAlign = ContentAlignment.MiddleCenter;
+            _settingsButton.TextAlign = ContentAlignment.MiddleLeft;
+            _settingsButton.ImageAlign = ContentAlignment.MiddleLeft;
+            _settingsButton.Padding = new Padding(16, 8, 8, 8);
+            _settingsButton.Margin = new Padding(0, 4, 8, 4);
             _settingsButton.Click += (s, e) =>
             {
                 _settingsPanel.Visible = !_settingsPanel.Visible;
@@ -265,13 +270,11 @@ namespace BusBus.UI
                 TextAlign = ContentAlignment.MiddleCenter,
                 Height = 40
             };
-            _settingsPanel.Controls.Add(settingsLabel);
-
-            var themePanel = new Panel
+            _settingsPanel.Controls.Add(settingsLabel);            var themePanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 60,
-                Padding = new Padding(10)
+                Height = 70,
+                Padding = new Padding(16, 12, 16, 12) // Better padding for settings controls
             };
 
             var themeLabel = new Label
@@ -281,25 +284,29 @@ namespace BusBus.UI
                 Font = ThemeManager.CurrentTheme.SmallButtonFont,
                 Dock = DockStyle.Left,
                 TextAlign = ContentAlignment.MiddleLeft,
-                AutoSize = true
-            };
-
-            var themeToggle = new Button
+                AutoSize = true,
+                Width = 60
+            };            var themeToggle = new Button
             {
-                Text = "Toggle Dark/Light",
+                Text = $"Switch to {(ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark")}",
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
                 FlatStyle = FlatStyle.Flat,
                 Dock = DockStyle.Right,
-                FlatAppearance = { BorderSize = 1 }
-            };
-
-            themeToggle.Click += (s, e) =>
+                Width = 140,
+                Height = 35,
+                FlatAppearance = { 
+                    BorderSize = 1,
+                    BorderColor = Color.FromArgb(100, 100, 120)
+                }
+            };            themeToggle.Click += (s, e) =>
             {
-                string newTheme = ThemeManager.CurrentTheme.GetType().GetField("Name")?.GetValue(ThemeManager.CurrentTheme)?.ToString() == "Dark"
+                string newTheme = ThemeManager.CurrentTheme.Name == "Dark"
                     ? "Light"
                     : "Dark";
                 ThemeManager.SwitchTheme(newTheme);
+                // Update button text to reflect new state
+                themeToggle.Text = $"Switch to {(ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark")}";
             };
 
             themePanel.Controls.Add(themeLabel);
@@ -307,9 +314,7 @@ namespace BusBus.UI
             _settingsPanel.Controls.Add(themePanel);
 
             sidePanel.Controls.Add(_settingsPanel);
-        }
-
-        private static Button CreateSidebarButton(string text, Font font)
+        }        private static Button CreateSidebarButton(string text, Font font)
         {
             return new Button
             {
@@ -318,46 +323,45 @@ namespace BusBus.UI
                 ForeColor = Color.Gainsboro,
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
                 FlatStyle = FlatStyle.Flat,
-                Width = 160,
-                Height = 40,
+                Height = 45, // Consistent height
                 TabStop = false,
-                Anchor = AnchorStyles.None,
                 FlatAppearance = {
-                    BorderSize = 1,
-                    BorderColor = Color.FromArgb(80, 80, 100),
+                    BorderSize = 0, // Clean, borderless design
                     MouseOverBackColor = ThemeManager.CurrentTheme.ButtonHoverBackground
                 }
             };
-        }
-
-        private void SetupMainPanel(Panel mainPanel)
+        }        private void SetupMainPanel(Panel mainPanel)
         {
             mainPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
-            mainPanel.Padding = new Padding(2);
+            mainPanel.Padding = new Padding(0); // Remove all padding for edge-to-edge grid
 
             var contentLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 RowCount = 2,
                 ColumnCount = 1,
-                BackColor = ThemeManager.CurrentTheme.MainBackground
+                BackColor = ThemeManager.CurrentTheme.MainBackground,
+                Padding = new Padding(0),
+                Margin = new Padding(0),
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None
             };
-            contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+            contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80)); // Refined header height
             contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             var headlinePanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(0),
-                Margin = new Padding(2)
+                Padding = new Padding(24, 16, 24, 8), // Refined header padding
+                Margin = new Padding(0)
             };
             ThemeManager.CurrentTheme.StyleHeadlinePanel(headlinePanel);
             var headlineLabel = new Label
             {
-                Text = "Welcome to BusBus!",
+                Text = "BusBus Command Center",
                 Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
+                TextAlign = ContentAlignment.MiddleLeft, // Left-aligned for more professional look
+                Font = new Font(ThemeManager.CurrentTheme.HeadlineFont.FontFamily, 18, FontStyle.Bold)
             };
             ThemeManager.CurrentTheme.StyleHeadlineLabel(headlineLabel);
             headlinePanel.Controls.Add(headlineLabel);
@@ -365,15 +369,17 @@ namespace BusBus.UI
 
             _contentPanel.Dock = DockStyle.Fill;
             _contentPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+            _contentPanel.Padding = new Padding(0); // Remove content panel padding for edge-to-edge
+            _contentPanel.Margin = new Padding(0);
             contentLayout.Controls.Add(_contentPanel, 0, 1);
 
             mainPanel.Controls.Add(contentLayout);
 
             var welcomeLabel = new Label
             {
-                Text = "Welcome to BusBus Management System",
-                Font = new Font(ThemeManager.CurrentTheme.HeadlineFont.FontFamily, 16, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                Text = "Select an option from the sidebar to get started",
+                Font = new Font(ThemeManager.CurrentTheme.HeadlineFont.FontFamily, 14, FontStyle.Regular),
+                ForeColor = Color.FromArgb(180, ThemeManager.CurrentTheme.HeadlineText),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill
             };

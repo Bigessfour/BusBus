@@ -1,83 +1,127 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public class Theme
+    /// <summary>
+    /// Base class for application themes
+    /// </summary>
+    public abstract class Theme : IDisposable
     {
-        public string Name { get; }
-        public Color MainBackground { get; }
-        public Color HeadlineBackground { get; }
-        public Color CardBackground { get; }
-        public Color HeadlineText { get; }
-        public Color CardText { get; }
-        public Color SidePanelBackground { get; }
-        public Color ButtonBackground { get; }
-        public Color ButtonHoverBackground { get; }
-        public Color GridBackground { get; }
-        public Color TextBoxBackground { get; }
+        // Font cache to prevent repeated font creation
+        private Font? _headlineFont;
+        private Font? _cardFont;
+        private Font? _buttonFont;
+        private Font? _mediumButtonFont;
+        private Font? _smallButtonFont;
+        private Font? _textBoxFont;
 
-        public Font HeadlineFont { get; }
-        public Font CardFont { get; }
-        public Font ButtonFont { get; }
-        public Font MediumButtonFont { get; }
-        public Font SmallButtonFont { get; }
-        public Font TextBoxFont { get; }
+        private bool _disposed;
 
-        public Theme(string name)
-        {
-            Name = name;
-            if (name == "Light")
-            {
-                MainBackground = Color.FromArgb(240, 240, 240);
-                HeadlineBackground = Color.FromArgb(200, 200, 220);
-                CardBackground = Color.FromArgb(220, 220, 230);
-                HeadlineText = Color.Black;
-                CardText = Color.DarkGray;
-                SidePanelBackground = Color.FromArgb(210, 210, 220);
-                ButtonBackground = Color.FromArgb(180, 180, 200);
-                ButtonHoverBackground = Color.FromArgb(160, 160, 180);
-                GridBackground = Color.FromArgb(230, 230, 240);
-                TextBoxBackground = Color.FromArgb(255, 255, 255);
-            }
-            else // Default (Dark)
-            {
-                MainBackground = Color.FromArgb(30, 30, 30);
-                HeadlineBackground = Color.FromArgb(44, 51, 73);
-                CardBackground = Color.FromArgb(40, 40, 50);
-                HeadlineText = Color.White;
-                CardText = Color.Gainsboro;
-                SidePanelBackground = Color.FromArgb(36, 36, 46);
-                ButtonBackground = Color.FromArgb(44, 51, 73);
-                ButtonHoverBackground = Color.FromArgb(60, 70, 100);
-                GridBackground = Color.FromArgb(35, 35, 45);
-                TextBoxBackground = Color.FromArgb(50, 50, 60);
-            }
+        /// <summary>
+        /// Name of the theme
+        /// </summary>
+        public abstract string Name { get; }
 
-            HeadlineFont = TryCreateFont("Segoe UI", 28F, FontStyle.Bold) ?? SystemFonts.DefaultFont;
-            CardFont = TryCreateFont("Segoe UI", 14F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
-            ButtonFont = TryCreateFont("Segoe UI Symbol", 24F, FontStyle.Bold) ?? SystemFonts.DefaultFont;
-            MediumButtonFont = TryCreateFont("Segoe UI Symbol", 20F, FontStyle.Bold) ?? SystemFonts.DefaultFont;
-            SmallButtonFont = TryCreateFont("Segoe UI Symbol", 16F, FontStyle.Bold) ?? SystemFonts.DefaultFont;
-            TextBoxFont = TryCreateFont("Segoe UI", 12F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
-        }
+        /// <summary>
+        /// Main background color
+        /// </summary>
+        public abstract Color MainBackground { get; }
 
-        private static Font TryCreateFont(string familyName, float emSize, FontStyle style)
+        /// <summary>
+        /// Side panel background color
+        /// </summary>
+        public abstract Color SidePanelBackground { get; }
+
+        /// <summary>
+        /// Headline/header background color
+        /// </summary>
+        public abstract Color HeadlineBackground { get; }
+
+        /// <summary>
+        /// Card background color
+        /// </summary>
+        public abstract Color CardBackground { get; }
+
+        /// <summary>
+        /// Grid background color
+        /// </summary>
+        public abstract Color GridBackground { get; }
+
+        /// <summary>
+        /// Button background color
+        /// </summary>
+        public abstract Color ButtonBackground { get; }
+
+        /// <summary>
+        /// Button hover background color
+        /// </summary>
+        public abstract Color ButtonHoverBackground { get; }
+
+        /// <summary>
+        /// Card text color
+        /// </summary>
+        public abstract Color CardText { get; }
+
+        /// <summary>
+        /// Headline text color
+        /// </summary>
+        public abstract Color HeadlineText { get; }
+
+        /// <summary>
+        /// Text box background color
+        /// </summary>
+        public abstract Color TextBoxBackground { get; }
+
+        /// <summary>
+        /// Light variant of text box background color for better readability
+        /// </summary>
+        public virtual Color LightTextBoxBackground => 
+            Color.FromArgb(255, 
+                Math.Min(255, TextBoxBackground.R + 20),
+                Math.Min(255, TextBoxBackground.G + 20),
+                Math.Min(255, TextBoxBackground.B + 20));
+
+        /// <summary>
+        /// Gets border color (derived from other colors if not overridden)
+        /// </summary>
+        public virtual Color BorderColor => 
+            Color.FromArgb(128, CardText.R, CardText.G, CardText.B);
+
+        /// <summary>
+        /// Gets disabled text color (derived from CardText if not overridden)
+        /// </summary>
+        public virtual Color DisabledText => 
+            Color.FromArgb(128, CardText.R, CardText.G, CardText.B);
+
+        /// <summary>
+        /// Fonts used in the theme
+        /// </summary>
+        public virtual Font HeadlineFont => _headlineFont ??= TryCreateFont("Segoe UI", 28F, FontStyle.Bold) ?? SystemFonts.DefaultFont;
+        public virtual Font CardFont => _cardFont ??= TryCreateFont("Segoe UI", 14F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
+        public virtual Font ButtonFont => _buttonFont ??= TryCreateFont("Segoe UI", 12F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
+        public virtual Font MediumButtonFont => _mediumButtonFont ??= TryCreateFont("Segoe UI", 10F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
+        public virtual Font SmallButtonFont => _smallButtonFont ??= TryCreateFont("Segoe UI", 8F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
+        public virtual Font TextBoxFont => _textBoxFont ??= TryCreateFont("Segoe UI", 10F, FontStyle.Regular) ?? SystemFonts.DefaultFont;
+
+        /// <summary>
+        /// Creates a font safely with fallbacks if the specified font is not available
+        /// </summary>
+        /// <param name="familyName">The font family name to create</param>
+        /// <param name="emSize">The em-size of the font in points</param>
+        /// <param name="style">The font style</param>
+        /// <returns>The created font or default font if creation fails</returns>
+        protected static Font? TryCreateFont(string familyName, float emSize, FontStyle style)
         {
             if (string.IsNullOrWhiteSpace(familyName))
-            {
-
                 return SystemFonts.DefaultFont;
-            }
-
 
             if (emSize <= 0 || emSize > 72.0f)
-            {
                 emSize = 12.0f;
-            }
-
 
             try
             {
@@ -87,7 +131,6 @@ namespace BusBus.UI
 
                 if (!fontExists)
                 {
-                    // Try a series of common system fonts as fallbacks
                     string[] fallbackFonts = new[] {
                         "Segoe UI", "Arial", "Tahoma", "Verdana", "Calibri", "Microsoft Sans Serif"
                     };
@@ -100,30 +143,24 @@ namespace BusBus.UI
                             return new Font(fallbackFont, emSize, style);
                         }
                     }
-
-                    // If none of the fallbacks work, use the system default
                     return new Font(SystemFonts.DefaultFont.Name, emSize, style);
                 }
 
                 return new Font(familyName, emSize, style);
             }
-            catch (ArgumentException)
+            catch (Exception ex)
             {
-                // Font creation issues - fall back to system default
-                return new Font(SystemFonts.DefaultFont.FontFamily, emSize, style);
-            }
-            catch (System.Runtime.InteropServices.ExternalException)
-            {
-                // Font creation issues related to GDI+ - fall back to system default
+                // Log the exception instead of silently catching it
+                Debug.WriteLine($"Font creation failed: {ex.Message}");
                 return SystemFonts.DefaultFont;
             }
         }
 
         /// <summary>
-        /// Styles a ComboBox to match the theme’s text box appearance.
+        /// Styles a ComboBox to match the theme's text box appearance.
         /// </summary>
-        /// <param name="comboBox">The ComboBox to style.</param>
-        public void StyleComboBox(ComboBox comboBox)
+        /// <param name="comboBox">The ComboBox to style</param>
+        public virtual void StyleComboBox(ComboBox comboBox)
         {
             ArgumentNullException.ThrowIfNull(comboBox);
             comboBox.BackColor = TextBoxBackground;
@@ -132,7 +169,11 @@ namespace BusBus.UI
             comboBox.FlatStyle = FlatStyle.Flat;
         }
 
-        public void StyleHeadlinePanel(Panel panel)
+        /// <summary>
+        /// Styles a panel as a headline panel
+        /// </summary>
+        /// <param name="panel">The Panel to style</param>
+        public virtual void StyleHeadlinePanel(Panel panel)
         {
             ArgumentNullException.ThrowIfNull(panel);
             panel.Height = 80;
@@ -140,7 +181,11 @@ namespace BusBus.UI
             panel.Dock = DockStyle.Top;
         }
 
-        public void StyleHeadlineLabel(Label label)
+        /// <summary>
+        /// Styles a label as a headline label
+        /// </summary>
+        /// <param name="label">The Label to style</param>
+        public virtual void StyleHeadlineLabel(Label label)
         {
             ArgumentNullException.ThrowIfNull(label);
             label.ForeColor = HeadlineText;
@@ -151,14 +196,22 @@ namespace BusBus.UI
             label.AutoSize = false;
         }
 
-        public void StyleCardPanel(Panel panel)
+        /// <summary>
+        /// Styles a panel as a card panel
+        /// </summary>
+        /// <param name="panel">The Panel to style</param>
+        public virtual void StyleCardPanel(Panel panel)
         {
             ArgumentNullException.ThrowIfNull(panel);
             panel.BackColor = CardBackground;
             panel.BorderStyle = BorderStyle.None;
         }
 
-        public void StyleCardLabel(Label label)
+        /// <summary>
+        /// Styles a label as a card label
+        /// </summary>
+        /// <param name="label">The Label to style</param>
+        public virtual void StyleCardLabel(Label label)
         {
             ArgumentNullException.ThrowIfNull(label);
             label.ForeColor = CardText;
@@ -169,7 +222,11 @@ namespace BusBus.UI
             label.AutoSize = false;
         }
 
-        public void StyleDataGrid(DataGridView grid)
+        /// <summary>
+        /// Styles a DataGridView to match the theme
+        /// </summary>
+        /// <param name="grid">The DataGridView to style</param>
+        public virtual void StyleDataGrid(DataGridView grid)
         {
             ArgumentNullException.ThrowIfNull(grid);
             grid.BackgroundColor = GridBackground;
@@ -180,7 +237,11 @@ namespace BusBus.UI
             grid.EnableHeadersVisualStyles = false;
         }
 
-        public void StyleTextBox(TextBox textBox)
+        /// <summary>
+        /// Styles a TextBox to match the theme
+        /// </summary>
+        /// <param name="textBox">The TextBox to style</param>
+        public virtual void StyleTextBox(TextBox textBox)
         {
             ArgumentNullException.ThrowIfNull(textBox);
             textBox.BackColor = TextBoxBackground;
@@ -188,99 +249,163 @@ namespace BusBus.UI
             textBox.Font = TextBoxFont;
             textBox.BorderStyle = BorderStyle.FixedSingle;
         }
-    }
-
-    public static class ThemeManager
-    {
-        private static Theme _currentTheme = new Theme("Dark");
 
         /// <summary>
-        /// Event triggered when the theme changes
+        /// Determines whether the specified control has already been styled according to this theme
         /// </summary>
-        public static event EventHandler? ThemeChanged;
-
-        public static Theme CurrentTheme
+        /// <param name="control">The control to check</param>
+        /// <returns>True if the control already matches this theme's styling</returns>
+        public virtual bool IsControlStyled(Control control)
         {
-            get => _currentTheme;
-            set
+            ArgumentNullException.ThrowIfNull(control);
+
+            if (control is Form form)
             {
-                ArgumentNullException.ThrowIfNull(value);
-
-
-                if (_currentTheme != value)
+                return form.BackColor == MainBackground;
+            }
+            else if (control is Panel panel)
+            {
+                if (panel.Tag?.ToString() == "HeadlinePanel" ||
+                    panel.Name.Contains("Headline", StringComparison.OrdinalIgnoreCase))
                 {
-                    _currentTheme = value;
-                    OnThemeChanged(EventArgs.Empty);
+                    return panel.BackColor == HeadlineBackground;
+                }
+                else if (panel.Tag?.ToString() == "SidePanel" ||
+                         panel.Name.Contains("SidePanel", StringComparison.OrdinalIgnoreCase))
+                {
+                    return panel.BackColor == SidePanelBackground;
+                }
+                else
+                {
+                    return panel.BackColor == CardBackground;
                 }
             }
-        }
-
-        /// <summary>
-        /// Raises the ThemeChanged event
-        /// </summary>
-        private static void OnThemeChanged(EventArgs e)
-        {
-            ThemeChanged?.Invoke(null, e);
-        }
-
-        public static void SwitchTheme(string themeName)
-        {
-            CurrentTheme = new Theme(themeName);
-        }
-
-        /// <summary>
-        /// Refreshes the theme for the given form
-        /// </summary>
-        public static void RefreshTheme(Form form)
-        {
-            ArgumentNullException.ThrowIfNull(form);
-            ApplyThemeToControl(form);
-            form.Refresh();
-        }
-
-        /// <summary>
-        /// Applies the current theme to a control and its children
-        /// </summary>
-        private static void ApplyThemeToControl(Control control)
-        {
-            // Apply theme based on control type
-            switch (control)
+            else if (control is Button button)
             {
-                case Form form:
-                    form.BackColor = CurrentTheme.MainBackground;
-                    break;
-
-                case Panel panel:
-                    panel.BackColor = CurrentTheme.CardBackground;
-                    break;
-
-                case Label label:
-                    label.ForeColor = CurrentTheme.CardText;
-                    label.Font = CurrentTheme.CardFont;
-                    break;
-
-                case Button button:
-                    button.BackColor = CurrentTheme.ButtonBackground;
-                    button.ForeColor = CurrentTheme.HeadlineText;
-                    button.FlatStyle = FlatStyle.Flat;
-                    break;
-
-                case TextBox textBox:
-                    textBox.BackColor = CurrentTheme.TextBoxBackground;
-                    textBox.ForeColor = CurrentTheme.CardText;
-                    textBox.Font = CurrentTheme.TextBoxFont;
-                    break;
-
-                case ComboBox comboBox:
-                    CurrentTheme.StyleComboBox(comboBox);
-                    break;
+                return button.BackColor == ButtonBackground;
+            }
+            else if (control is TextBox textBox)
+            {
+                return textBox.BackColor == TextBoxBackground && textBox.ForeColor == CardText;
+            }
+            else if (control is ComboBox comboBox)
+            {
+                return comboBox.BackColor == TextBoxBackground && comboBox.ForeColor == CardText;
             }
 
-            // Apply to children
-            foreach (Control child in control.Controls)
+            return false;
+        }
+
+        /// <summary>
+        /// Disposes of all font resources used by this theme
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes of all font resources used by this theme
+        /// </summary>
+        /// <param name="disposing">True if being called from Dispose(), false if called from finalizer</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
             {
-                ApplyThemeToControl(child);
+                if (disposing)
+                {
+                    // Dispose managed resources (fonts)
+                    _headlineFont?.Dispose();
+                    _cardFont?.Dispose();
+                    _buttonFont?.Dispose();
+                    _mediumButtonFont?.Dispose();
+                    _smallButtonFont?.Dispose();
+                    _textBoxFont?.Dispose();
+                }
+
+                // Set all font references to null
+                _headlineFont = null;
+                _cardFont = null;
+                _buttonFont = null;
+                _mediumButtonFont = null;
+                _smallButtonFont = null;
+                _textBoxFont = null;
+
+                _disposed = true;
             }
         }
+
+        /// <summary>
+        /// Finalizer that ensures resources are released
+        /// </summary>
+        ~Theme()
+        {
+            Dispose(false);
+        }
+    }
+
+    /// <summary>
+    /// Light theme implementation using centralized color definitions
+    /// </summary>
+    public class LightTheme : Theme
+    {
+        public override string Name => "Light";
+        public override Color MainBackground => ThemeColors.LightMainBackground;
+        public override Color SidePanelBackground => ThemeColors.LightSidePanelBackground;
+        public override Color HeadlineBackground => ThemeColors.LightHeadlineBackground;
+        public override Color CardBackground => ThemeColors.LightCardBackground;
+        public override Color GridBackground => ThemeColors.LightGridBackground;
+        public override Color ButtonBackground => ThemeColors.LightButtonBackground;
+        public override Color ButtonHoverBackground => ThemeColors.LightButtonHoverBackground;
+        public override Color CardText => ThemeColors.LightCardText;
+        public override Color HeadlineText => ThemeColors.LightHeadlineText;
+        public override Color TextBoxBackground => ThemeColors.LightTextBoxBackground;
+    }
+
+    /// <summary>
+    /// Dark theme implementation using centralized color definitions
+    /// </summary>
+    public class DarkTheme : Theme
+    {
+        public override string Name => "Dark";
+        public override Color MainBackground => ThemeColors.DarkMainBackground;
+        public override Color SidePanelBackground => ThemeColors.DarkSidePanelBackground;
+        public override Color HeadlineBackground => ThemeColors.DarkHeadlineBackground;
+        public override Color CardBackground => ThemeColors.DarkCardBackground;
+        public override Color GridBackground => ThemeColors.DarkGridBackground;
+        public override Color ButtonBackground => ThemeColors.DarkButtonBackground;
+        public override Color ButtonHoverBackground => ThemeColors.DarkButtonHoverBackground;
+        public override Color CardText => ThemeColors.DarkCardText;
+        public override Color HeadlineText => ThemeColors.DarkHeadlineText;
+        public override Color TextBoxBackground => ThemeColors.DarkTextBoxBackground;
+    }
+
+    /// <summary>
+    /// Static theme colors for compatibility
+    /// </summary>
+    public static class ThemeColors
+    {
+        public static readonly Color LightMainBackground = Color.White;
+        public static readonly Color LightSidePanelBackground = Color.FromArgb(248, 249, 250);
+        public static readonly Color LightHeadlineBackground = Color.FromArgb(233, 236, 239);
+        public static readonly Color LightCardBackground = Color.White;
+        public static readonly Color LightGridBackground = Color.White;
+        public static readonly Color LightButtonBackground = Color.FromArgb(0, 123, 255);
+        public static readonly Color LightButtonHoverBackground = Color.FromArgb(0, 86, 179);
+        public static readonly Color LightCardText = Color.Black;
+        public static readonly Color LightHeadlineText = Color.FromArgb(33, 37, 41);
+        public static readonly Color LightTextBoxBackground = Color.White;
+
+        public static readonly Color DarkMainBackground = Color.FromArgb(33, 37, 41);
+        public static readonly Color DarkSidePanelBackground = Color.FromArgb(52, 58, 64);
+        public static readonly Color DarkHeadlineBackground = Color.FromArgb(73, 80, 87);
+        public static readonly Color DarkCardBackground = Color.FromArgb(52, 58, 64);
+        public static readonly Color DarkGridBackground = Color.FromArgb(52, 58, 64);
+        public static readonly Color DarkButtonBackground = Color.FromArgb(40, 167, 69);
+        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(34, 142, 58);
+        public static readonly Color DarkCardText = Color.White;
+        public static readonly Color DarkHeadlineText = Color.White;
+        public static readonly Color DarkTextBoxBackground = Color.FromArgb(73, 80, 87);
     }
 }

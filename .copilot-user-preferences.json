@@ -1,0 +1,30 @@
+{
+  "projectName": "BusBus",
+  "projectPurpose": "Digitize workload for a Transportation Manager in a small, rural school district in Colorado.",
+  "primaryLanguage": "C#",
+  "userExperienceLevel": "novice",
+  "userStrengths": ["asking detailed questions"],
+  "assistantRole": "Interpret user questions and translate them into proper coding and development structure for the BusBus project.",
+  "preferredExplanationStyle": "Concise, novice-friendly explanations focused on what happened and how to fix it, without code snippets. Prefer actionable recommendations and one-click fixes.",  "progressUpdates": "Always provide clear progress indicators like 'Fixed 3 of 5 errors', '✅ Build now succeeds', or 'Progress: 80% complete'. Show before/after error counts and celebrate improvements.",
+  "errorHandlingPreference": "Prefer to review the whole list of build errors at once, group and prioritize fixes, provide progress updates after each fix, and always show the overall error count reduction.",
+  "postBuildGuidance": "After a clean build, if the app opens but needs UI tweaks or improvements, provide clear, actionable recommendations for what to do next, so I never feel lost or stuck.",
+  "fileOrganization": "Always place new files in the correct folders (Models, Services, DataAccess, UI, Tests, etc.), move misplaced files to their proper locations, and notify me if something is out of place. Maintain a clean, standard folder structure.",
+  "codeQuality": {
+    "warningTolerance": "pragmatic",
+    "preferredWarningResolution": "suppress-with-comment",
+    "prioritizeBy": "compilation-blocking",
+    "autoSuppressPatterns": ["CA1822", "CA1805"],
+    "explanationStyle": "explain-why-and-show-options",
+    "cleanBuildGoal": true
+  },  "buildProcess": {
+    "groupSimilarErrors": true,
+    "showProgressDuringFixes": true,
+    "explainRootCauses": true,
+    "celebrateSuccesses": true,
+    "preferQuickWins": true,
+    "alwaysShowProgressMetrics": true,
+    "beforeAfterComparisons": true,
+    "milestoneRecognition": true,
+    "neverLeaveUserGuessing": true
+  }
+}

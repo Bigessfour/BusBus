@@ -1,0 +1,86 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using NUnit.Framework;
+using Moq;
+
+namespace BusBus.Tests
+{
+    /// <summary>
+    /// Tests for the [ClassName] class
+    /// </summary>
+    [TestFixture]
+    public class ClassNameTests : TestBase
+    {
+        /// <summary>
+        /// Setup for the tests
+        /// </summary>
+        [SetUp]
+        public override async Task SetUp()
+        {
+            await base.SetUp();
+            // Additional setup code here
+        }
+
+        /// <summary>
+        /// Test method template
+        /// </summary>
+        [Test]
+        public void MethodName_Scenario_ExpectedBehavior()
+        {
+            // Arrange
+            // Create objects and set up the test scenario
+
+            // Act
+            // Call the method under test
+
+            // Assert
+            // Verify the expected outcome using Assert.That
+            Assert.That(/* actual */, Is.EqualTo(/* expected */));
+        }
+
+        /// <summary>
+        /// Test method template with async
+        /// </summary>
+        [Test]
+        public async Task MethodNameAsync_Scenario_ExpectedBehavior()
+        {
+            // Arrange
+            // Create objects and set up the test scenario
+
+            // Act
+            // Call the method under test            // Assert
+            // Verify the expected outcome using Assert.That
+            Assert.That(/* actual */, Is.EqualTo(/* expected */));
+        }
+
+        /// <summary>
+        /// Test method template with test cases
+        /// </summary>
+        [TestCase(1, true)]
+        [TestCase(2, false)]
+        public void MethodName_WhenGivenParameter_ReturnsExpectedResult(int input, bool expected)
+        {
+            // Arrange
+            // Create objects and set up the test scenario
+
+            // Act
+            // Call the method under test
+
+            // Assert
+            // Verify the expected outcome matches the expected parameter
+            Assert.That(/* actual result */, Is.EqualTo(expected));
+        }
+
+        [TearDown]
+        public override void TearDown()
+        {
+            // Cleanup code here
+            base.TearDown();
+        }
+    }
+}
+}
+    }
+}

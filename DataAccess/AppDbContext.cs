@@ -3,7 +3,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BusBus.DataAccess
 {
-    public class AppDbContext : DbContext
+    // This interface is added to make AppDbContext easier to mock in tests
+    public interface IAppDbContext : IDisposable
+    {
+        DbSet<Route> Routes { get; }
+        DbSet<Driver> Drivers { get; }
+        DbSet<Vehicle> Vehicles { get; }
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    }
+
+    public class AppDbContext : DbContext, IAppDbContext
     {
         public DbSet<Route> Routes { get; set; }
         public DbSet<Driver> Drivers { get; set; }

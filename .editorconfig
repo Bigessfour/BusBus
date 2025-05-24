@@ -1,0 +1,10 @@
+# ...existing code...
+
+# Enable nullable reference types for all C# files
+[*.cs]
+dotnet_enable_nullable = true
+
+# Treat CA1062 (validate arguments for null) as error
+dotnet_diagnostic.CA1062.severity = error
+
+# ...existing code...

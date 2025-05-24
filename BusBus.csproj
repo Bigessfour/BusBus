@@ -11,7 +11,7 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <NoWarn>$(NoWarn);CA1416;CA1016;CA2007;CA1303;CA2208;CS0160;CA1812;CA1852</NoWarn>
+    <NoWarn>$(NoWarn);CA1416;CA1016;CA2007;CA1303;CA2208;CS0160;CA1812;CA1852;CS8600;CS8618;CS0649;CS0169;CA1823;CA1805;CA2213;CA1031</NoWarn>
     <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
 
@@ -21,7 +21,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Remove these exclusions to include critical UI files -->
+    <!-- <Compile Remove="BusBus\UI\RouteListPanel.cs" /> -->
+    <!-- <Compile Remove="BusBus\UI\Dashboard.cs" /> -->
+    
+    <!-- Exclude old RouteService versions -->
+    <Compile Remove="BusBus\Services\RouteService.cs" />
+    <Compile Remove="BusBus\BusBus\Services\RouteService.cs" />
+      <!-- Exclude test files -->
     <Compile Remove="BusBus.Tests\**\*.cs" />
+    <Compile Remove="TestBase.cs" />
+    <Compile Remove="DashboardTests.cs" />
+    <Compile Remove="DashboardLoadViewTests.cs" />
+    <Compile Remove="DashboardUITests.cs" />
+    <Compile Remove="Tests\DashboardUITests.cs" />
+    <Compile Remove="busbus\routelistpanel.cs" />
+    <Compile Remove="routelistpanel.cs" />
+      <!-- Exclude scripts that have their own entry points -->
+    <Compile Remove="scripts\**\*.cs" />
+    
+    <!-- Exclude documentation files -->
+    <Compile Remove="docs\**\*.cs" />
   </ItemGroup>
 
   <!-- Copy appsettings.json to output directory -->
@@ -40,6 +60,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.5" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,3 @@
-
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -41,5 +40,9 @@ namespace BusBus.Models
         public Driver? Driver { get; set; }
         public Guid? VehicleId { get; set; }
         public Vehicle? Vehicle { get; set; }
+
+        public string StartLocation { get; set; } = string.Empty;
+        public string EndLocation { get; set; } = string.Empty;
+        public DateTime ScheduledTime { get; set; }
     }
 }

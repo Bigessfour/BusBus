@@ -5,6 +5,9 @@ using System.IO;
 
 namespace BusBus.UI
 {
+    /// <summary>
+    /// Constants for UI styling and layout
+    /// </summary>
     public static class UiConstants
     {
         // Default values
@@ -24,6 +27,46 @@ namespace BusBus.UI
         public static int DefaultSplitterDistance => GetIntSetting("UI.DefaultSplitterDistance", DEFAULT_SPLITTER_DISTANCE);
         public static int CardPanelWidth => GetIntSetting("UI.CardPanelWidth", DEFAULT_CARD_PANEL_WIDTH);
         public static int CardPanelHeight => GetIntSetting("UI.CardPanelHeight", DEFAULT_CARD_PANEL_HEIGHT);
+
+        // Spacing and Sizing
+        public const int DefaultPadding = 10;
+        public const int SmallPadding = 5;
+        public const int LargePadding = 20;
+        public const int DefaultButtonHeight = 35;
+        public const int DefaultControlHeight = 25;
+        public const int HeaderHeight = 50;
+        public const int FooterHeight = 30;
+        public const int SidebarWidth = 200;
+
+        // Font Sizes
+        public const float TitleFontSize = 14F;
+        public const float HeaderFontSize = 12F;
+        public const float DefaultFontSize = 10F;
+        public const float SmallFontSize = 8F;
+
+        // Grid Settings
+        public const int DefaultPageSize = 10;
+        public const int GridRowHeight = 25;
+        public const int GridHeaderHeight = 30;
+
+        // Control Names (for testing)
+        public const string AddButtonName = "AddButton";
+        public const string EditButtonName = "EditButton";
+        public const string DeleteButtonName = "DeleteButton";
+        public const string SaveButtonName = "SaveButton";
+        public const string CancelButtonName = "CancelButton";
+        public const string RoutesGridName = "RoutesGrid";
+
+        // Default Colors (fallback when theme is not available)
+        public static readonly Color DefaultBackgroundColor = Color.White;
+        public static readonly Color DefaultTextColor = Color.Black;
+        public static readonly Color DefaultButtonColor = Color.LightGray;
+        public static readonly Color DefaultBorderColor = Color.DarkGray;
+
+        // Animation and Timing
+        public const int DefaultAnimationDuration = 250; // milliseconds
+        public const int LoadingTimeout = 5000; // milliseconds
+        public const int DatabaseTimeout = 30000; // milliseconds
 
         // Helper method to read settings from config or use defaults
         private static int GetIntSetting(string key, int defaultValue)

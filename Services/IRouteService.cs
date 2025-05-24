@@ -1,8 +1,8 @@
-using BusBus.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using BusBus.Models;
 
 namespace BusBus.Services
 {
@@ -23,11 +23,12 @@ namespace BusBus.Services
         /// <param name="route">The route to create</param>
         /// <param name="cancellationToken">Optional cancellation token</param>
         /// <returns>A task representing the asynchronous operation</returns>
-        Task<Route> CreateRouteAsync(Route route, CancellationToken cancellationToken = default);        /// <summary>
-                                                                                                         /// Gets all routes
-                                                                                                         /// </summary>
-                                                                                                         /// <param name="cancellationToken">Optional cancellation token</param>
-                                                                                                         /// <returns>A list of routes</returns>
+        Task<Route> CreateRouteAsync(Route route, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Gets all routes
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A list of routes</returns>
         Task<List<Route>> GetRoutesAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
