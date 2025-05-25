@@ -18,12 +18,14 @@ namespace BusBus.Tests.Infrastructure
     public class TestFixtureFactory
     {
         private readonly Fixture _fixture;
-        
+
         public TestFixtureFactory()
         {
             _fixture = new Fixture();
             ConfigureFixture();
-        }        private void ConfigureFixture()
+        }
+
+        private void ConfigureFixture()
         {
             // Remove throwing recursion behavior and add omit on recursion behavior
             _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
@@ -59,7 +61,7 @@ namespace BusBus.Tests.Infrastructure
                 .With(v => v.Capacity, () => Random.Shared.Next(20, 80))
                 .With(v => v.IsActive, () => true));
         }
-        
+
         /// <summary>
         /// Creates a new instance of type T with random test data
         /// </summary>
@@ -67,7 +69,7 @@ namespace BusBus.Tests.Infrastructure
         {
             return _fixture.Create<T>();
         }
-        
+
         /// <summary>
         /// Creates multiple instances of type T with random test data
         /// </summary>
@@ -75,11 +77,11 @@ namespace BusBus.Tests.Infrastructure
         {
             return _fixture.CreateMany<T>(count).ToList();
         }
-        
+
         /// <summary>
         /// Creates a test Route with the specified properties or random values for unspecified properties
         /// </summary>
-        public Route CreateRoute(
+        public static Route CreateRoute(
             Guid? id = null,
             string? name = null,
             DateTime? routeDate = null,
@@ -113,7 +115,7 @@ namespace BusBus.Tests.Infrastructure
                 VehicleId = vehicleId
                 // Note: Driver and Vehicle navigation properties are left null to avoid circular references
             };
-            
+
             // Apply overrides
             if (id.HasValue) route.Id = id.Value;
             if (name != null) route.Name = name;
@@ -129,47 +131,47 @@ namespace BusBus.Tests.Infrastructure
             if (pmRiders.HasValue) route.PMRiders = pmRiders.Value;
             if (driverId.HasValue) route.DriverId = driverId.Value;
             if (vehicleId.HasValue) route.VehicleId = vehicleId.Value;
-            
+
             return route;
         }
-        
+
         /// <summary>
         /// Creates a test Driver with the specified properties or random values for unspecified properties
         /// </summary>
-        public Driver CreateDriver(
+        public static Driver CreateDriver(
             Guid? id = null,
             string? firstName = null,
             string? lastName = null,
             string? phoneNumber = null,
             string? email = null)
         {
-            var driver = _fixture.Create<Driver>();
-            
+            // Use a local fixture for static context
+            var fixture = new Fixture();
+            var driver = fixture.Create<Driver>();
+
             if (id.HasValue) driver.Id = id.Value;
             if (firstName != null) driver.FirstName = firstName;
             if (lastName != null) driver.LastName = lastName;
-            // Removed: if (employeeNumber != null) driver.EmployeeNumber = employeeNumber;
             if (phoneNumber != null) driver.PhoneNumber = phoneNumber;
             if (email != null) driver.Email = email;
-            // Removed: if (hireDate.HasValue) driver.HireDate = hireDate.Value;
-            
+
             return driver;
         }
-        
+
         /// <summary>
         /// Creates a ServiceProvider with test services
         /// </summary>
-        public ServiceProvider CreateServiceProvider(string connectionString)
+        public static ServiceProvider CreateServiceProvider(string connectionString)
         {
             var services = new ServiceCollection();
-            
+
             // Add database context
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connectionString));
-            
+
             // Add other services
             // TODO: Add your services here
-            
+
             return services.BuildServiceProvider();
         }
     }

@@ -5,166 +5,233 @@ using System.Threading;
 using System.Threading.Tasks;
 using BusBus.Services;
 using BusBus.Models;
+using BusBus.DataAccess;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace BusBus
+namespace BusBus.Services
 {
     public class RouteService : IRouteService
     {
-        private readonly List<Route> _routes;
-        private readonly List<Driver> _drivers;
-        private readonly List<Vehicle> _vehicles;
+        private readonly IServiceProvider _serviceProvider;
 
-        public RouteService()
+        public RouteService(IServiceProvider serviceProvider)
         {
-            _routes = new List<Route>();
-            _drivers = new List<Driver>();
-            _vehicles = new List<Vehicle>();
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }
+
+        /// <summary>
+        /// Helper method to handle ObjectDisposedException when service provider is disposed
+        /// </summary>
+        private bool IsServiceProviderDisposed()
+        {
+            try
+            {
+                // Try to create a scope to test if service provider is still available
+                using var testScope = _serviceProvider.CreateScope();
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                return true;
+            }
         }
 
         public async Task SeedSampleDataAsync(CancellationToken cancellationToken = default)
         {
-            await Task.Run(() =>
+            // Check if data already exists
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            if (await dbContext.Routes.AnyAsync(cancellationToken))
+                return;
+
+            var driver1 = new Driver
             {
-                if (_drivers.Count == 0)
-                {
-                    _drivers.AddRange(new[]
-                    {
-                        new Driver { Id = Guid.NewGuid(), Name = "John Doe", LicenseNumber = "DL001" },
-                        new Driver { Id = Guid.NewGuid(), Name = "Jane Smith", LicenseNumber = "DL002" }
-                    });
-                }
+                Id = Guid.NewGuid(),
+                FirstName = "John",
+                LastName = "Doe",
+                Name = "John Doe",
+                LicenseNumber = "DL001"
+            };
 
-                if (_vehicles.Count == 0)
-                {
-                    _vehicles.AddRange(new[]
-                    {
-                        new Vehicle { Id = Guid.NewGuid(), Number = "BUS001", Capacity = 50 },
-                        new Vehicle { Id = Guid.NewGuid(), Number = "BUS002", Capacity = 40 }
-                    });
-                }
-
-                if (_routes.Count == 0)
-                {
-                    _routes.AddRange(new[]
-                    {
-                        new Route
-                        {
-                            Id = Guid.NewGuid(),
-                            Name = "Route 1",
-                            StartLocation = "Downtown",
-                            EndLocation = "Airport",
-                            ScheduledTime = DateTime.Now.AddHours(1),
-                            DriverId = _drivers.First().Id,
-                            VehicleId = _vehicles.First().Id
-                        },
-                        new Route
-                        {
-                            Id = Guid.NewGuid(),
-                            Name = "Route 2",
-                            StartLocation = "Mall",
-                            EndLocation = "University",
-                            ScheduledTime = DateTime.Now.AddHours(2),
-                            DriverId = _drivers.Last().Id,
-                            VehicleId = _vehicles.Last().Id
-                        }
-                    });
-                }
-            }, cancellationToken);
-        }
-
-        public async Task<Route> CreateRouteAsync(Route route, CancellationToken cancellationToken = default)
-        {
-            return await Task.Run(() =>
+            var driver2 = new Driver
             {
-                if (route.Id == Guid.Empty)
-                    route.Id = Guid.NewGuid();
+                Id = Guid.NewGuid(),
+                FirstName = "Jane",
+                LastName = "Smith",
+                Name = "Jane Smith",
+                LicenseNumber = "DL002"
+            };
 
-                _routes.Add(route);
-                return route;
-            }, cancellationToken);
-        }
+            var vehicle1 = new Vehicle
+            {
+                Id = Guid.NewGuid(),
+                Number = "BUS001",
+                Capacity = 50
+            };
 
-        // Add overload without CancellationToken for backward compatibility
-        public async Task<Route> CreateRouteAsync(Route route)
+            var vehicle2 = new Vehicle
+            {
+                Id = Guid.NewGuid(),
+                Number = "BUS002",
+                Capacity = 40
+            };
+
+            var route1 = new Route
+            {
+                Id = Guid.NewGuid(),
+                Name = "Route 1",
+                RouteDate = DateTime.Today,
+                StartLocation = "Downtown",
+                EndLocation = "Airport",
+                ScheduledTime = DateTime.Today.AddHours(9),
+                AMStartingMileage = 1000,
+                AMEndingMileage = 1050,
+                PMStartMileage = 1050,
+                PMEndingMileage = 1100,
+                AMRiders = 25,
+                PMRiders = 30,
+                DriverId = driver1.Id,
+                VehicleId = vehicle1.Id
+            };
+
+            var route2 = new Route
+            {
+                Id = Guid.NewGuid(),
+                Name = "Route 2",
+                RouteDate = DateTime.Today,
+                StartLocation = "Mall",
+                EndLocation = "University",
+                ScheduledTime = DateTime.Today.AddHours(14),
+                AMStartingMileage = 1100,
+                AMEndingMileage = 1150,
+                PMStartMileage = 1150,
+                PMEndingMileage = 1200,
+                AMRiders = 20,
+                PMRiders = 25,
+                DriverId = driver2.Id,
+                VehicleId = vehicle2.Id
+            };
+
+            dbContext.Drivers.AddRange(driver1, driver2);
+            dbContext.Vehicles.AddRange(vehicle1, vehicle2);
+            dbContext.Routes.AddRange(route1, route2);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }        public async Task<Route> CreateRouteAsync(Route route, CancellationToken cancellationToken = default)
         {
-            return await CreateRouteAsync(route, CancellationToken.None);
+            ArgumentNullException.ThrowIfNull(route);
+
+            if (route.Id == Guid.Empty)
+                route.Id = Guid.NewGuid();
+
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Routes.Add(route);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return route;
         }
 
         public async Task<List<Route>> GetRoutesAsync(CancellationToken cancellationToken = default)
         {
-            return await Task.Run(() => _routes.ToList(), cancellationToken);
-        }
-
-        // Add overload without CancellationToken
-        public async Task<List<Route>> GetRoutesAsync()
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Routes
+                .Include(r => r.Driver)
+                .Include(r => r.Vehicle)
+                .ToListAsync(cancellationToken);
+        }        public async Task<List<Route>> GetRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
-            return await GetRoutesAsync(CancellationToken.None);
-        }
-
-        public async Task<List<Route>> GetRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
-        {
-            return await Task.Run(() => _routes.Skip((page - 1) * pageSize).Take(pageSize).ToList(), cancellationToken);
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Routes
+                .Include(r => r.Driver)
+                .Include(r => r.Vehicle)
+                .OrderByDescending(r => r.RouteDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<int> GetRoutesCountAsync(CancellationToken cancellationToken = default)
         {
-            return await Task.Run(() => _routes.Count, cancellationToken);
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Routes.CountAsync(cancellationToken);
         }
 
         public async Task<Route?> GetRouteByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await Task.Run(() => _routes.FirstOrDefault(r => r.Id == id), cancellationToken);
-        }
-
-        // Add overload without CancellationToken
-        public async Task<Route?> GetRouteByIdAsync(Guid id)
-        {
-            return await GetRouteByIdAsync(id, CancellationToken.None);
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Routes
+                .Include(r => r.Driver)
+                .Include(r => r.Vehicle)
+                .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
         }
 
         public async Task<Route> UpdateRouteAsync(Route route, CancellationToken cancellationToken = default)
         {
-            return await Task.Run(() =>
-            {
-                var existingRoute = _routes.FirstOrDefault(r => r.Id == route.Id);
-                if (existingRoute != null)
-                {
-                    var index = _routes.IndexOf(existingRoute);
-                    _routes[index] = route;
-                }
-                return route;
-            }, cancellationToken);
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Routes.Update(route);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return route;
         }
 
         public async Task DeleteRouteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            await Task.Run(() =>
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var route = await dbContext.Routes.FindAsync(new object[] { id }, cancellationToken);
+            if (route != null)
             {
-                var route = _routes.FirstOrDefault(r => r.Id == id);
-                if (route != null)
-                {
-                    _routes.Remove(route);
-                }
-            }, cancellationToken);
-        }
-
-        public async Task<List<Driver>> GetDriversAsync(CancellationToken cancellationToken = default)
+                dbContext.Routes.Remove(route);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }        public async Task<List<Driver>> GetDriversAsync(CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            return await Task.Run(() => _drivers.ToList(), cancellationToken);
+            try
+            {
+                if (IsServiceProviderDisposed())
+                    return new List<Driver>();
+
+                using var scope = _serviceProvider.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                return await dbContext.Drivers.ToListAsync(cancellationToken);
+            }
+            catch (ObjectDisposedException)
+            {
+                return new List<Driver>();
+            }
         }
 
         public async Task<List<Vehicle>> GetVehiclesAsync(CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            return await Task.Run(() => _vehicles.ToList(), cancellationToken);
+            try
+            {
+                if (IsServiceProviderDisposed())
+                    return new List<Vehicle>();
+
+                using var scope = _serviceProvider.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                return await dbContext.Vehicles.ToListAsync(cancellationToken);
+            }
+            catch (ObjectDisposedException)
+            {
+                return new List<Vehicle>();
+            }
         }
 
         public async Task<List<Route>> GetRoutesByDateAsync(DateTime routeDate, CancellationToken cancellationToken = default)
         {
-            return await Task.Run(() =>
-                _routes.Where(r => r.ScheduledTime.Date == routeDate.Date).ToList(),
-                cancellationToken);
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Routes
+                .Include(r => r.Driver)
+                .Include(r => r.Vehicle)
+                .Where(r => r.RouteDate.Date == routeDate.Date)
+                .ToListAsync(cancellationToken);
         }
     }
 }

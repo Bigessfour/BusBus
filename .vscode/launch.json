@@ -4,7 +4,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (BusBus)",
+            "name": ".NET Core Launch (Debug)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build BusBus solution",
@@ -13,20 +13,71 @@
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "justMyCode": true,
-            "requireExactSource": false
+            "justMyCode": false,
+            "requireExactSource": false,
+            "enableStepFiltering": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_ENVIRONMENT": "Development",
+                "LOGGING__LOGLEVEL__DEFAULT": "Debug",
+                "LOGGING__LOGLEVEL__MICROSOFT": "Information",
+                "LOGGING__LOGLEVEL__MICROSOFT.ENTITYFRAMEWORKCORE": "Information"
+            },
+            "logging": {
+                "exceptions": true,
+                "moduleLoad": false,
+                "programOutput": true,
+                "engineLogging": false,
+                "trace": false,
+                "traceResponse": false
+            }
         },
         {
-            "name": ".NET Core Launch (console)",
+            "name": ".NET Core Launch (Verbose Debug)",
             "type": "coreclr",
             "request": "launch",
-            "justMyCode": true,
+            "preLaunchTask": "build BusBus solution",
             "program": "${workspaceFolder}/bin/Debug/net8.0-windows/BusBus.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "stopAtEntry": false,
+            "stopAtEntry": true,
             "console": "internalConsole",
-            "requireExactSource": false
+            "justMyCode": false,
+            "requireExactSource": false,
+            "enableStepFiltering": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_ENVIRONMENT": "Development",
+                "LOGGING__LOGLEVEL__DEFAULT": "Trace",
+                "LOGGING__LOGLEVEL__MICROSOFT": "Debug",
+                "LOGGING__LOGLEVEL__MICROSOFT.ENTITYFRAMEWORKCORE": "Information"
+            },            "logging": {
+                "exceptions": true,
+                "moduleLoad": true,
+                "programOutput": true,
+                "diagnosticsLog": {
+                    "protocolMessages": true,
+                    "perftrace": false,
+                    "startDebugging": false,
+                    "stopOnEntry": false
+                }
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "justMyCode": false
+        },
+        {
+            "name": "Test Current File",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": ["test", "${workspaceFolder}/BusBus.Tests", "--filter", "FullyQualifiedName~${fileBasenameNoExtension}", "--verbosity", "normal"],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false
         }
     ]
 }

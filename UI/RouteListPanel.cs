@@ -1,51 +1,55 @@
 using BusBus.Models;
 using BusBus.Services;
-using BusBus.UI.Common;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace BusBus.UI
 {
-    public partial class RouteListPanel : ThemeableControl, IDisplayable
+    // Event args for route edit events (using RouteDisplayDTO for grid context)
+    public class RouteEventArgs : EventArgs
     {
-        // ...existing code...
+        public RouteDisplayDTO RouteDTO { get; set; }
 
-        /// <summary>
-        /// Handles infinite scroll for the DataGridView. Call this from the scroll event handler.
-        /// </summary>
-        private async Task HandleInfiniteScrollAsync()
-        {
-            // If already loading, or all data loaded, do nothing
-            if (_routes.Count >= _totalRoutes) return;
+        // Adding Route property for compatibility with existing code
+        public Route Route => RouteDTO.ToRoute();
 
-            // If the user is near the bottom, load more
-            var visibleRows = _routesGrid.DisplayedRowCount(false);
-            var firstDisplayed = _routesGrid.FirstDisplayedScrollingRowIndex;
-            var lastVisible = firstDisplayed + visibleRows;
-            // If within 5 rows of the end, load more
-            if (lastVisible >= _routes.Count - 5)
-            {
-                int nextPage = (_routes.Count / _pageSize) + 1;
-                var moreRoutes = await _routeService.GetRoutesAsync(nextPage, _pageSize, CancellationToken.None);
-                if (moreRoutes != null && moreRoutes.Count > 0)
-                {
-                    _routes.AddRange(moreRoutes);
-                    // Refresh grid
-                    _routesGrid.DataSource = null;
-                    _routesGrid.DataSource = _routes;
-                }
-            }
-        }
-
-        // ...existing code...
+        public RouteEventArgs(RouteDisplayDTO route) => RouteDTO = route;
     }
 
+    public partial class RouteListPanel : ThemeableControl, IDisplayable
+    {
+        private readonly IRouteService _routeService;
+        private List<RouteDisplayDTO> _routes = new List<RouteDisplayDTO>();
+        private List<Driver> _drivers = new List<Driver>();
+        private List<Vehicle> _vehicles = new List<Vehicle>();
+        private int _totalRoutes = 0;
+        private int _currentPage = 1;
+        private int _pageSize = 20;
+        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private DataGridView _routesGrid;
+        private Button _addRouteButton, _editRouteButton, _deleteRouteButton, _prevPageButton, _nextPageButton;
+        private Label _titleLabel, _pageInfoLabel;
+        public event EventHandler<RouteEventArgs>? RouteEditRequested;
+
+        // Public accessor for the routes grid
+        public DataGridView RoutesGrid => _routesGrid;
+
+        public RouteListPanel(IRouteService routeService)
+        {
+            ArgumentNullException.ThrowIfNull(routeService);
+            _routeService = routeService;
+            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            this.Padding = new Padding(10);
+            this.Dock = DockStyle.Fill;
+
+            // Title label
+            _titleLabel = new Label
+            {
                 Text = "Route Entries",
                 Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold),
                 Dock = DockStyle.Top,
@@ -55,7 +59,7 @@ namespace BusBus.UI
             };
             this.Controls.Add(_titleLabel);
 
-            // Create a container for the grid and pagination
+            // Main container
             var mainContainer = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -63,13 +67,12 @@ namespace BusBus.UI
                 RowCount = 3,
                 BackColor = ThemeManager.CurrentTheme.CardBackground
             };
-            // Using AutoSize for the button row for better scaling
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Buttons
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Grid
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));  // Pagination
+            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             this.Controls.Add(mainContainer);
 
-            // Initialize all buttons before adding to layout
+            // Buttons
             _addRouteButton = new Button
             {
                 Text = "Add New Route",
@@ -82,7 +85,6 @@ namespace BusBus.UI
                 FlatAppearance = { BorderSize = 1 },
                 Font = new System.Drawing.Font("Segoe UI", 10F)
             };
-
             _editRouteButton = new Button
             {
                 Text = "Edit Selected",
@@ -95,7 +97,6 @@ namespace BusBus.UI
                 FlatAppearance = { BorderSize = 1 },
                 Font = new System.Drawing.Font("Segoe UI", 10F)
             };
-
             _deleteRouteButton = new Button
             {
                 Text = "Delete",
@@ -108,8 +109,6 @@ namespace BusBus.UI
                 FlatAppearance = { BorderSize = 1 },
                 Font = new System.Drawing.Font("Segoe UI", 10F)
             };
-
-            // Create button panel with centered buttons
             var buttonPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -126,7 +125,7 @@ namespace BusBus.UI
             buttonPanel.Controls.Add(_deleteRouteButton, 2, 0);
             mainContainer.Controls.Add(buttonPanel, 0, 0);
 
-            // Setup DataGridView with optimized settings
+            // DataGridView
             _routesGrid = new DataGridView
             {
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
@@ -140,160 +139,55 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 CellBorderStyle = DataGridViewCellBorderStyle.Single,
-                GridColor = System.Drawing.Color.FromArgb(200, 200, 200), // Lighter grid lines
+                GridColor = System.Drawing.Color.FromArgb(200, 200, 200),
                 DefaultCellStyle = new DataGridViewCellStyle
                 {
                     Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular),
-                    BackColor = System.Drawing.Color.FromArgb(245, 245, 245), // Light gray background
-                    ForeColor = System.Drawing.Color.Black,
-                    SelectionBackColor = System.Drawing.Color.FromArgb(100, 150, 255), // Soft blue selection
-                    SelectionForeColor = System.Drawing.Color.Black,
+                    BackColor = ThemeManager.CurrentTheme.CardBackground,
+                    ForeColor = ThemeManager.CurrentTheme.CardText,
+                    SelectionBackColor = System.Drawing.Color.FromArgb(100, 150, 255),
+                    SelectionForeColor = ThemeManager.CurrentTheme.CardText,
                     Padding = new Padding(3),
                     Alignment = DataGridViewContentAlignment.MiddleLeft
                 },
                 AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = System.Drawing.Color.FromArgb(235, 235, 235) // Slightly darker alternating rows
+                    BackColor = System.Drawing.Color.FromArgb(235, 235, 235)
                 },
                 ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
                     Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold),
-                    BackColor = System.Drawing.Color.FromArgb(100, 130, 180), // Blue header background
-                    ForeColor = System.Drawing.Color.White,
+                    BackColor = ThemeManager.CurrentTheme.HeadlineBackground,
+                    ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                     Alignment = DataGridViewContentAlignment.MiddleCenter,
                     Padding = new Padding(3)
                 },
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
-                RowHeadersVisible = false, // Hide row headers for cleaner look
-                RowTemplate = { Height = 32 }, // Slightly taller rows for better readability
-                EditMode = DataGridViewEditMode.EditOnEnter, // Start edit when cell is entered
-                ReadOnly = false // Allow editing
+                RowHeadersVisible = false,
+                RowTemplate = { Height = 32 },
+                EditMode = DataGridViewEditMode.EditOnEnter,
+                ReadOnly = false
             };
             mainContainer.Controls.Add(_routesGrid, 0, 1);
 
-            // Optimized columns for the grid
-            var nameCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Route Name",
-                DataPropertyName = "Name",
-                FillWeight = 150,
-                MinimumWidth = 120
-            };
-
-            var dateCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Date",
-                DataPropertyName = "RouteDate",
-                FillWeight = 100,
-                MinimumWidth = 100,
-                DefaultCellStyle = new DataGridViewCellStyle { Format = "d" }
-            };
-
-            var amStartCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "AM Start",
-                DataPropertyName = "AMStartingMileage",
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Format = "N0",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                },
-                FillWeight = 80,
-                MinimumWidth = 80
-            };
-
-            var amEndCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "AM End",
-                DataPropertyName = "AMEndingMileage",
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Format = "N0",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                },
-                FillWeight = 80,
-                MinimumWidth = 80
-            };
-
-            var pmStartCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "PM Start",
-                DataPropertyName = "PMStartMileage",
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Format = "N0",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                },
-                FillWeight = 80,
-                MinimumWidth = 80
-            };
-
-            var pmEndCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "PM End",
-                DataPropertyName = "PMEndingMileage",
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Format = "N0",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                },
-                FillWeight = 80,
-                MinimumWidth = 80
-            };
-
-            var amMilesCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "AM Miles",
-                Name = "AMTotalMiles",
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Format = "N1",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                },
-                FillWeight = 70,
-                MinimumWidth = 70
-            };
-
-            var pmMilesCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "PM Miles",
-                Name = "PMTotalMiles",
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Format = "N1",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                },
-                FillWeight = 70,
-                MinimumWidth = 70
-            };
-
-            var driverCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Driver",
-                Name = "DriverName",
-                FillWeight = 120,
-                MinimumWidth = 100,
-                ReadOnly = true
-            };
-
-            var vehicleCol = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Vehicle",
-                Name = "VehicleNumber",
-                FillWeight = 80,
-                MinimumWidth = 80,
-                ReadOnly = true
-            };
-
-            // Add columns to grid
+            // Columns (updated)
+            _routesGrid.Columns.Clear();
             _routesGrid.Columns.AddRange(new DataGridViewColumn[]
             {
-                nameCol, dateCol, amStartCol, amEndCol, amMilesCol,
-                pmStartCol, pmEndCol, pmMilesCol, driverCol, vehicleCol
+                new DataGridViewTextBoxColumn { HeaderText = "Route Name", DataPropertyName = "Name", FillWeight = 150, MinimumWidth = 120 },
+                new DataGridViewTextBoxColumn { HeaderText = "Date", DataPropertyName = "TripDate", FillWeight = 100, MinimumWidth = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "d" } },
+                new DataGridViewTextBoxColumn { HeaderText = "AM Start", DataPropertyName = "AMStartingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
+                new DataGridViewTextBoxColumn { HeaderText = "AM End", DataPropertyName = "AMEndingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
+                new DataGridViewTextBoxColumn { HeaderText = "AM Miles", Name = "AMTotalMiles", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Format = "N1", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 70, MinimumWidth = 70 },
+                new DataGridViewTextBoxColumn { HeaderText = "PM Start", DataPropertyName = "PMStartMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
+                new DataGridViewTextBoxColumn { HeaderText = "PM End", DataPropertyName = "PMEndingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
+                new DataGridViewTextBoxColumn { HeaderText = "PM Miles", Name = "PMTotalMiles", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Format = "N1", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 70, MinimumWidth = 70 },
+                new DataGridViewTextBoxColumn { HeaderText = "Driver", Name = "DriverName", ReadOnly = true, FillWeight = 120, MinimumWidth = 100 },
+                new DataGridViewTextBoxColumn { HeaderText = "Vehicle", Name = "VehicleNumber", ReadOnly = true, FillWeight = 80, MinimumWidth = 80 }
             });
 
-            // Create pagination panel
+            // Pagination panel
             var paginationPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -341,50 +235,30 @@ namespace BusBus.UI
             };
             paginationPanel.Controls.Add(_nextPageButton);
 
-            // Initialize the event handlers
-            _cellFormattingHandler = OnCellFormatting;
-            _cellDoubleClickHandler = OnCellDoubleClick;
-            _cellEndEditHandler = OnCellEndEdit;
-
-            // Event handlers
+            // Event handlers (add as needed)
             _routesGrid.CellFormatting += (s, e) =>
             {
-                if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
-
+                if (e.RowIndex < 0 || e.ColumnIndex < 0 || e.RowIndex >= _routes.Count) return;
+                var route = _routes[e.RowIndex];
                 var colName = _routesGrid.Columns[e.ColumnIndex].Name;
 
-                // Calculate and display AM miles
-                if (colName == "AMTotalMiles" && e.RowIndex < _routes.Count)
+                if (colName == "AMTotalMiles")
                 {
-                    var route = _routes[e.RowIndex];
                     e.Value = Math.Max(0, route.AMEndingMileage - route.AMStartingMileage);
                     e.FormattingApplied = true;
                 }
-                // Calculate and display PM miles
-                else if (colName == "PMTotalMiles" && e.RowIndex < _routes.Count)
+                else if (colName == "PMTotalMiles")
                 {
-                    var route = _routes[e.RowIndex];
                     e.Value = Math.Max(0, route.PMEndingMileage - route.PMStartMileage);
                     e.FormattingApplied = true;
                 }
-                // Display driver name
-                else if (colName == "DriverName" && e.RowIndex < _routes.Count)
+                else if (colName == "DriverName")
                 {
-                    var route = _routes[e.RowIndex];
-                    if (route.Driver != null)
-                    {
-                        e.Value = $"{route.Driver.FirstName} {route.Driver.LastName}".Trim();
-                    }
-                    else
-                    {
-                        e.Value = "Unassigned";
-                    }
+                    e.Value = route.Driver != null ? $"{route.Driver.FirstName} {route.Driver.LastName}".Trim() : "Unassigned";
                     e.FormattingApplied = true;
                 }
-                // Display vehicle number
-                else if (colName == "VehicleNumber" && e.RowIndex < _routes.Count)
+                else if (colName == "VehicleNumber")
                 {
-                    var route = _routes[e.RowIndex];
                     e.Value = route.Vehicle?.BusNumber ?? "Unassigned";
                     e.FormattingApplied = true;
                 }
@@ -396,7 +270,8 @@ namespace BusBus.UI
                 bool hasSelection = _routesGrid.SelectedRows.Count > 0;
                 _editRouteButton.Enabled = hasSelection;
                 _deleteRouteButton.Enabled = hasSelection;
-            };            // Double-click to edit
+            };
+            // Double-click to edit
             _routesGrid.CellDoubleClick += (s, e) =>
             {
                 if (e.RowIndex >= 0 && e.RowIndex < _routes.Count)
@@ -409,7 +284,6 @@ namespace BusBus.UI
             _routesGrid.CellEndEdit += async (s, e) =>
             {
                 if (e.RowIndex < 0 || e.RowIndex >= _routes.Count) return;
-
                 var route = _routes[e.RowIndex];
                 if (e.ColumnIndex == _routesGrid.Columns["DriverId"].Index)
                 {
@@ -418,10 +292,9 @@ namespace BusBus.UI
                 else if (e.ColumnIndex == _routesGrid.Columns["VehicleId"].Index)
                 {
                     route.VehicleId = (Guid?)_routesGrid[e.ColumnIndex, e.RowIndex].Value;
-                }
-                try
+                }                try
                 {
-                    await _routeService.UpdateRouteAsync(route);
+                    await _routeService.UpdateRouteAsync(route.ToRoute());
                 }
                 catch (ArgumentException ex)
                 {
@@ -439,7 +312,6 @@ namespace BusBus.UI
                 {
                     MessageBox.Show($"Operation error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                // No general catch (Exception) after specific ones to avoid CS0160
             };
 
             // Edit button click handler
@@ -453,13 +325,11 @@ namespace BusBus.UI
 
             // Add button click handler
             _addRouteButton.Click += (s, e) =>
-            {
-                var newRoute = new Route
+            {                var newRoute = new RouteDisplayDTO
                 {
                     Id = Guid.Empty, // Mark as new route
                     Name = "New Route",
-                    RouteDate = DateTime.Today
-                };
+                    RouteDate = DateTime.Today                };
                 RouteEditRequested?.Invoke(this, new RouteEventArgs(newRoute));
             };
 
@@ -510,32 +380,50 @@ namespace BusBus.UI
 
             // Next page button
             _nextPageButton.Click += async (s, e) =>
-            {                if (_currentPage * _pageSize < _totalRoutes)
+            {
+                if (_currentPage * _pageSize < _totalRoutes)
                 {
                     _currentPage++;
                     await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                }            };
+                }
+            };
 
-            // Initialize data loading properly without background Task.Run
+            // Infinite scroll event
+            _routesGrid.Scroll += async (s, e) => await HandleInfiniteScrollAsync();
+
+            // Initial data load
             InitializeDataAsync();
+        }
+
+        private async Task HandleInfiniteScrollAsync()
+        {
+            if (_routes.Count >= _totalRoutes) return;
+            var visibleRows = _routesGrid.DisplayedRowCount(false);
+            var firstDisplayed = _routesGrid.FirstDisplayedScrollingRowIndex;
+            var lastVisible = firstDisplayed + visibleRows;
+            if (lastVisible >= _routes.Count - 5)
+            {
+                int nextPage = (_routes.Count / _pageSize) + 1;                var moreRoutes = await _routeService.GetRoutesAsync(nextPage, _pageSize, CancellationToken.None);
+                if (moreRoutes != null && moreRoutes.Count > 0)
+                {
+                    var moreRouteDTOs = moreRoutes.Select(RouteDisplayDTO.FromRoute).ToList();
+                    _routes.AddRange(moreRouteDTOs);
+                    _routesGrid.DataSource = null;
+                    _routesGrid.DataSource = _routes;
+                }
+            }
         }
 
         private async void InitializeDataAsync()
         {
             try
             {
-                // Check if we've been disposed before starting work
                 if (IsDisposed || _routeService == null)
                     return;
-
                 var token = _cancellationTokenSource.Token;
-
                 try
                 {
-                    // Check for cancellation frequently
                     token.ThrowIfCancellationRequested();
-
-                    // Get drivers and vehicles info with null checks
                     try
                     {
                         _drivers = await _routeService.GetDriversAsync(token);
@@ -543,11 +431,9 @@ namespace BusBus.UI
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error loading drivers: {ex.Message}");
-                        _drivers = new List<Driver>(); // Fallback to empty list
+                        _drivers = new List<Driver>();
                     }
-
                     token.ThrowIfCancellationRequested();
-
                     try
                     {
                         _vehicles = await _routeService.GetVehiclesAsync(token);
@@ -555,16 +441,14 @@ namespace BusBus.UI
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error loading vehicles: {ex.Message}");
-                        _vehicles = new List<Vehicle>(); // Fallback to empty list
+                        _vehicles = new List<Vehicle>();
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     Console.WriteLine("Initial data loading was canceled");
-                    return; // Exit early if canceled
+                    return;
                 }
-
-                // Only continue if the control is not disposed and not canceled
                 if (!IsDisposed && !token.IsCancellationRequested)
                 {
                     await LoadRoutesAsync(1, _pageSize, token);
@@ -572,12 +456,10 @@ namespace BusBus.UI
             }
             catch (OperationCanceledException)
             {
-                // Task was canceled, normal behavior during shutdown
                 Console.WriteLine("RouteListPanel initialization canceled");
             }
             catch (ObjectDisposedException)
             {
-                // Object was disposed, normal behavior during shutdown
                 Console.WriteLine("RouteListPanel was disposed during initialization");
             }
             catch (DbUpdateException ex)
@@ -612,65 +494,51 @@ namespace BusBus.UI
             }
         }
 
-        // Method to load routes with pagination
         public async Task LoadRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Early check for cancellation or disposal
                 if (cancellationToken.IsCancellationRequested || IsDisposed)
                 {
                     Console.WriteLine("LoadRoutesAsync canceled or control disposed");
                     return;
                 }
-
                 _currentPage = page;
                 _pageSize = pageSize;
-
-                // Lazy load drivers and vehicles if they're not already loaded
                 if (_drivers == null || _drivers.Count == 0)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     _drivers = await _routeService.GetDriversAsync(cancellationToken);
                 }
-
                 if (cancellationToken.IsCancellationRequested || IsDisposed)
                 {
                     Console.WriteLine("LoadRoutesAsync canceled after loading drivers");
                     return;
                 }
-
                 if (_vehicles == null || _vehicles.Count == 0)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     _vehicles = await _routeService.GetVehiclesAsync(cancellationToken);
                 }
-
                 if (cancellationToken.IsCancellationRequested || IsDisposed)
                 {
                     Console.WriteLine("LoadRoutesAsync canceled after loading vehicles");
                     return;
                 }
-
                 cancellationToken.ThrowIfCancellationRequested();
                 _totalRoutes = await _routeService.GetRoutesCountAsync(cancellationToken);
-
                 if (cancellationToken.IsCancellationRequested || IsDisposed)
                 {
                     Console.WriteLine("LoadRoutesAsync canceled after getting count");
                     return;
-                }
-
-                cancellationToken.ThrowIfCancellationRequested();
-                _routes = await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
-
+                }                cancellationToken.ThrowIfCancellationRequested();
+                var routes = await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
+                _routes = routes.Select(RouteDisplayDTO.FromRoute).ToList();
                 if (cancellationToken.IsCancellationRequested || IsDisposed)
                 {
                     Console.WriteLine("LoadRoutesAsync canceled before updating UI");
                     return;
                 }
-
-                // Update UI on UI thread, but only if handle is created and not disposed
                 if (IsHandleCreated && !IsDisposed)
                 {
                     try
@@ -678,11 +546,8 @@ namespace BusBus.UI
                         this.Invoke((MethodInvoker)delegate
                         {
                             if (IsDisposed) return;
-                            // Clear and reload grid
                             _routesGrid.DataSource = null;
                             _routesGrid.DataSource = _routes;
-
-                            // Enable editing only for driver and vehicle columns
                             _routesGrid.ReadOnly = false;
                             foreach (DataGridViewColumn col in _routesGrid.Columns)
                             {
@@ -691,33 +556,25 @@ namespace BusBus.UI
                                     col.ReadOnly = true;
                                 }
                             }
-
-                            // Update pagination UI
                             int totalPages = (_totalRoutes + pageSize - 1) / pageSize;
                             _pageInfoLabel.Text = $"Page {page} of {totalPages} ({_totalRoutes} routes)";
-
-                            // Enable/disable navigation buttons
                             _prevPageButton.Enabled = page > 1;
                             _nextPageButton.Enabled = page < totalPages;
-
-                            // Initialize button states
                             _editRouteButton.Enabled = false;
                             _deleteRouteButton.Enabled = false;
-                        });
-                    }
+                        });                    }
                     catch (ObjectDisposedException)
                     {
-                        Console.WriteLine("RouteListPanel was disposed during UI update");
+                        Console.WriteLine("RouteListPanel disposed during UI refresh");
                     }
                     catch (InvalidOperationException ex)
                     {
-                        Console.WriteLine($"InvalidOperationException during UI update: {ex.Message}");
+                        Console.WriteLine($"UI update error: {ex.Message}");
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                // Task was canceled, normal behavior during shutdown
                 Console.WriteLine("LoadRoutesAsync canceled by OperationCanceledException");
             }
             catch (HttpRequestException ex)
@@ -770,19 +627,8 @@ namespace BusBus.UI
             }
         }
 
-        // Method to show route panel for a selected route
-        private void ShowRoutePanel(Route route)
-        {
-            RouteEditRequested?.Invoke(this, new RouteEventArgs(route));
-        }
-
-        /// <summary>
-        /// Synchronously refreshes the routes list for test and UI purposes.
-        /// </summary>
         public void RefreshRoutesList()
         {
-            // Use default pagination values or current ones
-            // Wait for async method to complete (for test scenarios)
             LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None).GetAwaiter().GetResult();
         }
 
@@ -792,56 +638,13 @@ namespace BusBus.UI
             container.Controls.Clear();
             container.Controls.Add(this);
             this.Dock = DockStyle.Fill;
-        }        // Override dispose to properly clean up resources        private bool _disposed = false;
+        }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && !_disposed)
+            if (disposing)
             {
-                _disposed = true;
-                Console.WriteLine("RouteListPanel being disposed...");
-                
-                try
-                {
-                    _cancellationTokenSource?.Cancel();
-                }
-                catch (ObjectDisposedException)
-                {
-                    // Already disposed, ignore
-                }
-
-                // Wait for tasks with timeout
-                if (_initialLoadTask != null && !_initialLoadTask.IsCompleted)
-                {
-                    try
-                    {
-                        _initialLoadTask.Wait(TimeSpan.FromMilliseconds(500));
-                    }
-                    catch (AggregateException)
-                    {
-                        // Task was cancelled or timed out
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        // Already disposed, ignore
-                    }
-                }
-
-                foreach (var task in _backgroundTasks.ToList())
-                {
-                    if (!task.IsCompleted)
-                    {
-                        try
-                        {
-                            task.Wait(TimeSpan.FromMilliseconds(500));
-                        }
-                        catch (AggregateException)
-                        {
-                            // Task was cancelled or timed out
-                        }
-                    }
-                }
-
+                try { _cancellationTokenSource?.Cancel(); } catch { }
                 _cancellationTokenSource?.Dispose();
                 _routesGrid?.Dispose();
                 _prevPageButton?.Dispose();
@@ -850,41 +653,18 @@ namespace BusBus.UI
                 _addRouteButton?.Dispose();
                 _editRouteButton?.Dispose();
                 _deleteRouteButton?.Dispose();
-                _titleLabel?.Dispose();
-            }
+                _titleLabel?.Dispose();            }
             base.Dispose(disposing);
         }
 
-        private static void LogError(string message)
+        // Method added for test compatibility
+        private void ShowRoutePanel(Route route)
         {
-            System.Diagnostics.Debug.WriteLine($"[RouteListPanel ERROR] {message}");
-        }
-
-        private void OnCellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
-        {
-            // Handle cell formatting
-            if (e.Value != null && e.ColumnIndex >= 0)
-            {
-                // Add formatting logic as needed
-            }
-        }
-
-        private void OnCellDoubleClick(object? sender, DataGridViewCellEventArgs e)
-        {
-            // Handle cell double click
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                // Add double click logic as needed
-            }
-        }
-
-        private void OnCellEndEdit(object? sender, DataGridViewCellEventArgs e)
-        {
-            // Handle cell end edit
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                // Add end edit logic as needed
-            }
+            // Convert Route to RouteDisplayDTO
+            var routeDto = RouteDisplayDTO.FromRoute(route);
+            // Trigger the edit event
+            RouteEditRequested?.Invoke(this, new RouteEventArgs(routeDto));
         }
     }
 }
+

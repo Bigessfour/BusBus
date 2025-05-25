@@ -247,6 +247,245 @@
 				"clear": true
 			},
 			"problemMatcher": []
+		},
+		{
+			"label": "build with verbose logging",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"BusBus.sln",
+				"--verbosity",
+				"diagnostic",
+				"/flp:logfile=build.log;verbosity=diagnostic"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "clean and rebuild",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"clean",
+				"BusBus.sln",
+				"&&",
+				"dotnet",
+				"build",
+				"BusBus.sln",
+				"--verbosity",
+				"normal"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always"
+			}
+		},
+		{
+			"label": "run with environment logging",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"$env:DOTNET_ENVIRONMENT='Development'; $env:LOGGING__LOGLEVEL__DEFAULT='Debug'; dotnet run --project BusBus.csproj"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "attach debugger to running process",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Get-Process -Name 'BusBus' -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, StartTime | Format-Table; Write-Host 'Use Debug -> Attach to Process in VS Code' -ForegroundColor Green"
+			],
+			"group": "test"
+		},
+		{
+			"label": "check database connection",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"BusBus.csproj",
+				"--",
+				"--test-db-connection"
+			],
+			"group": "test"
+		},
+		{
+			"label": "view recent application logs",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"if (Test-Path './logs') { Get-ChildItem './logs' -Filter '*.log' | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | ForEach-Object { Write-Host \"Latest log: $($_.Name)\" -ForegroundColor Cyan; Get-Content $_.FullName -Tail 50 } } else { Write-Host 'No logs directory found' -ForegroundColor Yellow }"
+			],
+			"group": "test"
+		},
+		{
+			"label": "generate debug report",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Debug Environment Report' -ForegroundColor Cyan; Write-Host '=========================' -ForegroundColor Cyan; Write-Host 'Date:' (Get-Date) -ForegroundColor Yellow; Write-Host 'OS:' (Get-WmiObject -Class Win32_OperatingSystem).Caption -ForegroundColor Yellow; Write-Host '.NET Version:' -ForegroundColor Yellow; dotnet --version; Write-Host 'SQL Server Status:' -ForegroundColor Yellow; Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue | Select-Object Status, StartType; Write-Host 'Project Status:' -ForegroundColor Yellow; if (Test-Path 'BusBus.sln') { Write-Host '✅ Solution file found' -ForegroundColor Green } else { Write-Host '❌ Solution file missing' -ForegroundColor Red }; if (Test-Path 'bin/Debug') { Write-Host '✅ Debug build folder exists' -ForegroundColor Green } else { Write-Host '❌ Debug build folder missing' -ForegroundColor Red }"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Debug Performance Metrics",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Application Performance Report' -ForegroundColor Cyan; Write-Host '===========================' -ForegroundColor Cyan; $startTime = Get-Date; Write-Host 'Building solution...' -ForegroundColor Yellow; dotnet build BusBus.sln --verbosity quiet; $buildTime = (Get-Date) - $startTime; Write-Host \"Build completed in $($buildTime.TotalSeconds) seconds\" -ForegroundColor Green; Write-Host 'Running simple tests...' -ForegroundColor Yellow; $testStart = Get-Date; dotnet test BusBus.Tests --filter Category=Unit --verbosity quiet; $testTime = (Get-Date) - $testStart; Write-Host \"Tests completed in $($testTime.TotalSeconds) seconds\" -ForegroundColor Green; Write-Host 'Memory Usage:' -ForegroundColor Yellow; Get-Process -Name 'dotnet' | Format-Table Id, ProcessName, WorkingSet, CPU -AutoSize"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Advanced Debugging Console",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoExit",
+				"-Command",
+				"function Get-DbStatus { Write-Host 'Checking database connection...' -ForegroundColor Cyan; try { $connStr = (Get-Content 'appsettings.json' | ConvertFrom-Json).ConnectionStrings.DefaultConnection; Write-Host \"Connection string: $connStr\" -ForegroundColor Yellow; Write-Host 'Database status: Available' -ForegroundColor Green } catch { Write-Host 'Database status: Error' -ForegroundColor Red } }; function Start-Debug { param([string]$config='Debug') dotnet run --configuration $config --project BusBus.csproj }; function Watch-Process { param([string]$name='BusBus') while($true) { Clear-Host; Get-Process -Name $name -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, WorkingSet, CPU, Handles -AutoSize; Start-Sleep -Seconds 2 } }; Write-Host 'BusBus Advanced Debugging Console' -ForegroundColor Cyan; Write-Host 'Custom Commands:' -ForegroundColor Yellow; Write-Host '  Get-DbStatus                - Check database connection' -ForegroundColor White; Write-Host '  Start-Debug [-config Debug] - Run application with debugging' -ForegroundColor White; Write-Host '  Watch-Process [-name BusBus] - Monitor process metrics' -ForegroundColor White; cd '$workspaceFolder'"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": false,
+				"reveal": "always",
+				"panel": "new",
+				"focus": true
+			}
+		},
+		{
+			"label": "Debug Database Connection",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Database Connection Diagnostics' -ForegroundColor Cyan; Write-Host '=============================' -ForegroundColor Cyan; $connStr = $null; try { $config = Get-Content 'appsettings.json' | ConvertFrom-Json; $connStr = $config.ConnectionStrings.DefaultConnection; Write-Host 'Connection string found:' -ForegroundColor Green; Write-Host $connStr -ForegroundColor White; $parts = $connStr -split ';' | ForEach-Object { $_ -split '=' }; $server = ($parts | Where-Object { $_ -eq 'Server' } | Select-Object -Skip 1 -First 1); Write-Host \"Server: $server\" -ForegroundColor Yellow; Write-Host 'Testing connection...' -ForegroundColor Yellow; if ($connStr -like '*SQLEXPRESS*') { $sqlService = Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue; if ($sqlService) { Write-Host \"SQL Express Service Status: $($sqlService.Status)\" -ForegroundColor Green } else { Write-Host 'SQL Express Service Not Found!' -ForegroundColor Red } } } catch { Write-Host \"Error processing connection string: $_\" -ForegroundColor Red }; Write-Host 'Testing EF Core migrations...' -ForegroundColor Yellow; dotnet ef migrations list --project BusBus.csproj"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Debug Thread Analysis",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Thread and Cross-Thread Analysis Helper' -ForegroundColor Cyan; Write-Host '=======================================' -ForegroundColor Cyan; Write-Host 'This tool helps detect potential cross-thread UI operations' -ForegroundColor Yellow; Write-Host 'Scanning code for UI thread patterns...' -ForegroundColor Yellow; $uiFiles = Get-ChildItem -Path 'UI' -Filter '*.cs' -Recurse; Write-Host \"Found $($uiFiles.Count) UI files to analyze\" -ForegroundColor Green; $potentialIssues = @(); foreach ($file in $uiFiles) { $content = Get-Content $file.FullName; $lineNum = 1; foreach ($line in $content) { if ($line -match 'Thread|Task|Async|await|BeginInvoke|Invoke|ThreadPool|BackgroundWorker') { $potentialIssues += [PSCustomObject]@{ File = $file.Name; Line = $lineNum; Content = $line.Trim() }; } $lineNum++; } }; Write-Host \"Found $($potentialIssues.Count) potential threading patterns to review:\" -ForegroundColor Yellow; $potentialIssues | Format-Table File, Line, Content -AutoSize -Wrap"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Analyze Thread Safety Issues",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Analyzing Thread Safety Issues...' -ForegroundColor Cyan; Write-Host '==================================' -ForegroundColor Cyan; $errors = @(); $files = Get-ChildItem -Path . -Recurse -Include *.cs -Exclude *.Designer.cs; Write-Host \"Scanning $($files.Count) files for potential cross-thread issues...\" -ForegroundColor Yellow; foreach ($file in $files) { $content = Get-Content -Path $file.FullName; $lineNumber = 1; foreach ($line in $content) { if ($line -match '\\bInvoke(Required)?\\b' -and !($line -match 'ThreadSafeUI\\.Invoke')) { $errors += [PSCustomObject]@{ File = $file.FullName; Line = $lineNumber; Issue = 'Direct Control.Invoke usage found, consider using ThreadSafeUI.Invoke instead'; Text = $line.Trim() }; } if ($line -match '\\bBeginInvoke\\b' -and !($line -match 'ThreadSafeUI\\.BeginInvoke')) { $errors += [PSCustomObject]@{ File = $file.FullName; Line = $lineNumber; Issue = 'Direct Control.BeginInvoke usage found, consider using ThreadSafeUI.BeginInvoke instead'; Text = $line.Trim() }; } if ($line -match '\\.Text\\s*=\\s*' -and ($line -match 'Task|Thread|async|await' -or $file.Name -match 'Service|Manager|Helper')) { $errors += [PSCustomObject]@{ File = $file.FullName; Line = $lineNumber; Issue = 'Potential cross-thread UI update, check if InvokeRequired is handled'; Text = $line.Trim() }; } $lineNumber++; } } if ($errors.Count -gt 0) { Write-Host \"Found $($errors.Count) potential thread safety issues:\" -ForegroundColor Red; $errors | Format-Table -AutoSize -Wrap; } else { Write-Host \"No thread safety issues found!\" -ForegroundColor Green; }"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Check Database Context Disposal",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Checking Database Context Disposal Issues...' -ForegroundColor Cyan; Write-Host '==========================================' -ForegroundColor Cyan; $issues = @(); $files = Get-ChildItem -Path . -Recurse -Include *.cs -Exclude *.Designer.cs; Write-Host \"Scanning $($files.Count) files for potential DbContext disposal issues...\" -ForegroundColor Yellow; foreach ($file in $files) { $content = Get-Content -Path $file.FullName; $usesContext = $content -match 'AppDbContext|IAppDbContext|DbContext'; if ($usesContext) { $implementsDisposable = $content -match 'IDisposable|IAsyncDisposable'; $hasDisposeMethod = $content -match 'Dispose\\s*\\('; $hasUsingStatement = $content -match 'using\\s*\\(.+DbContext'; $hasResourceTracker = $content -match 'ResourceTracker|DbContextManager'; if (!$hasUsingStatement -and !$hasDisposeMethod -and !$hasResourceTracker -and !($file.Name -match 'Test|Factory')) { $issues += [PSCustomObject]@{ File = $file.FullName; Issue = 'Uses DbContext but might not dispose it properly'; Recommendation = 'Use \"using\" statement, ResourceTracker, or DbContextManager' }; } } } if ($issues.Count -gt 0) { Write-Host \"Found $($issues.Count) potential DbContext disposal issues:\" -ForegroundColor Red; $issues | Format-Table -AutoSize -Wrap; } else { Write-Host \"No DbContext disposal issues found!\" -ForegroundColor Green; }"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Check Resource Leaks",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Checking for Potential Resource Leaks...' -ForegroundColor Cyan; Write-Host '=======================================' -ForegroundColor Cyan; $leaks = @(); $files = Get-ChildItem -Path . -Recurse -Include *.cs -Exclude *.Designer.cs; Write-Host \"Scanning $($files.Count) files for potential resource leaks...\" -ForegroundColor Yellow; foreach ($file in $files) { $content = Get-Content -Path $file.FullName; $disposableTypes = @('SqlConnection', 'Stream', 'FileStream', 'IDisposable', 'DbContext', 'IDbConnection', 'Bitmap', 'Graphics', 'Font', 'IDataReader'); foreach ($type in $disposableTypes) { $creates = $content | Select-String \"new\\s+$type|GetRequiredService<$type>|CreateScope|CreateDbContext\" -AllMatches; if ($creates) { $usesDispose = $content -match 'Dispose\\s*\\('; $usesUsing = $content -match 'using\\s*\\('; $usesResourceTracker = $content -match 'ResourceTracker'; if (!$usesDispose -and !$usesUsing -and !$usesResourceTracker) { $leaks += [PSCustomObject]@{ File = $file.FullName; Type = $type; Issue = \"Creates $type but might not dispose it properly\"; Recommendation = 'Use \"using\" statement, call Dispose(), or use ResourceTracker' }; } } } } if ($leaks.Count -gt 0) { Write-Host \"Found $($leaks.Count) potential resource leaks:\" -ForegroundColor Red; $leaks | Format-Table -AutoSize -Wrap; } else { Write-Host \"No potential resource leaks found!\" -ForegroundColor Green; }"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Verify Thread-Safe UI Updates",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Verifying Thread-Safe UI Updates...' -ForegroundColor Cyan; Write-Host '=================================' -ForegroundColor Cyan; $patterns = @( [PSCustomObject]@{ Pattern = '\\.Text\\s*='; Description = 'Setting control Text property directly' }, [PSCustomObject]@{ Pattern = '\\.Enabled\\s*='; Description = 'Setting control Enabled property directly' }, [PSCustomObject]@{ Pattern = '\\.Visible\\s*='; Description = 'Setting control Visible property directly' }, [PSCustomObject]@{ Pattern = '\\.Items\\.Add|Clear|Remove'; Description = 'Modifying collection items' }, [PSCustomObject]@{ Pattern = '\\.DataSource\\s*='; Description = 'Setting DataSource directly' }, [PSCustomObject]@{ Pattern = '\\.(Controls|Rows|Columns)\\.(Add|Clear|Remove)'; Description = 'Modifying Controls/Rows/Columns collection' } ); $files = Get-ChildItem -Path . -Recurse -Include *.cs -Exclude *.Designer.cs | Where-Object { $_.FullName -match 'Service|Manager|Worker|Background|Thread|Task|Async' -and !($_.FullName -match 'ThreadSafeUI|UI\\\\') }; Write-Host \"Analyzing $($files.Count) background processing files...\" -ForegroundColor Yellow; $results = @(); foreach ($file in $files) { $content = Get-Content -Path $file.FullName; $lineNumber = 1; foreach ($line in $content) { foreach ($pattern in $patterns) { if ($line -match $pattern.Pattern -and $line -match '(Form|Control|Button|TextBox|Label|DataGridView|Panel|TabControl)' -and !($line -match 'InvokeRequired|Invoke\\(|BeginInvoke|ThreadSafeUI')) { $results += [PSCustomObject]@{ File = $file.Name; Line = $lineNumber; Issue = $pattern.Description; Recommendation = 'Use ThreadSafeUI helper or check InvokeRequired'; Text = $line.Trim() } } } $lineNumber++; } } if ($results.Count -gt 0) { Write-Host \"Found $($results.Count) potential unsafe UI updates:\" -ForegroundColor Red; $results | Format-Table File, Line, Issue, Recommendation -AutoSize; } else { Write-Host \"No unsafe UI updates found!\" -ForegroundColor Green; }"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			}
+		},
+		{
+			"label": "Debug Database Connection Exhaustively",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"BusBus.csproj",
+				"--",
+				"--debug-db",
+				"--verbose"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"problemMatcher": []
 		}
 	]
 }

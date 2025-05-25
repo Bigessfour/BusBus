@@ -128,6 +128,16 @@ All dependencies use compatible open-source licenses:
 - **Entity Framework**: Microsoft.EntityFrameworkCore (MIT)
 - **Dependency Injection**: Microsoft.Extensions.DependencyInjection (MIT)
 
+
+## Enhancements (May 2025)
+
+- Polished UI styles and visual appeal with Crystal Dark-inspired theme
+- Dashboard hub with modern navigation, active button highlighting, and tooltips
+- RoutePanel displays route summaries and CRUD buttons
+- Seamless DataGridView loading and search in RouteListPanel
+- Loading indicator and robust error handling
+- All obsolete designer files removed; codebase streamlined
+
 ## Build Status
 
 To build and test:

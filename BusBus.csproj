@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -13,6 +12,25 @@
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <NoWarn>$(NoWarn);CA1416;CA1016;CA2007;CA1303;CA2208;CS0160;CA1812;CA1852;CS8600;CS8618;CS0649;CS0169;CA1823;CA1805;CA2213;CA1031</NoWarn>
     <OutputPath>bin\Debug\</OutputPath>
+
+    <!-- Enhanced debugging configuration -->
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <ErrorReport>prompt</ErrorReport>
+    <FileAlignment>512</FileAlignment>
+
+    <!-- Enable better exception details -->
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+
+    <!-- Source link support for better debugging experience -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <!-- Exclude auto-generated assembly attribute files to avoid duplicate attributes -->
@@ -24,7 +42,7 @@
     <!-- Remove these exclusions to include critical UI files -->
     <!-- <Compile Remove="BusBus\UI\RouteListPanel.cs" /> -->
     <!-- <Compile Remove="BusBus\UI\Dashboard.cs" /> -->
-    
+
     <!-- Exclude old RouteService versions -->
     <Compile Remove="BusBus\Services\RouteService.cs" />
     <Compile Remove="BusBus\BusBus\Services\RouteService.cs" />
@@ -39,7 +57,7 @@
     <Compile Remove="routelistpanel.cs" />
       <!-- Exclude scripts that have their own entry points -->
     <Compile Remove="scripts\**\*.cs" />
-    
+
     <!-- Exclude documentation files -->
     <Compile Remove="docs\**\*.cs" />
   </ItemGroup>

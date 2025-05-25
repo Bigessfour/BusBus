@@ -25,16 +25,16 @@ namespace BusBus.Tests.Integration
             // Load configuration from appsettings.json
             var basePath = Path.GetDirectoryName(typeof(SqlServerExpressIntegrationTest).Assembly.Location);
             var projectRoot = Path.GetFullPath(Path.Combine(basePath!, "..", "..", "..", ".."));
-            
+
             _configuration = new ConfigurationBuilder()
                 .SetBasePath(projectRoot)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
             _connectionString = _configuration.GetConnectionString("DefaultConnection");
-            
+
             Console.WriteLine($"Using connection string: {_connectionString}");
-            
+
             // Setup dependency injection similar to Program.cs
             var services = new ServiceCollection();
             ConfigureTestServices(services);
@@ -46,17 +46,17 @@ namespace BusBus.Tests.Integration
         {
             _serviceProvider?.Dispose();
         }
-
         private void ConfigureTestServices(ServiceCollection services)
         {
             // Add DbContext with SQL Server Express (same as Program.cs)
+            // CA1861: Prefer static readonly for errorNumbersToAdd
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(
                     _connectionString,
                     sqlOptions => sqlOptions.EnableRetryOnFailure(
                         maxRetryCount: 3,
                         maxRetryDelay: TimeSpan.FromSeconds(30),
-                        errorNumbersToAdd: new[] { 1205, 10054 }
+                        errorNumbersToAdd: SqlServerExpressIntegrationTest.ErrorNumbersToAdd
                     )
                 )
                 .EnableSensitiveDataLogging()
@@ -70,6 +70,8 @@ namespace BusBus.Tests.Integration
             services.AddSingleton<IRouteService, RouteService>();
         }
 
+        private static readonly int[] ErrorNumbersToAdd = new[] { 1205, 10054 };
+
         [Test]
         [Order(1)]
         public void Test_ConfigurationLoadsCorrectly()
@@ -82,7 +84,7 @@ namespace BusBus.Tests.Integration
             Assert.That(connectionString, Does.Contain("SQLEXPRESS"), "Should use SQL Server Express");
             Assert.That(connectionString, Does.Contain("BusBusDb"), "Should connect to BusBusDb database");
             Assert.That(connectionString, Does.Contain("Trusted_Connection=true"), "Should use Windows authentication");
-            
+
             Console.WriteLine($"✅ Connection string configured correctly: {connectionString}");
         }
 
@@ -97,16 +99,16 @@ namespace BusBus.Tests.Integration
             // Act & Assert - Test database connection
             var canConnect = await context.Database.CanConnectAsync();
             Assert.That(canConnect, Is.True, "Should be able to connect to SQL Server Express database");
-            
+
             Console.WriteLine("✅ Successfully connected to SQL Server Express");
 
             // Verify database schema exists
             var driverTableExists = await context.Database.ExecuteSqlRawAsync(
                 "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Drivers'") >= 0;
-            
+
             var routeTableExists = await context.Database.ExecuteSqlRawAsync(
                 "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Routes'") >= 0;
-                
+
             var vehicleTableExists = await context.Database.ExecuteSqlRawAsync(
                 "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Vehicles'") >= 0;
 
@@ -138,7 +140,7 @@ namespace BusBus.Tests.Integration
             Assert.That(drivers.Any(d => d.Name == "John Doe"), Is.True, "Should contain John Doe driver");
             Assert.That(drivers.Any(d => d.Name == "Jane Smith"), Is.True, "Should contain Jane Smith driver");
 
-            // Verify vehicle data  
+            // Verify vehicle data
             Assert.That(vehicles.Any(v => v.Number == "BUS001"), Is.True, "Should contain BUS001 vehicle");
             Assert.That(vehicles.Any(v => v.Number == "BUS002"), Is.True, "Should contain BUS002 vehicle");
 
@@ -164,7 +166,7 @@ namespace BusBus.Tests.Integration
             // Arrange
             using var scope = _serviceProvider!.CreateScope();
             var routeService = scope.ServiceProvider.GetRequiredService<IRouteService>();
-            
+
             // Ensure data is seeded
             await routeService.SeedSampleDataAsync();
 
@@ -187,10 +189,10 @@ namespace BusBus.Tests.Integration
         public async Task Test_ApplicationStartupFlow()
         {
             // This test simulates the exact flow that happens in Program.cs Main method
-            
+
             // Arrange - Simulate Program.cs service setup
             var services = new ServiceCollection();
-            
+
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -203,7 +205,7 @@ namespace BusBus.Tests.Integration
                     sqlOptions => sqlOptions.EnableRetryOnFailure(
                         maxRetryCount: 10,
                         maxRetryDelay: TimeSpan.FromSeconds(60),
-                        errorNumbersToAdd: new[] { 1205, 10054 }
+                        errorNumbersToAdd: ErrorNumbersToAdd
                     )
                 )
                 .EnableSensitiveDataLogging()

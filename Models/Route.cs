@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BusBus.Models
 {    /// <summary>
@@ -7,8 +8,11 @@ namespace BusBus.Models
      /// </summary>
     public class Route
     {
+
         [Required]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();        [Timestamp]
+        [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Required for Entity Framework RowVersion/Timestamp")]
+        public byte[] RowVersion { get; set; }
 
         [Required]
         [StringLength(100, MinimumLength = 1)]

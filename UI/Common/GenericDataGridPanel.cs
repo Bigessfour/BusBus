@@ -255,6 +255,23 @@ namespace BusBus.UI.Common
 
             _dataGrid.SelectionChanged += OnDataGridSelectionChanged;
             _dataGrid.CellDoubleClick += OnDataGridCellDoubleClick;
+
+            // Handle data errors gracefully
+            _dataGrid.DataError += OnDataGridDataError;
+        }
+        /// <summary>
+        /// Handles DataGridView data errors to provide user-friendly feedback and suppress default dialogs.
+        /// </summary>
+        private void OnDataGridDataError(object? sender, DataGridViewDataErrorEventArgs e)
+        {
+            // Show a user-friendly message for format/conversion errors
+            string columnName = e.ColumnIndex >= 0 && _dataGrid.Columns.Count > e.ColumnIndex
+                ? _dataGrid.Columns[e.ColumnIndex].HeaderText
+                : "Unknown";
+            string message = $"Invalid value for column '{columnName}'. Please enter a value of the correct type.";
+            MessageBox.Show(message, "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            e.ThrowException = false;
+            e.Cancel = true;
         }
 
         private void OnDataGridSelectionChanged(object? sender, EventArgs e)
@@ -305,7 +322,7 @@ namespace BusBus.UI.Common
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error deleting {_entityName.ToUpperInvariant()}: {ex.Message}", "Error", 
+                    MessageBox.Show($"Error deleting {_entityName.ToUpperInvariant()}: {ex.Message}", "Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -348,13 +365,13 @@ namespace BusBus.UI.Common
                 // Update pagination info
                 var totalPages = Math.Max(1, (int)Math.Ceiling((double)_totalItems / _pageSize));
                 _pageInfoLabel.Text = $"Page {_currentPage} of {totalPages} ({_totalItems} total)";
-                
+
                 _prevPageButton.Enabled = _currentPage > 1;
                 _nextPageButton.Enabled = _currentPage < totalPages;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading {_entityPluralName.ToUpperInvariant()}: {ex.Message}", "Error", 
+                MessageBox.Show($"Error loading {_entityPluralName.ToUpperInvariant()}: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally

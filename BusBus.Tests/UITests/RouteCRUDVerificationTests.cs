@@ -8,6 +8,7 @@ using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI;
 using BusBus.Tests.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace BusBus.Tests.UITests
@@ -27,23 +28,22 @@ namespace BusBus.Tests.UITests
         public override async Task SetUp()
         {
             await base.SetUp();
-            
-            _testFixtureFactory = new TestFixtureFactory();
+              _testFixtureFactory = new TestFixtureFactory();
               // Use actual RouteService instead of mock
-            _routeService = new RouteService();
-            
+            _routeService = ServiceProvider.GetRequiredService<IRouteService>();
+
             // Create test data
             _testDrivers = _testFixtureFactory.CreateMany<Driver>(3);
             _testVehicles = _testFixtureFactory.CreateMany<Vehicle>(3);
             _testRoutes = _testFixtureFactory.CreateMany<Route>(5);
-            
+
             // Seed the actual service with sample data
             await _routeService.SeedSampleDataAsync();
-            
+
             // Create UI components with test constructor
-            _routePanel = new RoutePanel(_testDrivers, _testVehicles);
+            _routePanel = new RoutePanel(_routeService);
             _routeListPanel = new RouteListPanel(_routeService);
-            
+
             // Suppress dialogs for testing
             RoutePanel.SuppressDialogsForTests = true;
         }
@@ -80,11 +80,11 @@ namespace BusBus.Tests.UITests
 
             // Assert
             Assert.That(_routePanel, Is.Not.Null, "RoutePanel should be created");
-            
+
             // Verify UI reflects new route mode
             var titleLabel = GetPrivateField<System.Windows.Forms.Label>(_routePanel, "_titleLabel");
             Assert.That(titleLabel?.Text, Does.Contain("Add New Route"), "Title should indicate new route creation");
-            
+
             // Verify delete button is hidden for new routes
             var deleteButton = GetPrivateField<System.Windows.Forms.Button>(_routePanel, "_deleteButton");
             Assert.That(deleteButton?.Visible, Is.False, "Delete button should be hidden for new routes");
@@ -96,7 +96,7 @@ namespace BusBus.Tests.UITests
         {            // Act
             await _routeListPanel.LoadRoutesAsync(1, 10, CancellationToken.None);// Assert
             Assert.That(_routeListPanel.RoutesGrid, Is.Not.Null, "Routes grid should exist");
-            
+
             // Verify that routes can be loaded
             var routes = await _routeService.GetRoutesAsync(1, 10);
             Assert.That(routes, Is.Not.Null, "Routes should be retrievable");
@@ -116,7 +116,7 @@ namespace BusBus.Tests.UITests
             // Assert
             var titleLabel = GetPrivateField<System.Windows.Forms.Label>(_routePanel, "_titleLabel");
             Assert.That(titleLabel?.Text, Does.Contain("Edit Route"), "Title should indicate edit mode");
-            
+
             // Verify delete button is visible for existing routes
             var deleteButton = GetPrivateField<System.Windows.Forms.Button>(_routePanel, "_deleteButton");
             Assert.That(deleteButton?.Visible, Is.True, "Delete button should be visible for existing routes");
@@ -174,20 +174,20 @@ namespace BusBus.Tests.UITests
 
             // Act
             var showRoutePanel = GetPrivateMethod(_routeListPanel, "ShowRoutePanel");
-            showRoutePanel?.Invoke(_routeListPanel, new object[] { testRoute });
-
-            // Assert
+            showRoutePanel?.Invoke(_routeListPanel, new object[] { testRoute });            // Assert
             Assert.That(eventFired, Is.True, "RouteEditRequested event should fire");
-            Assert.That(eventRoute, Is.EqualTo(testRoute), "Event should pass the correct route");
+            Assert.That(eventRoute, Is.Not.Null, "Event should pass a route");
+            Assert.That(eventRoute!.Id, Is.EqualTo(testRoute.Id), "Event should pass the correct route ID");
+            Assert.That(eventRoute.Name, Is.EqualTo(testRoute.Name), "Event should pass the correct route name");
         }
 
-        private T? GetPrivateField<T>(object obj, string fieldName) where T : class
+        private static T? GetPrivateField<T>(object obj, string fieldName) where T : class
         {
             var field = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             return field?.GetValue(obj) as T;
         }
 
-        private System.Reflection.MethodInfo? GetPrivateMethod(object obj, string methodName)
+        private static System.Reflection.MethodInfo? GetPrivateMethod(object obj, string methodName)
         {
             return obj.GetType().GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         }

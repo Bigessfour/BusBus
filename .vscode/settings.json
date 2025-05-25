@@ -1,27 +1,87 @@
 {
-    // Logging settings
+    // Logging settings - Enhanced for better debugging
     "omnisharp.loggingLevel": "debug",
     "csharp.serverLogging.level": "debug",
     "omnisharp.logFilePath": "C:/Users/steve.mckitrick/Desktop/BusBus/omnisharp.log",
+
     // Solution settings
     "dotnet.defaultSolution": "BusBus.sln",
-    // Testing settings
+
+    // Testing settings - Enhanced
     "dotnet-test-explorer.testProjectPath": "**/*Tests.csproj",
     "dotnet-test-explorer.enableCodeCoverage": true,
     "dotnet-test-explorer.codeCoverageRunSettings": "CodeCoverage.runsettings",
-    // Editor settings
+    "dotnet.unitTests.runSettingsPath": "./coverlet.runsettings",
+
+    // Editor settings - Enhanced for better development experience
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
     "csharp.format.enable": true,
-    // IntelliSense settings
+    "csharp.semanticHighlighting.enabled": true,
+
+    // IntelliSense settings - Enhanced
     "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
     "csharp.inlayHints.enableInlayHintsForImplicitObjectCreation": true,
     "csharp.inlayHints.enableInlayHintsForLambdaParameterTypes": true,
     "csharp.inlayHints.enableInlayHintsForTypes": true,
-    // Language server settings - using modern .NET language server now
+    "csharp.inlayHints.enableInlayHintsForImplicitVariableTypes": true,
+    "csharp.inlayHints.enableInlayHintsForParameters": true,
+
+    // Language server settings - using modern .NET language server
     "dotnet.server.useOmnisharp": false,
     "omnisharp.enableRoslynAnalyzers": true,
     "omnisharp.enableEditorConfigSupport": true,
-    // Misc settings
-    "output.smartScroll.enabled": true
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
+
+    // Debugging enhancements
+    "debug.console.acceptSuggestionOnEnter": "on",
+    "debug.console.closeOnEnd": false,
+    "debug.console.fontSize": 12,
+    "debug.console.historySuggestions": true,
+    "debug.console.wordWrap": false,
+    "debug.openDebug": "openOnDebugBreak",
+    "debug.showBreakpointsInOverviewRuler": true,
+    "debug.showInlineBreakpointCandidates": true,
+    "debug.toolBarLocation": "docked",
+
+    // Problem matching and error detection
+    "problems.autoReveal": true,
+    "problems.decorations.enabled": true,
+    "problems.showCurrentInStatus": true,
+
+    // File associations and handling
+    "files.associations": {
+        "*.cs": "csharp",
+        "*.csproj": "xml",
+        "*.sln": "text"
+    },
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/.vs": true
+    },
+
+    // Terminal settings for better command execution
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "args": ["-NoLogo"]
+        }
+    },
+
+    // Output and logging
+    "output.smartScroll.enabled": true,
+
+    // Code analysis and suggestions
+    "dotnet.codeLens.enableReferencesCodeLens": true,
+    "dotnet.codeLens.enableTestsCodeLens": true,
+
+    // Exception handling in debugger
+    "debug.allowBreakpointsEverywhere": true
 }

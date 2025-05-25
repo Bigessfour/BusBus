@@ -1,0 +1,74 @@
+{
+  "Driver": {
+    "EmergencyContact": {
+      "Name": "EmergencyContact",
+      "Label": "Emergency Contact",
+      "Type": "text",
+      "Required": false,
+      "DefaultValue": ""
+    },
+    "HireDate": {
+      "Name": "HireDate",
+      "Label": "Hire Date",
+      "Type": "date",
+      "Required": false,
+      "DefaultValue": ""
+    },
+    "Department": {
+      "Name": "Department",
+      "Label": "Department",
+      "Type": "select",
+      "Required": false,
+      "DefaultValue": "Operations",
+      "Options": ["Operations", "Maintenance", "Administration"]
+    }
+  },
+  "Vehicle": {
+    "LastMaintenance": {
+      "Name": "LastMaintenance",
+      "Label": "Last Maintenance",
+      "Type": "date",
+      "Required": false,
+      "DefaultValue": ""
+    },
+    "FuelType": {
+      "Name": "FuelType",
+      "Label": "Fuel Type",
+      "Type": "select",
+      "Required": false,
+      "DefaultValue": "Diesel",
+      "Options": ["Diesel", "Electric", "Hybrid", "CNG"]
+    },
+    "Insurance": {
+      "Name": "Insurance",
+      "Label": "Insurance Policy",
+      "Type": "text",
+      "Required": false,
+      "DefaultValue": ""
+    }
+  },
+  "Route": {
+    "Priority": {
+      "Name": "Priority",
+      "Label": "Priority Level",
+      "Type": "select",
+      "Required": false,
+      "DefaultValue": "Normal",
+      "Options": ["Low", "Normal", "High", "Critical"]
+    },
+    "MaxPassengers": {
+      "Name": "MaxPassengers",
+      "Label": "Max Passengers",
+      "Type": "number",
+      "Required": false,
+      "DefaultValue": "50"
+    },
+    "OperatingDays": {
+      "Name": "OperatingDays",
+      "Label": "Operating Days",
+      "Type": "text",
+      "Required": false,
+      "DefaultValue": "Monday-Friday"
+    }
+  }
+}

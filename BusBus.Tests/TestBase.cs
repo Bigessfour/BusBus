@@ -66,9 +66,7 @@ namespace BusBus.Tests
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true)
                 .AddJsonFile("appsettings.test.json", optional: true)
-                .Build();
-
-            services.AddSingleton(Configuration);
+                .Build();            services.AddSingleton(Configuration);
 
             // Use InMemory database for testing instead of SQL Server
             services.AddDbContext<AppDbContext>(options =>
@@ -76,8 +74,10 @@ namespace BusBus.Tests
                        .EnableSensitiveDataLogging()
                        .EnableDetailedErrors());
             
-            // Register the correct RouteService implementation
-            services.AddScoped<BusBus.Services.IRouteService, BusBus.RouteService>();
+            // Register services
+            services.AddScoped<BusBus.Services.IRouteService, BusBus.Services.RouteService>();
+            services.AddScoped<BusBus.Services.IDriverService, BusBus.Services.DriverService>();
+            services.AddScoped<BusBus.Services.IVehicleService, BusBus.Services.VehicleService>();
         }
 
         protected AppDbContext GetDbContext()
@@ -96,14 +96,14 @@ namespace BusBus.Tests
             {
                 Console.WriteLine($"Error during dispose: {ex.Message}");
             }
-        }
-
-        protected virtual async Task SeedTestDataAsync(AppDbContext context)
+        }        protected virtual async Task SeedTestDataAsync(AppDbContext context)
         {
             if (context == null) return;
             
-            // Only seed if no data exists to avoid conflicts
-            if (await context.Drivers.AnyAsync()) return;
+            // Always ensure we have test data for BasicTests
+            // Each test uses its own in-memory database instance
+            // Check if routes exist rather than drivers, since routes depend on both drivers and vehicles
+            if (await context.Routes.AnyAsync()) return;
                 
             var driver1Id = Guid.NewGuid();
             var vehicle1Id = Guid.NewGuid();
@@ -142,19 +142,29 @@ namespace BusBus.Tests
                 PMEndingMileage = 1100,
                 AMRiders = 25,
                 PMRiders = 30
-            };
-
-            context.Drivers.Add(driver1);
+            };            context.Drivers.Add(driver1);
             context.Vehicles.Add(vehicle1);
             context.Routes.Add(route1);
             
             try
             {
+                Console.WriteLine("Attempting to save test data...");
                 await context.SaveChangesAsync();
+                Console.WriteLine("✅ Test data saved successfully");
+                
+                // Verify data was saved
+                var driverCount = await context.Drivers.CountAsync();
+                var vehicleCount = await context.Vehicles.CountAsync();
+                var routeCount = await context.Routes.CountAsync();
+                Console.WriteLine($"Data verification: Drivers={driverCount}, Vehicles={vehicleCount}, Routes={routeCount}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Seeding failed: {ex.Message}");
+                Console.WriteLine($"❌ Seeding failed: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 // Don't rethrow - let tests continue
             }
         }

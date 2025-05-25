@@ -20,26 +20,26 @@ namespace BusBus.Tests.Unit
     {
         private Fixture _fixture = null!;
         private TestFixtureFactory _factory = null!;
-        private IRouteService _routeService = null!;
-        
+        // CA1859: Change type for improved performance
+        private InMemoryRouteService? _routeService = null!;
+
         [SetUp]
         public void SetUp()
         {
             // Initialize AutoFixture
-            _fixture = new Fixture();
-            _fixture.Customize(new AutoMoqCustomization());
+            _fixture = new Fixture();            _fixture.Customize(new AutoMoqCustomization());
             _factory = new TestFixtureFactory();
-            // RouteService has a parameterless constructor and uses in-memory lists
-            _routeService = new RouteService();
+            // Use InMemoryRouteService for unit tests
+            _routeService = new InMemoryRouteService();
         }
-        
+
         [Test]
         public async Task GetRouteByIdAsync_WhenRouteExists_ShouldReturnRoute()
         {
             // Arrange
             var routeId = Guid.NewGuid();
-            var expectedRoute = _factory.CreateRoute(id: routeId);
-            await _routeService.CreateRouteAsync(expectedRoute);
+            var expectedRoute = TestFixtureFactory.CreateRoute(id: routeId);
+            await _routeService!.CreateRouteAsync(expectedRoute);
 
             // Act
             var result = await _routeService.GetRouteByIdAsync(routeId);
@@ -49,7 +49,7 @@ namespace BusBus.Tests.Unit
             result!.Id.Should().Be(routeId);
             result.Name.Should().Be(expectedRoute.Name);
         }
-        
+
         [Test]
         public async Task GetRouteByIdAsync_WhenRouteDoesNotExist_ShouldReturnNull()
         {
@@ -57,34 +57,34 @@ namespace BusBus.Tests.Unit
             var nonExistentId = Guid.NewGuid();
 
             // Act
-            var result = await _routeService.GetRouteByIdAsync(nonExistentId);
+            var result = await _routeService!.GetRouteByIdAsync(nonExistentId);
 
             // Assert
             result.Should().BeNull();
         }
-        
+
         [Test]
         public async Task CreateRouteAsync_ShouldAddRouteToDbSet()
         {
             // Arrange
-            var newRoute = _factory.CreateRoute();
+            var newRoute = TestFixtureFactory.CreateRoute();
 
             // Act
-            var created = await _routeService.CreateRouteAsync(newRoute);
+            var created = await _routeService!.CreateRouteAsync(newRoute);
 
             // Assert
             created.Should().NotBeNull();
             created.Id.Should().Be(newRoute.Id);
-            var fetched = await _routeService.GetRouteByIdAsync(newRoute.Id);
+            var fetched = await _routeService!.GetRouteByIdAsync(newRoute.Id);
             fetched.Should().NotBeNull();
         }
-        
+
         [Test]
         public async Task UpdateRouteAsync_WhenRouteExists_ShouldUpdateRoute()
         {
             // Arrange
-            var existingRoute = _factory.CreateRoute();
-            await _routeService.CreateRouteAsync(existingRoute);
+            var existingRoute = TestFixtureFactory.CreateRoute();
+            await _routeService!.CreateRouteAsync(existingRoute);
             var updatedRoute = new Route
             {
                 Id = existingRoute.Id,
@@ -103,7 +103,7 @@ namespace BusBus.Tests.Unit
             };
 
             // Act
-            var result = await _routeService.UpdateRouteAsync(updatedRoute);
+            var result = await _routeService!.UpdateRouteAsync(updatedRoute);
 
             // Assert
             result.Should().NotBeNull();
@@ -111,36 +111,36 @@ namespace BusBus.Tests.Unit
             result.StartLocation.Should().Be("Updated Start");
             result.EndLocation.Should().Be("Updated End");
         }
-        
+
         [Test]
         public async Task UpdateRouteAsync_WhenRouteDoesNotExist_ShouldReturnFalse()
         {
             // Arrange
-            var nonExistentRoute = _factory.CreateRoute();
+            var nonExistentRoute = TestFixtureFactory.CreateRoute();
 
             // Act
-            var result = await _routeService.UpdateRouteAsync(nonExistentRoute);
+            var result = await _routeService!.UpdateRouteAsync(nonExistentRoute);
 
             // Assert
             result.Should().NotBeNull();
             result.Id.Should().Be(nonExistentRoute.Id);
         }
-        
+
         [Test]
         public async Task DeleteRouteAsync_WhenRouteExists_ShouldDeleteRoute()
         {
             // Arrange
-            var existingRoute = _factory.CreateRoute();
-            await _routeService.CreateRouteAsync(existingRoute);
+            var existingRoute = TestFixtureFactory.CreateRoute();
+            await _routeService!.CreateRouteAsync(existingRoute);
 
             // Act
-            await _routeService.DeleteRouteAsync(existingRoute.Id);
+            await _routeService!.DeleteRouteAsync(existingRoute.Id);
 
             // Assert
-            var result = await _routeService.GetRouteByIdAsync(existingRoute.Id);
+            var result = await _routeService!.GetRouteByIdAsync(existingRoute.Id);
             result.Should().BeNull();
         }
-        
+
         [Test]
         public async Task DeleteRouteAsync_WhenRouteDoesNotExist_ShouldReturnFalse()
         {
@@ -148,13 +148,13 @@ namespace BusBus.Tests.Unit
             var nonExistentId = Guid.NewGuid();
 
             // Act
-            await _routeService.DeleteRouteAsync(nonExistentId);
+            await _routeService!.DeleteRouteAsync(nonExistentId);
 
             // Assert
-            var result = await _routeService.GetRouteByIdAsync(nonExistentId);
+            var result = await _routeService!.GetRouteByIdAsync(nonExistentId);
             result.Should().BeNull();
         }
-        
+
         [Test]
         public async Task GetRoutesByDateAsync_ShouldReturnMatchingRoutes()
         {
@@ -164,18 +164,18 @@ namespace BusBus.Tests.Unit
             foreach (var route in routes)
             {
                 route.RouteDate = targetDate;
-                await _routeService.CreateRouteAsync(route);
+                await _routeService!.CreateRouteAsync(route);
             }
 
             // Act
-            var result = await _routeService.GetRoutesByDateAsync(targetDate);
+            var result = await _routeService!.GetRoutesByDateAsync(targetDate);
 
             // Assert
             result.Should().HaveCount(3);
             result.Should().BeEquivalentTo(routes);
         }
 
-        private Mock<DbSet<Route>> CreateMockDbSet()
+        private static Mock<DbSet<Route>> CreateMockDbSet()
         {
             // No longer needed; RouteService does not use DbSet
             return null!;
