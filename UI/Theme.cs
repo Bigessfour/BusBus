@@ -99,6 +99,12 @@ namespace BusBus.UI
             Color.FromArgb(128, CardText.R, CardText.G, CardText.B);
 
         /// <summary>
+        /// Gets secondary text color (lighter than CardText for less prominent text)
+        /// </summary>
+        public virtual Color SecondaryText => 
+            Color.FromArgb(180, CardText.R, CardText.G, CardText.B);
+
+        /// <summary>
         /// Fonts used in the theme
         /// </summary>
         public virtual Font HeadlineFont => _headlineFont ??= TryCreateFont("Segoe UI", 28F, FontStyle.Bold) ?? SystemFonts.DefaultFont;
@@ -343,6 +349,40 @@ namespace BusBus.UI
         {
             Dispose(false);
         }
+
+        /// <summary>
+        /// Gets elevation-based background colors for dark themes
+        /// Following Material Design elevation system for depth perception
+        /// </summary>
+        public virtual Color GetElevatedBackground(int elevation = 0)
+        {
+            if (Name != "Dark") return CardBackground;
+            
+            // Base dark color (#121212) with increasing lightness for elevation
+            var baseColor = Color.FromArgb(18, 18, 18);
+            var elevationStep = Math.Min(elevation * 8, 64); // Max 64 steps
+            
+            return Color.FromArgb(
+                Math.Min(255, baseColor.R + elevationStep),
+                Math.Min(255, baseColor.G + elevationStep), 
+                Math.Min(255, baseColor.B + elevationStep)
+            );
+        }
+
+        /// <summary>
+        /// Gets appropriate text color for elevated surfaces
+        /// Ensures proper contrast ratios on different elevation levels
+        /// </summary>
+        public virtual Color GetElevatedTextColor(int elevation = 0)
+        {
+            if (Name != "Dark") return CardText;
+            
+            // For very light elevated surfaces, use darker text
+            if (elevation > 6)
+                return Color.FromArgb(33, 33, 33);
+            
+            return CardText;
+        }
     }
 
     /// <summary>
@@ -397,15 +437,19 @@ namespace BusBus.UI
         public static readonly Color LightHeadlineText = Color.FromArgb(33, 37, 41);
         public static readonly Color LightTextBoxBackground = Color.White;
 
-        public static readonly Color DarkMainBackground = Color.FromArgb(33, 37, 41);
-        public static readonly Color DarkSidePanelBackground = Color.FromArgb(52, 58, 64);
-        public static readonly Color DarkHeadlineBackground = Color.FromArgb(73, 80, 87);
-        public static readonly Color DarkCardBackground = Color.FromArgb(52, 58, 64);
-        public static readonly Color DarkGridBackground = Color.FromArgb(52, 58, 64);
-        public static readonly Color DarkButtonBackground = Color.FromArgb(40, 167, 69);
-        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(34, 142, 58);
-        public static readonly Color DarkCardText = Color.White;
-        public static readonly Color DarkHeadlineText = Color.White;
-        public static readonly Color DarkTextBoxBackground = Color.FromArgb(73, 80, 87);
+        // Crystal Dark Theme Colors - inspired by Telerik Crystal Dark
+        // Using deep dark base with subtle blue-gray tints for modern crystal-like appearance
+        // Enhanced contrast ratios and premium visual depth
+        // Following both Material Design and crystal-like aesthetic principles
+        public static readonly Color DarkMainBackground = Color.FromArgb(15, 17, 20);        // Deep charcoal base
+        public static readonly Color DarkSidePanelBackground = Color.FromArgb(28, 32, 38);   // Cool gray with blue undertones
+        public static readonly Color DarkHeadlineBackground = Color.FromArgb(42, 48, 55);    // Elevated surface with crystal depth
+        public static readonly Color DarkCardBackground = Color.FromArgb(32, 36, 42);        // Card surface with subtle blue tint
+        public static readonly Color DarkGridBackground = Color.FromArgb(24, 28, 32);        // Grid container with depth
+        public static readonly Color DarkButtonBackground = Color.FromArgb(52, 144, 220);    // Crystal blue accent
+        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(42, 120, 195); // Deeper crystal blue on hover
+        public static readonly Color DarkCardText = Color.FromArgb(230, 235, 240);           // Cool white for excellent readability
+        public static readonly Color DarkHeadlineText = Color.FromArgb(248, 250, 252);       // Pure white for headlines
+        public static readonly Color DarkTextBoxBackground = Color.FromArgb(48, 54, 61);     // Input fields with crystal-like elevation
     }
 }

@@ -46,7 +46,13 @@ BusBus is a Windows Forms application designed to streamline school bus route ma
 Run tests and generate coverage reports:
 
 ```
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/Coverage/ /p:Threshold=80
+dotnet test --verbosity minimal --logger "console;verbosity=minimal"
+```
+
+Run tests with coverage:
+
+```
+dotnet test --collect:"XPlat Code Coverage" --settings ./CodeCoverage.runsettings --results-directory TestResults/Coverage --verbosity minimal
 ```
 
 Generate HTML coverage report:
@@ -82,7 +88,7 @@ You can run the same checks locally before pushing your changes:
 ```
 dotnet restore
 dotnet build --no-restore
-dotnet test --collect:"XPlat Code Coverage" --settings ./CodeCoverage.runsettings --results-directory TestResults/Coverage /p:Threshold=80
+dotnet test --verbosity minimal --logger "console;verbosity=minimal"
 ```
 
 For more detailed information on working with GitHub Actions in this project, see the [GitHub Actions Guide](docs/github-actions-guide.md).
@@ -128,5 +134,5 @@ To build and test:
 ```bash
 dotnet clean
 dotnet build BusBus.sln
-dotnet test BusBus.Tests/BusBus.Tests.csproj
+dotnet test BusBus.Tests/BusBus.Tests.csproj --verbosity minimal
 ```

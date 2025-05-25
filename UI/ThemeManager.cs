@@ -4,182 +4,234 @@ using System.Drawing;
 using System.Windows.Forms;
 
 namespace BusBus.UI
-{
-    /// <summary>
-    /// Manages application themes and theme switching
+{    /// <summary>
+    /// Manages application themes and provides centralized theme switching functionality
     /// </summary>
     public static class ThemeManager
     {
-        private static readonly Dictionary<string, Func<Theme>> _themes = new();
-        private static Theme _currentTheme = new LightTheme();
+        private static readonly Dictionary<string, Func<Theme>> _themeRegistry = new()
+        {
+            ["Light"] = () => new LightTheme(),
+            ["Dark"] = () => new DarkTheme()
+        };
+        private static Theme _currentTheme = new DarkTheme();
+        
+        /// <summary>
+        /// Event fired when the theme changes
+        /// </summary>
+        public static event EventHandler<EventArgs>? ThemeChanged;
 
         /// <summary>
-        /// Event fired when theme changes
+        /// Gets or sets the current active theme
         /// </summary>
-        public static event EventHandler? ThemeChanged;
-
-        static ThemeManager()
+        public static Theme CurrentTheme
         {
-            // Register built-in themes
-            RegisterTheme("Light", () => new LightTheme());
-            RegisterTheme("Dark", () => new DarkTheme());
+            get => _currentTheme;
+            set
+            {
+                if (_currentTheme != value)
+                {
+                    _currentTheme?.Dispose();
+                    _currentTheme = value ?? throw new ArgumentNullException(nameof(value));
+                    OnThemeChanged(EventArgs.Empty);
+                }
+            }
         }
 
         /// <summary>
-        /// Gets the current active theme
+        /// Raises the ThemeChanged event
         /// </summary>
-        public static Theme CurrentTheme => _currentTheme;
+        private static void OnThemeChanged(EventArgs e)
+        {
+            ThemeChanged?.Invoke(null, e);
+        }
 
         /// <summary>
-        /// Registers a new theme
+        /// Switches to a theme by name
         /// </summary>
-        /// <param name="name">Theme name</param>
-        /// <param name="themeFactory">Factory function to create theme instance</param>
+        /// <param name="themeName">Name of the theme to switch to</param>
+        public static void SwitchTheme(string themeName)
+        {
+            if (string.IsNullOrWhiteSpace(themeName))
+                throw new ArgumentException("Theme name cannot be null or empty", nameof(themeName));
+
+            if (_themeRegistry.TryGetValue(themeName, out var themeFactory))
+            {
+                CurrentTheme = themeFactory();
+            }
+            else
+            {
+                throw new ArgumentException($"Theme '{themeName}' is not registered", nameof(themeName));
+            }
+        }
+
+        /// <summary>
+        /// Sets the theme by name (alias for SwitchTheme)
+        /// </summary>
+        /// <param name="themeName">Name of the theme to set</param>
+        public static void SetTheme(string themeName)
+        {
+            SwitchTheme(themeName);
+        }
+
+        /// <summary>
+        /// Registers a new theme with the theme manager
+        /// </summary>
+        /// <param name="name">Name of the theme</param>
+        /// <param name="themeFactory">Factory function to create the theme</param>
         public static void RegisterTheme(string name, Func<Theme> themeFactory)
         {
             ArgumentNullException.ThrowIfNull(name);
             ArgumentNullException.ThrowIfNull(themeFactory);
             
-            _themes[name] = themeFactory;
-        }
+            _themeRegistry[name] = themeFactory;
+        }        /// <summary>
+        /// Gets all available theme names
+        /// </summary>
+        /// <returns>Collection of theme names</returns>
+        public static IEnumerable<string> AvailableThemes => _themeRegistry.Keys;
 
         /// <summary>
-        /// Switches to the specified theme
+        /// Applies the current theme to a form and all its child controls
         /// </summary>
-        /// <param name="themeName">Name of the theme to switch to</param>
-        public static void SwitchTheme(string themeName)
+        /// <param name="form">The form to apply the theme to</param>
+        public static void RefreshTheme(Form form)
         {
-            ArgumentNullException.ThrowIfNull(themeName);
-
-            if (!_themes.TryGetValue(themeName, out var themeFactory))
-            {
-                throw new ArgumentException($"Theme '{themeName}' not found. Available themes: {string.Join(", ", _themes.Keys)}");
-            }
-
-            var oldTheme = _currentTheme;
-            _currentTheme = themeFactory();
-            oldTheme?.Dispose();
-
-            ThemeChanged?.Invoke(null, EventArgs.Empty);
+            ArgumentNullException.ThrowIfNull(form);
+            ApplyThemeToControl(form);
         }
 
         /// <summary>
-        /// Sets the theme (alias for SwitchTheme for compatibility)
+        /// Applies the current theme to a specific control
         /// </summary>
-        /// <param name="themeName">Name of the theme to set</param>
-        public static void SetTheme(string themeName) => SwitchTheme(themeName);
-
-        /// <summary>
-        /// Gets available theme names
-        /// </summary>
-        /// <returns>Array of theme names</returns>
-        public static string[] GetAvailableThemes()
-        {
-            var themes = new string[_themes.Keys.Count];
-            _themes.Keys.CopyTo(themes, 0);
-            return themes;
-        }
-
-        /// <summary>
-        /// Refreshes theme for the specified control and its children
-        /// </summary>
-        /// <param name="control">Control to refresh</param>
-        public static void RefreshTheme(Control control)
+        /// <param name="control">The control to apply the theme to</param>
+        public static void RefreshControl(Control control)
         {
             ArgumentNullException.ThrowIfNull(control);
             ApplyThemeToControl(control);
         }
 
         /// <summary>
-        /// Refreshes theme for a specific control based on its properties
+        /// Recursively applies the current theme to a control and all its children
         /// </summary>
-        /// <param name="control">Control to refresh</param>
-        public static void RefreshControl(Control control)
+        /// <param name="control">The control to apply the theme to</param>
+        private static void ApplyThemeToControl(Control control)
         {
-            ArgumentNullException.ThrowIfNull(control);
+            if (control == null) return;
 
-            // Apply theme based on control tag or type
-            if (control.Tag?.ToString() == "HeadlinePanel")
+            try
             {
-                control.BackColor = CurrentTheme.HeadlineBackground;
-                control.ForeColor = CurrentTheme.HeadlineText;
+                // Apply theme based on control type and tags
+                switch (control)
+                {
+                    case Form form:
+                        form.BackColor = CurrentTheme.MainBackground;
+                        break;
+                        
+                    case Panel panel when panel.Tag?.ToString() == "HeadlinePanel":
+                        panel.BackColor = CurrentTheme.HeadlineBackground;
+                        break;
+                        
+                    case Panel panel when panel.Tag?.ToString() == "SidePanel":
+                        panel.BackColor = CurrentTheme.SidePanelBackground;
+                        break;
+                          case Panel panel when panel.Tag?.ToString()?.StartsWith("Elevation", StringComparison.Ordinal) == true:
+                        if (int.TryParse(panel.Tag.ToString()!.Replace("Elevation", "", StringComparison.Ordinal), out int elevation))
+                        {
+                            panel.BackColor = CurrentTheme.GetElevatedBackground(elevation);
+                        }
+                        else
+                        {
+                            panel.BackColor = CurrentTheme.CardBackground;
+                        }
+                        break;
+                        
+                    case Panel panel:
+                        panel.BackColor = CurrentTheme.CardBackground;
+                        break;
+                        
+                    case Button button:
+                        button.BackColor = CurrentTheme.ButtonBackground;
+                        button.ForeColor = CurrentTheme.HeadlineText;
+                        button.Font = CurrentTheme.ButtonFont;
+                        button.FlatStyle = FlatStyle.Flat;
+                        button.FlatAppearance.BorderSize = 0;
+                        break;
+                        
+                    case Label label:
+                        label.ForeColor = CurrentTheme.CardText;
+                        label.Font = CurrentTheme.CardFont;
+                        break;
+                        
+                    case TextBox textBox:
+                        textBox.BackColor = CurrentTheme.TextBoxBackground;
+                        textBox.ForeColor = CurrentTheme.CardText;
+                        textBox.Font = CurrentTheme.TextBoxFont;
+                        textBox.BorderStyle = BorderStyle.FixedSingle;
+                        break;
+                        
+                    case ComboBox comboBox:
+                        comboBox.BackColor = CurrentTheme.TextBoxBackground;
+                        comboBox.ForeColor = CurrentTheme.CardText;
+                        comboBox.Font = CurrentTheme.TextBoxFont;
+                        comboBox.FlatStyle = FlatStyle.Flat;
+                        break;
+                        
+                    case NumericUpDown numericUpDown:
+                        numericUpDown.BackColor = CurrentTheme.TextBoxBackground;
+                        numericUpDown.ForeColor = CurrentTheme.CardText;
+                        numericUpDown.Font = CurrentTheme.TextBoxFont;
+                        break;
+                        
+                    case DataGridView grid:
+                        grid.BackgroundColor = CurrentTheme.GridBackground;
+                        grid.ForeColor = CurrentTheme.CardText;
+                        grid.BorderStyle = BorderStyle.None;
+                        grid.ColumnHeadersDefaultCellStyle.BackColor = CurrentTheme.HeadlineBackground;
+                        grid.ColumnHeadersDefaultCellStyle.ForeColor = CurrentTheme.HeadlineText;
+                        grid.DefaultCellStyle.BackColor = CurrentTheme.CardBackground;
+                        grid.DefaultCellStyle.ForeColor = CurrentTheme.CardText;
+                        grid.EnableHeadersVisualStyles = false;
+                        break;
+                }
+
+                // Recursively apply theme to all child controls
+                foreach (Control child in control.Controls)
+                {
+                    ApplyThemeToControl(child);
+                }
             }
-            else
+            catch (ObjectDisposedException)
             {
-                ApplyThemeToControl(control);
+                // Control was disposed while applying theme
+                // This is normal during application shutdown
             }
         }
 
         /// <summary>
-        /// Applies current theme to a control and its children
+        /// Determines if a control has been styled according to the current theme
         /// </summary>
-        /// <param name="control">Control to apply theme to</param>
-        private static void ApplyThemeToControl(Control control)
+        /// <param name="control">The control to check</param>
+        /// <returns>True if the control matches the current theme styling</returns>
+        private static bool IsControlStyled(Control control)
         {
-            switch (control)
+            ArgumentNullException.ThrowIfNull(control);
+
+            return control switch
             {
-                case Form form:
-                    form.BackColor = CurrentTheme.MainBackground;
-                    form.ForeColor = CurrentTheme.CardText;
-                    break;
-
-                case Panel panel:
-                    panel.BackColor = CurrentTheme.CardBackground;
-                    panel.ForeColor = CurrentTheme.CardText;
-                    break;
-
-                case DataGridView grid:
-                    grid.BackgroundColor = CurrentTheme.GridBackground;
-                    grid.ColumnHeadersDefaultCellStyle.BackColor = CurrentTheme.HeadlineBackground;
-                    grid.ColumnHeadersDefaultCellStyle.ForeColor = CurrentTheme.HeadlineText;
-                    grid.DefaultCellStyle.BackColor = CurrentTheme.CardBackground;
-                    grid.DefaultCellStyle.ForeColor = CurrentTheme.CardText;
-                    grid.DefaultCellStyle.SelectionBackColor = CurrentTheme.ButtonBackground;
-                    grid.DefaultCellStyle.SelectionForeColor = Color.White;
-                    break;
-
-                case Button button:
-                    button.BackColor = CurrentTheme.ButtonBackground;
-                    button.ForeColor = Color.White;
-                    button.FlatStyle = FlatStyle.Flat;
-                    button.FlatAppearance.BorderSize = 0;
-                    break;
-
-                case Label label:
-                    label.ForeColor = CurrentTheme.CardText;
-                    if (label.Parent != null)
-                    {
-                        label.BackColor = Color.Transparent;
-                    }
-                    break;
-
-                case TextBox textBox:
-                    textBox.BackColor = CurrentTheme.TextBoxBackground;
-                    textBox.ForeColor = CurrentTheme.CardText;
-                    textBox.BorderStyle = BorderStyle.FixedSingle;
-                    break;
-
-                case ComboBox comboBox:
-                    comboBox.BackColor = CurrentTheme.TextBoxBackground;
-                    comboBox.ForeColor = CurrentTheme.CardText;
-                    break;
-
-                case NumericUpDown numericUpDown:
-                    numericUpDown.BackColor = CurrentTheme.TextBoxBackground;
-                    numericUpDown.ForeColor = CurrentTheme.CardText;
-                    break;
-
-                default:
-                    // For unknown controls, apply basic theming
-                    control.BackColor = CurrentTheme.CardBackground;
-                    control.ForeColor = CurrentTheme.CardText;
-                    break;
-            }
-
-            // Recursively apply to child controls
-            foreach (Control child in control.Controls)
-            {
-                ApplyThemeToControl(child);
-            }        }
+                Form form => form.BackColor == CurrentTheme.MainBackground,
+                Panel panel when panel.Tag?.ToString() == "HeadlinePanel" => 
+                    panel.BackColor == CurrentTheme.HeadlineBackground,
+                Panel panel when panel.Tag?.ToString() == "SidePanel" => 
+                    panel.BackColor == CurrentTheme.SidePanelBackground,
+                Panel panel => panel.BackColor == CurrentTheme.CardBackground,
+                Button button => button.BackColor == CurrentTheme.ButtonBackground,
+                TextBox textBox => textBox.BackColor == CurrentTheme.TextBoxBackground && 
+                                   textBox.ForeColor == CurrentTheme.CardText,
+                ComboBox comboBox => comboBox.BackColor == CurrentTheme.TextBoxBackground && 
+                                     comboBox.ForeColor == CurrentTheme.CardText,
+                _ => false
+            };
+        }
     }
 }

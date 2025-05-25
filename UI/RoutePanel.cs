@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -40,6 +41,7 @@ namespace BusBus.UI
         private readonly Button _deleteButton;
         private readonly TableLayoutPanel _tableLayoutPanel;
         private readonly IRouteService _routeService;
+        private readonly RouteCRUDHelper _crudHelper;
         private readonly Label _titleLabel;
         private readonly Label _errorLabel;
 #pragma warning disable CS0169, CA1823 // Unused field
@@ -57,11 +59,10 @@ namespace BusBus.UI
         public event EventHandler? SaveButtonClicked;
         public event EventHandler? UpdateButtonClicked;
         public event EventHandler? DeleteButtonClicked;
-        public event EventHandler? CancelButtonClicked;
-
-        public RoutePanel(IRouteService routeService)
+        public event EventHandler? CancelButtonClicked;        public RoutePanel(IRouteService routeService)
         {
             _routeService = routeService ?? throw new ArgumentNullException(nameof(routeService));
+            _crudHelper = new RouteCRUDHelper(routeService);
             _drivers = new List<Driver>();
             _vehicles = new List<Vehicle>();
 
@@ -89,11 +90,12 @@ namespace BusBus.UI
             _saveButton.Click += _saveButtonHandler;
             _cancelButton.Click += _cancelButtonHandler;
 
+            // Initialize the UI
+            InitializeUI();
+
             LoadDriversAndVehicles(); // Load drivers and vehicles
             Console.WriteLine("[RoutePanel] Event handlers hooked");
-        }
-
-        // Modified constructor to directly initialize from lists (used in tests)
+        }        // Modified constructor to directly initialize from lists (used in tests)
         public RoutePanel(IReadOnlyList<Driver> drivers, IReadOnlyList<Vehicle> vehicles)
         {
             _tripDatePicker = new DateTimePicker();
@@ -122,14 +124,32 @@ namespace BusBus.UI
             _cancelButtonHandler = (s, e) => CancelEdit();
             _saveButton.Click += _saveButtonHandler;
             _cancelButton.Click += _cancelButtonHandler;
-        }
 
-        private void CancelEdit()
+            // Initialize the UI to configure control properties (Maximum values, etc.)
+            InitializeUI();
+        }private void CancelEdit()
         {
-            CancelButtonClicked?.Invoke(this, EventArgs.Empty);
-        }
-
-        // Method to load a route for editing
+            // If it's a new route being edited, invoke the cancel event to close the panel
+            if (_currentRoute == null || _currentRoute.Id == Guid.Empty)
+            {
+                CancelButtonClicked?.Invoke(this, EventArgs.Empty);
+            }
+            // For existing routes, just revert to view mode
+            else
+            {
+                // Reset form with original route values
+                LoadRoute(_currentRoute);
+                
+                // Update button visibility
+                _saveButton.Visible = false;
+                _cancelButton.Visible = false;
+                _editButton.Visible = true;
+                _deleteButton.Visible = true;
+                
+                // Disable editing
+                SetFormEditable(false);
+            }
+        }// Method to load a route for editing
         public void LoadRoute(Route route)
         {
             ArgumentNullException.ThrowIfNull(route);
@@ -139,21 +159,52 @@ namespace BusBus.UI
 
             // Update the form fields
             _tripDatePicker.Value = route.RouteDate;
-            _amStartingMileage.Value = route.AMStartingMileage;
-            _amEndingMileage.Value = route.AMEndingMileage;
-            _amRiders.Value = route.AMRiders;
-            _pmStartMileage.Value = route.PMStartMileage;
-            _pmEndingMileage.Value = route.PMEndingMileage;
-            _pmRiders.Value = route.PMRiders;            // Update the title
+            _amStartingMileage.Value = ClampNumeric(_amStartingMileage, route.AMStartingMileage);
+            _amEndingMileage.Value = ClampNumeric(_amEndingMileage, route.AMEndingMileage);
+            _amRiders.Value = ClampNumeric(_amRiders, route.AMRiders);
+            _pmStartMileage.Value = ClampNumeric(_pmStartMileage, route.PMStartMileage);
+            _pmEndingMileage.Value = ClampNumeric(_pmEndingMileage, route.PMEndingMileage);
+            _pmRiders.Value = ClampNumeric(_pmRiders, route.PMRiders);
+
+            // Update the title
             _titleLabel.Text = route.Id == Guid.Empty ? "Add New Route" : $"Edit Route: {route.Name}";
 
-            // Enable/disable delete button
-            _deleteButton.Visible = route.Id != Guid.Empty;
-            _deleteButton.Click -= DeleteButton_Click;
-            _deleteButton.Click += DeleteButton_Click;
+            // Setup buttons visibility and event handlers
+            bool isNewRoute = route.Id == Guid.Empty;
+
+            // For new routes, enable editing and show save/cancel buttons
+            if (isNewRoute)
+            {
+                SetFormEditable(true);
+                _saveButton.Visible = true;
+                _cancelButton.Visible = true;
+                _editButton.Visible = false;
+                _deleteButton.Visible = false;
+            }
+            // For existing routes, show edit button initially
+            else
+            {
+                SetFormEditable(false);
+                _saveButton.Visible = false;
+                _cancelButton.Visible = false;
+                _editButton.Visible = true;
+                _deleteButton.Visible = true;
+
+                // Set up delete button click handler
+                _deleteButton.Click -= DeleteButton_Click;
+                _deleteButton.Click += DeleteButton_Click;
+            }
 
             // Update driver and vehicle combo boxes
             UpdateComboBoxes(route.DriverId, route.VehicleId);
+        }
+
+        /// <summary>
+        /// Clamps a value to the valid range of a NumericUpDown control.
+        /// </summary>
+        private static decimal ClampNumeric(NumericUpDown control, int value)
+        {
+            return Math.Min(Math.Max(value, (int)control.Minimum), (int)control.Maximum);
         }
 
         // Async method to load drivers and vehicles
@@ -242,9 +293,7 @@ namespace BusBus.UI
             {
                 _vehicleComboBox.SelectedIndex = 0;
             }
-        }
-
-        private async Task<bool> SaveRouteAsync()
+        }        private async Task<bool> SaveRouteAsync()
         {
             try
             {
@@ -260,21 +309,6 @@ namespace BusBus.UI
 
                 var isNewRoute = _currentRoute == null || _currentRoute.Id == Guid.Empty;
                 var route = _currentRoute ?? new Route { Id = Guid.Empty };
-
-                // Validate data
-                if (_amEndingMileage.Value < _amStartingMileage.Value)
-                {
-                    _errorLabel.Text = "AM ending mileage cannot be less than AM starting mileage";
-                    _errorLabel.Visible = true;
-                    return false;
-                }
-
-                if (_pmEndingMileage.Value < _pmStartMileage.Value)
-                {
-                    _errorLabel.Text = "PM ending mileage cannot be less than PM starting mileage";
-                    _errorLabel.Visible = true;
-                    return false;
-                }
 
                 // Update route properties
                 route.RouteDate = _tripDatePicker.Value;
@@ -292,17 +326,42 @@ namespace BusBus.UI
 
                 route.VehicleId = _vehicleComboBox.SelectedIndex > 0 ?
                     _vehicles[_vehicleComboBox.SelectedIndex - 1].Id :
-                    null;
-
-                // Determine if we're creating or updating
+                    null;                // Validate the route
+                var (isValid, errorMessage) = RouteCRUDHelper.ValidateRoute(route);
+                if (!isValid)
+                {
+                    _errorLabel.Text = errorMessage;
+                    _errorLabel.Visible = true;
+                    return false;
+                }                // Determine if we're creating or updating
                 if (isNewRoute)
                 {
-                    route.Name = $"Route {DateTime.Now:yyyyMMdd-HHmmss}";
-                    await _routeService.CreateRouteAsync(route);
+                    if (string.IsNullOrWhiteSpace(route.Name))
+                    {
+                        route.Name = $"Route {DateTime.Now:yyyyMMdd-HHmmss}";
+                    }
+                    // Create new route
+                    var createdRoute = await _crudHelper.CreateRouteAsync(route);
+                    _currentRoute = createdRoute;
+                    
+                    // Notify listeners about the save
+                    SaveButtonClicked?.Invoke(this, EventArgs.Empty);
                 }
                 else
                 {
-                    await _routeService.UpdateRouteAsync(route);
+                    // Update existing route
+                    var updatedRoute = await _crudHelper.UpdateRouteAsync(route);
+                    _currentRoute = updatedRoute;
+                    
+                    // Switch back to view mode
+                    SetFormEditable(false);
+                    _saveButton.Visible = false;
+                    _cancelButton.Visible = false;
+                    _editButton.Visible = true;
+                    _deleteButton.Visible = true;
+                    
+                    // Notify listeners about the update
+                    UpdateButtonClicked?.Invoke(this, EventArgs.Empty);
                 }
 
                 return true;
@@ -333,11 +392,9 @@ namespace BusBus.UI
             container.Controls.Clear();
             container.Controls.Add(this);
             this.Dock = DockStyle.Fill;
-        }
-
-        private async void DeleteButton_Click(object? sender, EventArgs e)
+        }        private async void DeleteButton_Click(object? sender, EventArgs e)
         {
-            if (_currentRoute != null && _currentRoute.Id != Guid.Empty && _routeService != null)
+            if (_currentRoute != null && _currentRoute.Id != Guid.Empty)
             {
                 try
                 {
@@ -347,7 +404,7 @@ namespace BusBus.UI
 
                     if (result == DialogResult.Yes)
                     {
-                        await _routeService.DeleteRouteAsync(_currentRoute.Id);
+                        await _crudHelper.DeleteRouteAsync(_currentRoute.Id);
                         DeleteButtonClicked?.Invoke(this, EventArgs.Empty);
                     }
                 }
@@ -357,6 +414,173 @@ namespace BusBus.UI
                     _errorLabel.Visible = true;
                 }
             }
+        }
+
+        // Method to initialize the UI
+        private void InitializeUI()
+        {
+            // Create main layout
+            _tableLayoutPanel.Dock = DockStyle.Fill;
+            _tableLayoutPanel.ColumnCount = 2;
+            _tableLayoutPanel.RowCount = 12; // Increased to fit all rows including buttons
+            _tableLayoutPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            _tableLayoutPanel.Padding = new Padding(10);
+
+            // Configure column styles
+            _tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35F));
+            _tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F));
+
+            // Configure row styles
+            // Rows 0 (Title), 1-9 (Fields), 10 (Error), 11 (Buttons)
+            for (int i = 0; i < _tableLayoutPanel.RowCount; i++)
+            {
+                if (i == 11) // Button panel row
+                {
+                    _tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F)); // Fixed height for button row
+                }
+                else
+                {
+                    _tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                }
+            }
+
+            // Add title label
+            _titleLabel.Text = "Route Details";
+            _titleLabel.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            _titleLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+            _tableLayoutPanel.Controls.Add(_titleLabel, 0, 0);
+            _tableLayoutPanel.SetColumnSpan(_titleLabel, 2);
+
+            // Configure DateTimePicker
+            _tripDatePicker.Format = DateTimePickerFormat.Short;
+            _tripDatePicker.Width = 200;
+            
+            // Configure numeric inputs
+            _amStartingMileage.Maximum = 999999;
+            _amEndingMileage.Maximum = 999999;
+            _amRiders.Maximum = 999;
+            _pmStartMileage.Maximum = 999999;
+            _pmEndingMileage.Maximum = 999999;
+            _pmRiders.Maximum = 999;
+
+            // Add form fields with labels
+            AddFormRow("Trip Date:", _tripDatePicker, 1);
+            AddFormRow("AM Starting Mileage:", _amStartingMileage, 2);
+            AddFormRow("AM Ending Mileage:", _amEndingMileage, 3);
+            AddFormRow("AM Riders:", _amRiders, 4);
+            AddFormRow("PM Starting Mileage:", _pmStartMileage, 5);
+            AddFormRow("PM Ending Mileage:", _pmEndingMileage, 6);
+            AddFormRow("PM Riders:", _pmRiders, 7);
+            AddFormRow("Driver:", _driverComboBox, 8);
+            AddFormRow("Vehicle:", _vehicleComboBox, 9);
+
+            // Configure error label
+            _errorLabel.ForeColor = System.Drawing.Color.Red;
+            _errorLabel.AutoSize = true;
+            _errorLabel.Visible = false;
+            _tableLayoutPanel.Controls.Add(_errorLabel, 0, 10);
+            _tableLayoutPanel.SetColumnSpan(_errorLabel, 2);
+
+            // Create button panel for CRUD operations
+            var buttonPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 4,
+                RowCount = 1,
+                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                Visible = true // Explicitly set Visible to true
+            };
+              // Configure CRUD buttons
+            ConfigureButton(_saveButton, "Save", ThemeManager.CurrentTheme.ButtonBackground);
+            ConfigureButton(_editButton, "Edit", ThemeManager.CurrentTheme.ButtonBackground);
+            ConfigureButton(_cancelButton, "Cancel", ThemeManager.CurrentTheme.ButtonBackground);
+            ConfigureButton(_deleteButton, "Delete", System.Drawing.Color.FromArgb(220, 53, 69)); // Red for delete
+            
+            // Set button names for proper identification
+            _saveButton.Name = "SaveButton";
+            _editButton.Name = "EditButton";
+            _cancelButton.Name = "CancelButton";
+            _deleteButton.Name = "DeleteButton";
+
+            // Add buttons to panel
+            buttonPanel.Controls.Add(_saveButton, 0, 0);
+            buttonPanel.Controls.Add(_editButton, 1, 0);
+            buttonPanel.Controls.Add(_cancelButton, 2, 0);
+            buttonPanel.Controls.Add(_deleteButton, 3, 0);
+
+            // Set equal widths for buttons
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+
+            // Add button panel to main layout
+            _tableLayoutPanel.Controls.Add(buttonPanel, 0, 11);
+            _tableLayoutPanel.SetColumnSpan(buttonPanel, 2);
+
+            // Add the edit button click event handler
+            _editButton.Click += EditButton_Click;
+
+            // Add the main layout to the control
+            this.Controls.Add(_tableLayoutPanel);
+        }
+
+        // Helper method to add a row with label and control
+        private void AddFormRow(string labelText, Control control, int rowIndex)
+        {
+            var label = new Label
+            {
+                Text = labelText,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleRight,
+                ForeColor = ThemeManager.CurrentTheme.CardText
+            };
+            
+            control.Dock = DockStyle.Fill;
+            
+            _tableLayoutPanel.Controls.Add(label, 0, rowIndex);
+            _tableLayoutPanel.Controls.Add(control, 1, rowIndex);
+        }        // Helper method to configure button appearance
+        private static void ConfigureButton(Button button, string text, System.Drawing.Color backColor)
+        {
+            button.Text = text;
+            button.BackColor = backColor;
+            button.ForeColor = ThemeManager.CurrentTheme.CardText;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 1;
+            button.Dock = DockStyle.Fill;
+            button.Margin = new Padding(5);
+            button.Font = new System.Drawing.Font("Segoe UI", 10F);
+        }
+
+        // Edit button click event handler
+        private void EditButton_Click(object? sender, EventArgs e)
+        {
+            if (_currentRoute != null)
+            {
+                // Enable editing of form fields
+                SetFormEditable(true);
+                
+                // Hide Edit button and show Save/Cancel buttons
+                _editButton.Visible = false;
+                _saveButton.Visible = true;
+                _cancelButton.Visible = true;
+                _deleteButton.Visible = true;
+            }
+        }
+
+        // Helper method to set form fields editable or read-only
+        private void SetFormEditable(bool editable)
+        {
+            _tripDatePicker.Enabled = editable;
+            _amStartingMileage.Enabled = editable;
+            _amEndingMileage.Enabled = editable;
+            _amRiders.Enabled = editable;
+            _pmStartMileage.Enabled = editable;
+            _pmEndingMileage.Enabled = editable;
+            _pmRiders.Enabled = editable;
+            _driverComboBox.Enabled = editable;
+            _vehicleComboBox.Enabled = editable;
         }
     }
 }

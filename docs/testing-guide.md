@@ -48,6 +48,17 @@ The following NUnit packages are configured in `BusBus.Tests.csproj`:
 <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
 ```
 
+### Test Categories
+Tests are organized using NUnit categories defined in `TestCategories.cs`:
+```csharp
+public static class TestCategories
+{
+    public const string Unit = "Unit";
+    public const string Integration = "Integration";
+    public const string EndToEnd = "EndToEnd";
+}
+```
+
 ### Test Class Structure
 All test classes must follow this NUnit pattern:
 ```csharp
@@ -56,6 +67,7 @@ using NUnit.Framework;
 namespace BusBus.Tests
 {
     [TestFixture]
+    [Category(TestCategories.Unit)] // Add appropriate category
     public class YourClassTests : TestBase
     {
         [SetUp]
@@ -81,6 +93,19 @@ namespace BusBus.Tests
 }
 ```
 
+### Running Tests by Category
+You can run specific test categories using:
+```cmd
+# Run only unit tests
+dotnet test --filter "Category=Unit" --verbosity minimal
+
+# Run integration tests
+dotnet test --filter "Category=Integration" --verbosity minimal
+
+# Exclude end-to-end tests
+dotnet test --filter "Category!=EndToEnd" --verbosity minimal
+```
+
 ## Key Testing Components
 
 ### TestBase
@@ -88,19 +113,18 @@ namespace BusBus.Tests
 The `TestBase` class provides common functionality for tests:
 
 - Sets up dependency injection
-- Creates in-memory database instances 
-- Configures AutoFixture
+- Creates LocalDB database instances 
+- Configures test data seeding
 - Handles cleanup after tests
 
 ```csharp
-public abstract class TestBase
+public abstract class TestBase : IDisposable
 {
-    protected IServiceProvider ServiceProvider { get; private set; }
-    protected IFixture Fixture { get; private set; }
+    protected ServiceProvider ServiceProvider { get; private set; }
     protected AppDbContext DbContext { get; private set; }
     
     [SetUp]
-    public virtual void Setup()
+    public virtual async Task SetUp()
     {
         // Sets up services and test data
     }
@@ -113,17 +137,21 @@ public abstract class TestBase
 }
 ```
 
-### In-Memory Database Testing
+### LocalDB Testing
 
-Tests use EF Core's in-memory database provider to simulate data operations without requiring a real database:
+Tests use SQL Server LocalDB for Windows development and Docker SQL Server for CI:
 
 ```csharp
-protected AppDbContext CreateInMemoryDatabase()
+protected virtual void ConfigureServices(IServiceCollection services)
 {
-    var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString())
-        .Options;
-    return new AppDbContext(options);
+    Configuration = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional: false)
+        .Build();
+
+    var connectionString = Configuration.GetConnectionString("DefaultConnection");
+    services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString));
 }
 ```
 

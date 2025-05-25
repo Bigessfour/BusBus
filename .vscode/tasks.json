@@ -35,50 +35,29 @@
 			"args": [
 				"test",
 				"/p:CollectCoverage=true",
-				"/p:CoverletOutputFormat=cobertura"
+				"/p:CoverletOutputFormat=cobertura",
+				"/p:CoverletOutput=./TestResults/Coverage/",
+				"/p:Threshold=80"
 			],
 			"problemMatcher": "$msCompile",
-			"group": "test"
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
 		},
 		{
 			"label": "generate coverage report",
 			"command": "reportgenerator",
 			"type": "process",
 			"args": [
-				"-reports:${workspaceFolder}/BusBus.Tests/coverage.cobertura.xml",
-				"-targetdir:${workspaceFolder}/CoverageReport",
+				"-reports:./TestResults/Coverage/coverage.cobertura.xml",
+				"-targetdir:./TestResults/Coverage/Report",
 				"-reporttypes:Html"
 			],
-			"problemMatcher": []
-		},
-		{
-			"label": "test with coverage and report",
-			"dependsOrder": "sequence",
+			"problemMatcher": [],
 			"dependsOn": [
-				"test with coverage",
-				"generate coverage report"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Run tests with coverage and open report",
-			"type": "shell",
-			"command": "powershell",
-			"args": [
-				"-Command",
-				"Write-Host 'Checking if PowerShell is available...' -ForegroundColor Cyan; Write-Host 'PowerShell version:' -ForegroundColor Green; $PSVersionTable.PSVersion; Write-Host 'Running tests with coverage...' -ForegroundColor Cyan; dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/Coverage/; if ($?) { Write-Host 'Generating coverage report...' -ForegroundColor Cyan; reportgenerator -reports:./TestResults/Coverage/coverage.cobertura.xml -targetdir:./TestResults/Coverage/Report -reporttypes:Html; if ($?) { Write-Host 'Opening coverage report...' -ForegroundColor Green; Start-Process (Resolve-Path ./TestResults/Coverage/Report/index.html) } else { Write-Host 'Failed to generate coverage report' -ForegroundColor Red } } else { Write-Host 'Tests failed or coverage data was not generated' -ForegroundColor Red }; Write-Host 'Press any key to continue...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')"
-			],
-			"group": "test",
-			"presentation": {
-				"reveal": "always",
-				"panel": "dedicated",
-				"clear": true
-			},
-			"problemMatcher": []
+				"test with coverage"
+			]
 		},
 		{
 			"label": "OmniSharp check Dashboard.cs",
@@ -181,6 +160,77 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "Validate SQL Server Express Configuration",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Validating SQL Server Express Configuration...' -ForegroundColor Cyan; $configPath = 'appsettings.json'; if (Test-Path $configPath) { $config = Get-Content $configPath | ConvertFrom-Json; $connStr = $config.ConnectionStrings.DefaultConnection; Write-Host 'Connection String:' -ForegroundColor Yellow; Write-Host $connStr -ForegroundColor White; if ($connStr -like '*SQLEXPRESS*') { Write-Host '✅ Using SQL Server Express' -ForegroundColor Green } else { Write-Host '❌ Not using SQL Server Express' -ForegroundColor Red }; if ($connStr -like '*BusBusDb*') { Write-Host '✅ Database name is BusBusDb' -ForegroundColor Green } else { Write-Host '❌ Database name is not BusBusDb' -ForegroundColor Red } } else { Write-Host '❌ appsettings.json not found' -ForegroundColor Red }"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true,
+				"showReuseMessage": false
+			}
+		},
+		{
+			"label": "Test SQL Server Express Integration",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"BusBus.Tests",
+				"--filter",
+				"FullyQualifiedName~SqlServerExpressIntegrationTest",
+				"--verbosity",
+				"normal",
+				"--logger",
+				"console;verbosity=detailed"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true,
+				"showReuseMessage": false
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"dependsOn": [
+				"build BusBus solution"
+			]
+		},
+		{
+			"label": "Test All Integration Tests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--filter",
+				"Category=Integration",
+				"--verbosity",
+				"normal",
+				"--logger",
+				"console;verbosity=detailed"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true,
+				"showReuseMessage": false
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"dependsOn": [
+				"build BusBus solution"
+			]
+		},
+		{
 			"label": "Check if OmniSharp is loaded",
 			"type": "process",
 			"command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
@@ -197,198 +247,6 @@
 				"clear": true
 			},
 			"problemMatcher": []
-		},
-		{
-			"label": "open coverage report",
-			"type": "shell",
-			"command": "start",
-			"windows": {
-				"command": "start"
-			},
-			"osx": {
-				"command": "open"
-			},
-			"linux": {
-				"command": "xdg-open"
-			},
-			"args": [
-				"${workspaceFolder}/CoverageReport/index.html"
-			],
-			"problemMatcher": []
-		},
-		{
-			"label": "Ensure ReportGenerator is installed",
-			"type": "shell",
-			"command": "powershell",
-			"args": [
-				"-Command",
-				"Write-Host 'Checking if ReportGenerator is installed...' -ForegroundColor Cyan; if (Get-Command reportgenerator -ErrorAction SilentlyContinue) { Write-Host 'ReportGenerator is already installed!' -ForegroundColor Green } else { Write-Host 'Installing ReportGenerator...' -ForegroundColor Yellow; dotnet tool install -g dotnet-reportgenerator-globaltool --ignore-failed-sources; if ($?) { Write-Host 'ReportGenerator has been installed successfully!' -ForegroundColor Green } else { Write-Host 'Failed to install ReportGenerator. Please install it manually with:' -ForegroundColor Red; Write-Host 'dotnet tool install -g dotnet-reportgenerator-globaltool' -ForegroundColor Red } }; Write-Host 'Press any key to continue...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')"
-			],
-			"presentation": {
-				"reveal": "always",
-				"panel": "shared",
-				"clear": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "test",
-			"command": "dotnet",
-			"type": "process",
-			"args": [
-				"test"
-			],
-			"problemMatcher": "$msCompile",
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			}
-		},
-		{
-			"label": "Run Tests with Coverage",
-			"command": "dotnet",
-			"type": "process",
-			"args": [
-				"test",
-				"/p:CollectCoverage=true",
-				"/p:CoverletOutputFormat=cobertura"
-			],
-			"problemMatcher": "$msCompile",
-			"group": "test"
-		},
-		{
-			"label": "Generate Coverage Report",
-			"command": "reportgenerator",
-			"type": "process",
-			"args": [
-				"-reports:${workspaceFolder}/BusBus.Tests/coverage.cobertura.xml",
-				"-targetdir:${workspaceFolder}/CoverageReport",
-				"-reporttypes:Html"
-			],
-			"problemMatcher": []
-		},
-		{
-			"label": "Run Tests and Generate Report",
-			"dependsOrder": "sequence",
-			"dependsOn": [
-				"Run Tests with Coverage",
-				"Generate Coverage Report"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Open Coverage Report",
-			"type": "shell",
-			"command": "cmd.exe",
-			"args": [
-				"/c",
-				"start",
-				"\"\"",
-				"\"${workspaceFolder}\\open-coverage-report.html\""
-			],
-			"presentation": {
-				"reveal": "always",
-				"panel": "shared",
-				"clear": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Generate and Open Coverage Report",
-			"type": "shell",
-			"command": "cmd.exe",
-			"args": [
-				"/c",
-				"reportgenerator -reports:${workspaceFolder}/BusBus.Tests/coverage.cobertura.xml -targetdir:${workspaceFolder}/CoverageReport -reporttypes:Html && timeout /t 2 > nul && start \"\" \"${workspaceFolder}\\open-coverage-report.html\""
-			],
-			"presentation": {
-				"reveal": "always",
-				"panel": "shared",
-				"clear": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Complete Test Coverage Workflow",
-			"dependsOrder": "sequence",
-			"dependsOn": [
-				"Run Tests with Coverage",
-				"Generate Coverage Report",
-				"Open Coverage Report"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "View Coverage in VS Code Browser",
-			"type": "shell",
-			"command": "${command:simpleBrowser.show}",
-			"args": [
-				"${workspaceFolder}/CoverageReport/index.html"
-			],
-			"problemMatcher": []
-		},
-		{
-			"label": "Open Testing Guide",
-			"type": "shell",
-			"command": "start",
-			"args": [
-				"${workspaceFolder}/docs/testing-guide.md"
-			],
-			"presentation": {
-				"reveal": "never",
-				"panel": "new"
-			},
-			"group": "test",
-			"problemMatcher": []
-		},
-		{
-			"label": "Create New Test",
-			"type": "shell",
-			"command": "powershell",
-			"args": [
-				"-Command",
-				"Write-Host 'Starting new test creation workflow...' -ForegroundColor Cyan; Start-Process '${workspaceFolder}/docs/testing-guide.md'; $testName = Read-Host 'Enter the name of the class to test (without \"Tests\" suffix)'; $filename = \"${workspaceFolder}/BusBus.Tests/${testName}Tests.cs\"; if (!(Test-Path $filename)) { if (Test-Path \"${workspaceFolder}/docs/test-template.cs\") { $templateContent = Get-Content -Path '${workspaceFolder}/docs/test-template.cs' -Raw; $templateContent = $templateContent -replace '\\{ClassName\\}', $testName; Set-Content -Path $filename -Value $templateContent; Write-Host \"Created new test file at $filename\" -ForegroundColor Green; } else { Write-Host \"Creating basic test file for $testName...\" -ForegroundColor Yellow; $basicTemplate = @\"\nusing NUnit.Framework;\nusing System;\nusing System.Threading.Tasks;\n\nnamespace BusBus.Tests\n{\n    [TestFixture]\n    public class ${testName}Tests\n    {\n        [SetUp]\n        public void Setup()\n        {\n            // TODO: Setup test dependencies\n        }\n\n        [Test]\n        public void Test1()\n        {\n            // Arrange\n\n            // Act\n\n            // Assert\n            Assert.Pass(\"Test not yet implemented\");\n        }\n\n        [TearDown]\n        public void TearDown()\n        {\n            // TODO: Cleanup resources\n        }\n    }\n}\n\"@; Set-Content -Path $filename -Value $basicTemplate; Write-Host \"Created basic test file at $filename\" -ForegroundColor Green; } code $filename } else { Write-Host \"Test file already exists at $filename\" -ForegroundColor Yellow; code $filename }"
-			],
-			"group": "test",
-			"presentation": {
-				"reveal": "always",
-				"panel": "new",
-				"clear": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Prepare Test Context",
-			"type": "shell",
-			"command": "cmd.exe",
-			"args": [
-				"/c",
-				"${workspaceFolder}\\prepare-test-context.cmd",
-				"${input:classNameForTestContext}"
-			],
-			"group": "test",
-			"presentation": {
-				"reveal": "always",
-				"panel": "dedicated",
-				"clear": true
-			},
-			"problemMatcher": []
-		}
-	],
-	"inputs": [
-		{
-			"id": "classNameForTestContext",
-			"type": "promptString",
-			"description": "Enter the name of the class to analyze (leave empty for general report)",
-			"default": ""
 		}
 	]
 }

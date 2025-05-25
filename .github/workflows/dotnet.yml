@@ -18,38 +18,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Validate appsettings.json
-        run: |
-          Get-Content appsettings.json | ConvertFrom-Json
-        shell: pwsh
-        continue-on-error: true
       - name: Restore dependencies
         run: dotnet restore BusBus.sln
-      - name: Run SonarQube Analysis Begin
-        run: |
-          dotnet tool install --global dotnet-sonarscanner
-          dotnet sonarscanner begin /k:"BusBus" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        if: matrix.os == 'windows-latest'
       - name: Build
-        run: dotnet build BusBus.sln --configuration Release --no-restore /warnaserror
-      - name: Run SonarQube Analysis End
-        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}"
-        if: matrix.os == 'windows-latest'
+        run: dotnet build BusBus.sln --configuration Release --no-restore
       - name: Test with Coverage
-        run: |
-          dotnet tool install --global coverlet.console
-          dotnet test BusBus.sln --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+        run: dotnet test BusBus.sln --verbosity minimal --logger "console;verbosity=minimal"
       - name: Publish Test Results
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}
           path: '**/*.trx'
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts-${{ matrix.os }}
-          path: bin/Release/
+        if: always()

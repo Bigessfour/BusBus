@@ -29,10 +29,11 @@ namespace BusBus
                 _backgroundTasks.Add(task);
             }
             Console.WriteLine($"[Program] Added background task. Total tasks: {_backgroundTasks.Count}");
-        }
-
+        }        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
         [STAThread]
-        static void Main()
+        static async Task Main()
         {
             Console.WriteLine("[Program] Application starting...");
 
@@ -47,12 +48,37 @@ namespace BusBus
 
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-
-            // Setup dependency injection
+            Application.SetCompatibleTextRenderingDefault(false);            // Setup dependency injection
             var services = new ServiceCollection();
             ConfigureServices(services);
-            _serviceProvider = services.BuildServiceProvider();            // Setup application exit handler (nullable EventHandler)
+            _serviceProvider = services.BuildServiceProvider();
+
+            // Initialize theme system with dark theme for testing
+            Console.WriteLine("[Program] Initializing theme system...");
+            try 
+            {
+                var args = Environment.GetCommandLineArgs();
+                
+                // Default to dark theme unless explicitly requested otherwise
+                bool startWithLightTheme = args.Length > 1 && args[1].Equals("--light", StringComparison.OrdinalIgnoreCase);
+                
+                if (startWithLightTheme)
+                {
+                    Console.WriteLine("[Program] Starting with light theme...");
+                    ThemeManager.SwitchTheme("Light");
+                }
+                else
+                {
+                    Console.WriteLine("[Program] Starting with dark theme (default)...");
+                    ThemeManager.SwitchTheme("Dark");
+                }
+                  Console.WriteLine($"[Program] Current theme: {ThemeManager.CurrentTheme.Name}");
+                Console.WriteLine($"[Program] Available themes: {string.Join(", ", ThemeManager.AvailableThemes)}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Program] Error initializing theme: {ex.Message}");
+            }// Setup application exit handler (nullable EventHandler)
             EventHandler? applicationExitHandler = null;
             applicationExitHandler = (sender, e) =>
             {
@@ -60,10 +86,14 @@ namespace BusBus
                 ShutdownApplication();
             };
 
-            Application.ApplicationExit += applicationExitHandler;
-
-            try
+            Application.ApplicationExit += applicationExitHandler;            try
             {
+                // Seed sample data into the RouteService
+                var routeService = _serviceProvider.GetRequiredService<IRouteService>();
+                Console.WriteLine("[Program] Seeding sample data...");
+                await routeService.SeedSampleDataAsync();
+                Console.WriteLine("[Program] Sample data seeded successfully");
+
                 var dashboard = _serviceProvider.GetRequiredService<Dashboard>();
                 Console.WriteLine("[Program] Running main form...");
                 Application.Run(dashboard);
@@ -169,11 +199,8 @@ namespace BusBus
                 )
                 .EnableSensitiveDataLogging()
                 .EnableDetailedErrors()
-            );
-
-            // Register RouteService with factory to match constructor signature
-            services.AddScoped<IRouteService>(provider =>
-                new RouteService());
+            );            // Register RouteService with singleton pattern to maintain in-memory data
+            services.AddSingleton<IRouteService, RouteService>();
 
             // Register AppDbContext as IAppDbContext
             services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());

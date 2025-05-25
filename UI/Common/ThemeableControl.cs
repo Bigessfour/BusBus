@@ -55,17 +55,16 @@ namespace BusBus.UI.Common
                 {
                     if (InvokeRequired)
                     {
-                        Invoke(new Action(ApplyTheme));
+                        Invoke(new MethodInvoker(RefreshTheme));
                     }
                     else
                     {
-                        ApplyTheme();
+                        RefreshTheme();
                     }
                 }
                 catch (ObjectDisposedException)
                 {
-                    // Control was disposed while theme change was processing
-                    // This is normal during application shutdown
+                    // Control was disposed while trying to update theme - ignore
                 }
             }
         }
@@ -77,45 +76,36 @@ namespace BusBus.UI.Common
         protected virtual void ApplyTheme()
         {
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            ApplyThemeToControl(this);
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Recursively applies theme to a control and all its children.
         /// This is the centralized theme application logic.
         /// </summary>
         protected static void ApplyThemeToControl(Control control)
         {
-            if (control == null) return;
+            if (control == null)
+                return;
 
             try
             {
+                // Apply theme based on control type
                 switch (control)
                 {
-                    case DataGridView grid:
-                        grid.BackgroundColor = ThemeManager.CurrentTheme.GridBackground;
-                        grid.ColumnHeadersDefaultCellStyle.BackColor = ThemeManager.CurrentTheme.HeadlineBackground;
-                        grid.DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.CardBackground;
-                        grid.DefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
-                    case Button button:
-                        button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                        button.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
-                    case Label label:
-                        label.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
                     case TextBox textBox:
-                        textBox.BackColor = ThemeManager.CurrentTheme.LightTextBoxBackground;
+                        textBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
                         textBox.ForeColor = ThemeManager.CurrentTheme.CardText;
                         break;
                     case ComboBox comboBox:
-                        comboBox.BackColor = ThemeManager.CurrentTheme.LightTextBoxBackground;
+                        comboBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
                         comboBox.ForeColor = ThemeManager.CurrentTheme.CardText;
                         break;
                     case NumericUpDown numericUpDown:
-                        numericUpDown.BackColor = ThemeManager.CurrentTheme.LightTextBoxBackground;
+                        numericUpDown.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
                         numericUpDown.ForeColor = ThemeManager.CurrentTheme.CardText;
+                        break;
+                    default:
+                        // Apply default theme to the control itself
+                        control.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                        control.ForeColor = ThemeManager.CurrentTheme.CardText;
                         break;
                 }
 
@@ -130,9 +120,7 @@ namespace BusBus.UI.Common
                 // Control was disposed while applying theme
                 // This is normal during application shutdown
             }
-        }
-
-        /// <summary>
+        }/// <summary>
         /// Renders the control into the specified container.
         /// Must be implemented by derived classes.
         /// </summary>

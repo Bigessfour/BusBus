@@ -12,71 +12,40 @@ using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public class RouteEventArgs : EventArgs
-    {
-        public Route Route { get; set; }
-
-        public RouteEventArgs(Route route)
-        {
-            Route = route;
-        }
-    }
-
-#pragma warning disable CA2213 // Disposable fields should be disposed
     public partial class RouteListPanel : ThemeableControl, IDisplayable
-    // Removed unused field _disposedValue and related pragma
     {
-        // Add event for route editing with proper EventArgs pattern
-        public event EventHandler<RouteEventArgs>? RouteEditRequested;
-
-        private bool _disposed = false;
-
-#pragma warning disable CS0649 // Field is never assigned
-        private Task? _initialLoadTask;
-#pragma warning restore CS0649
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private readonly EventHandler _selectionChangedHandler;        private readonly List<Task> _backgroundTasks = new List<Task>();
-        private readonly DataGridViewCellFormattingEventHandler _cellFormattingHandler;
-        private readonly DataGridViewCellEventHandler _cellDoubleClickHandler;
-        private readonly DataGridViewCellEventHandler _cellEndEditHandler;
-        private readonly IRouteService _routeService;
-        private readonly DataGridView _routesGrid;
-
-        // For test/mocking: allow injection of details panel and map view
-        public IRouteDetailsPanel? RouteDetailsPanel { get; set; }
-        public IMapView? MapView { get; set; }
+        // ...existing code...
 
         /// <summary>
-        /// Exposes the routes DataGridView for testing purposes.
+        /// Handles infinite scroll for the DataGridView. Call this from the scroll event handler.
         /// </summary>
-        public DataGridView RoutesGrid => _routesGrid;
-        private readonly Button _prevPageButton;
-        private readonly Button _nextPageButton;
-        private readonly Label _pageInfoLabel;
-        private readonly Button _addRouteButton;
-        private readonly Button _editRouteButton;
-        private readonly Button _deleteRouteButton; // Properly name the button
-        private readonly Label _titleLabel; // Add title label
-        private bool _disposedValue;
-        private int _currentPage = 1;
-        private int _pageSize = 10;
-        private int _totalRoutes;
-        private List<BusBus.Models.Route> _routes = new List<BusBus.Models.Route>();
-        private List<Driver>? _drivers;
-        private List<Vehicle>? _vehicles;
-
-        public RouteListPanel(IRouteService routeService)
-
+        private async Task HandleInfiniteScrollAsync()
         {
-            ArgumentNullException.ThrowIfNull(routeService);
-            _routeService = routeService;
-            _selectionChangedHandler = (s, e) => { };            this.Dock = DockStyle.Fill;
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            this.Padding = new Padding(0); // Remove padding for edge-to-edge layout
+            // If already loading, or all data loaded, do nothing
+            if (_routes.Count >= _totalRoutes) return;
 
-            // Create title label
-            _titleLabel = new Label
+            // If the user is near the bottom, load more
+            var visibleRows = _routesGrid.DisplayedRowCount(false);
+            var firstDisplayed = _routesGrid.FirstDisplayedScrollingRowIndex;
+            var lastVisible = firstDisplayed + visibleRows;
+            // If within 5 rows of the end, load more
+            if (lastVisible >= _routes.Count - 5)
             {
+                int nextPage = (_routes.Count / _pageSize) + 1;
+                var moreRoutes = await _routeService.GetRoutesAsync(nextPage, _pageSize, CancellationToken.None);
+                if (moreRoutes != null && moreRoutes.Count > 0)
+                {
+                    _routes.AddRange(moreRoutes);
+                    // Refresh grid
+                    _routesGrid.DataSource = null;
+                    _routesGrid.DataSource = _routes;
+                }
+            }
+        }
+
+        // ...existing code...
+    }
+
                 Text = "Route Entries",
                 Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold),
                 Dock = DockStyle.Top,

@@ -74,10 +74,35 @@ namespace BusBus.UI
                     }
                 }
                 if (routeListPanel != null) break;
-            }
-            if (routeListPanel == null)
+            }            if (routeListPanel == null)
             {
                 routeListPanel = new RouteListPanel(_routeService);
+                
+                // Subscribe to the RouteEditRequested event
+                routeListPanel.RouteEditRequested += (sender, args) =>
+                {
+                    try
+                    {
+                        Console.WriteLine($"[Dashboard] RouteEditRequested event received for route: {args.Route.Name}");
+                        Console.WriteLine($"[Dashboard] Route ID: {args.Route.Id} (Empty = new route: {args.Route.Id == Guid.Empty})");
+                        
+                        // TODO: Implement route editing functionality
+                        if (args.Route.Id == Guid.Empty)
+                        {
+                            MessageBox.Show($"Add new route functionality will be implemented here.\nRoute: {args.Route.Name}", "Add Route", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Edit route functionality will be implemented here.\nRoute: {args.Route.Name}\nID: {args.Route.Id}", "Edit Route", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Dashboard] ERROR in RouteEditRequested handler: {ex.Message}");
+                        MessageBox.Show($"Error handling route edit request: {ex.Message}", "Handler Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
+                
                 _mainPanel.Controls.Add(routeListPanel);
             }
             await routeListPanel.LoadRoutesAsync(page, pageSize, cancellationToken);
@@ -113,19 +138,17 @@ namespace BusBus.UI
                     CellBorderStyle = TableLayoutPanelCellBorderStyle.None
                 };
                 mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240F)); // Fixed sidebar width
-                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Main area takes remaining space
-                mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 95F));
-                mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 5F));
-
-                _sidePanel.Dock = DockStyle.Fill;
+                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Main area takes remaining space                mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 90F));
+                mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 10F));_sidePanel.Dock = DockStyle.Fill;
+                _sidePanel.Tag = "SidePanel"; // Tag for theme manager
                 _sidePanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
                 mainTableLayout.Controls.Add(_sidePanel, 0, 0);                _mainPanel.Dock = DockStyle.Fill;
+                _mainPanel.Tag = "MainPanel"; // Tag for theme manager
                 _mainPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
                 _mainPanel.Padding = new Padding(0); // Remove padding for edge-to-edge layout
                 _mainPanel.Margin = new Padding(0);
-                mainTableLayout.Controls.Add(_mainPanel, 1, 0);
-
-                _footerPanel.Dock = DockStyle.Fill;
+                mainTableLayout.Controls.Add(_mainPanel, 1, 0);                _footerPanel.Dock = DockStyle.Fill;
+                _footerPanel.Tag = "SidePanel"; // Tag for theme manager (footer uses side panel colors)
                 _footerPanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
                 mainTableLayout.SetColumnSpan(_footerPanel, 2);
                 mainTableLayout.Controls.Add(_footerPanel, 0, 1);
@@ -151,19 +174,34 @@ namespace BusBus.UI
                 var fallbackPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeManager.CurrentTheme.MainBackground };
                 this.Controls.Add(fallbackPanel);
             }
-        }
-
-        private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
+        }        private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
         {
             try
             {
+                Console.WriteLine($"[Dashboard] Theme changed to: {ThemeManager.CurrentTheme.Name}");
+                
+                // Update form background
+                this.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                
+                // Tag panels for proper theme application
+                _sidePanel.Tag = "SidePanel";
+                _mainPanel.Tag = "MainPanel";
+                _footerPanel.Tag = "SidePanel";
+                
+                // Apply theme to all controls recursively
                 ThemeManager.RefreshTheme(this);
 
+                // Update the current view if there is one
                 if (_currentView != null)
                 {
                     _contentPanel.Controls.Clear();
                     _currentView.Render(_contentPanel);
                 }
+                
+                // Update settings panel theme toggle button text
+                UpdateThemeToggleButton();
+                
+                Console.WriteLine($"[Dashboard] Theme application completed");
             }
             catch (InvalidOperationException ex)
             {
@@ -177,7 +215,43 @@ namespace BusBus.UI
             {
                 Console.WriteLine($"Null reference when applying theme: {ex.Message}");
             }
-        }        private void SetupSidePanel(Panel sidePanel)
+        }
+
+        /// <summary>
+        /// Updates the theme toggle button text to show the opposite theme
+        /// </summary>
+        private void UpdateThemeToggleButton()
+        {
+            try
+            {
+                // Find the theme toggle button in the settings panel
+                foreach (Control control in _settingsPanel.Controls)
+                {
+                    if (control is Panel themePanel)
+                    {
+                        foreach (Control panelControl in themePanel.Controls)
+                        {
+                            if (panelControl is Button toggleButton && toggleButton.Text.Contains("Switch", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                string oppositeTheme = ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark";
+                                toggleButton.Text = $"Switch to {oppositeTheme}";
+                                
+                                // Update button colors
+                                toggleButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                                toggleButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating theme toggle button: {ex.Message}");
+            }
+        }
+
+        private void SetupSidePanel(Panel sidePanel)
         {
             sidePanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
             sidePanel.BorderStyle = BorderStyle.None; // Clean edge for seamless transition
@@ -202,18 +276,64 @@ namespace BusBus.UI
             routesButton.TextAlign = ContentAlignment.MiddleLeft;
             routesButton.ImageAlign = ContentAlignment.MiddleLeft;
             routesButton.Padding = new Padding(16, 8, 8, 8); // Better internal padding
-            routesButton.Margin = new Padding(0, 4, 8, 4); // Refined margins
-            routesButton.Click += async (s, e) =>
+            routesButton.Margin = new Padding(0, 4, 8, 4); // Refined margins            routesButton.Click += (s, e) =>
             {
                 _settingsPanel.Visible = false;
                 try
                 {
+                    Console.WriteLine("[Dashboard] Routes button clicked, creating RouteListPanel");
                     var routeListPanel = new RouteListPanel(_routeService);
+                    
+                    // Subscribe to the RouteEditRequested event - THIS WAS MISSING!
+                    routeListPanel.RouteEditRequested += (sender, args) =>
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[Dashboard] RouteEditRequested event received for route: {args.Route.Name}");
+                            Console.WriteLine($"[Dashboard] Route ID: {args.Route.Id} (Empty = new route: {args.Route.Id == Guid.Empty})");
+                            
+                            // TODO: Implement route editing functionality
+                            // For now, show a placeholder message
+                            if (args.Route.Id == Guid.Empty)
+                            {
+                                MessageBox.Show($"Add new route functionality will be implemented here.\nRoute: {args.Route.Name}", "Add Route", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show($"Edit route functionality will be implemented here.\nRoute: {args.Route.Name}\nID: {args.Route.Id}", "Edit Route", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Dashboard] ERROR in RouteEditRequested handler: {ex.Message}");
+                            MessageBox.Show($"Error handling route edit request: {ex.Message}", "Handler Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    };
+                    
+                    Console.WriteLine("[Dashboard] RouteEditRequested event handler attached");
                     LoadView(routeListPanel);
-                    await routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
+                    
+                    // Load routes asynchronously without blocking the UI thread
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
+                            Console.WriteLine("[Dashboard] RouteListPanel loaded and displayed");
+                        }
+                        catch (Exception loadEx)
+                        {
+                            Console.WriteLine($"[Dashboard] ERROR during async route loading: {loadEx.Message}");
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                MessageBox.Show($"Error loading routes: {loadEx.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            });
+                        }
+                    });
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
                 {
+                    Console.WriteLine($"[Dashboard] ERROR loading routes: {ex.Message}");
                     MessageBox.Show($"Error loading routes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
@@ -347,13 +467,12 @@ namespace BusBus.UI
             };
             contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80)); // Refined header height
             contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-            var headlinePanel = new Panel
+            contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));            var headlinePanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(24, 16, 24, 8), // Refined header padding
-                Margin = new Padding(0)
+                Margin = new Padding(0),
+                Tag = "HeadlinePanel" // Proper tag for theme manager
             };
             ThemeManager.CurrentTheme.StyleHeadlinePanel(headlinePanel);
             var headlineLabel = new Label
@@ -365,12 +484,11 @@ namespace BusBus.UI
             };
             ThemeManager.CurrentTheme.StyleHeadlineLabel(headlineLabel);
             headlinePanel.Controls.Add(headlineLabel);
-            contentLayout.Controls.Add(headlinePanel, 0, 0);
-
-            _contentPanel.Dock = DockStyle.Fill;
-            _contentPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
-            _contentPanel.Padding = new Padding(0); // Remove content panel padding for edge-to-edge
-            _contentPanel.Margin = new Padding(0);
+            contentLayout.Controls.Add(headlinePanel, 0, 0);            _contentPanel.Dock = DockStyle.Fill;
+            _contentPanel.Tag = "Elevation1"; // Use elevation for visual depth
+            _contentPanel.BackColor = ThemeManager.CurrentTheme.GetElevatedBackground(1);
+            _contentPanel.Padding = new Padding(12); // Add some padding for elevated content
+            _contentPanel.Margin = new Padding(8); // Add margin for separation
             contentLayout.Controls.Add(_contentPanel, 0, 1);
 
             mainPanel.Controls.Add(contentLayout);
@@ -438,34 +556,63 @@ namespace BusBus.UI
                     e.Handled = true;
                 }
             };
-        }
-
-        private static void SetupFooterPanel(Panel footerPanel)
+        }        private void SetupFooterPanel(Panel footerPanel)
         {
-            footerPanel.BackColor = Color.FromArgb(40, 40, 55);
+            footerPanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
+            // Add a visible border to make the footer more noticeable
+            footerPanel.BorderStyle = BorderStyle.FixedSingle;
 
+            Console.WriteLine("[Dashboard] Setting up footer panel");
+
+            // Create layout for footer sections
+            var footerLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                RowCount = 1,
+                ColumnCount = 3,
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
+                BackColor = ThemeManager.CurrentTheme.SidePanelBackground
+            };
+            
+            // Configure columns: version (20%), statistics (60%), copyright (20%)
+            footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F)); // Version
+            footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F)); // Statistics
+            footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F)); // Copyright
+
+            // Version label
             var versionLabel = new Label
             {
                 Text = "BusBus v1.0.0",
-                ForeColor = Color.Silver,
+                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
                 Font = new Font(ThemeManager.CurrentTheme.SmallButtonFont.FontFamily, 8),
-                Dock = DockStyle.Left,
+                Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(10, 0, 0, 0)
+            };            // Statistics panel
+            var statisticsService = new BusBus.Services.StatisticsService(_routeService);
+            var statisticsPanel = new BusBus.UI.Common.StatisticsPanel(statisticsService)
+            {
+                Dock = DockStyle.Fill
             };
+            
+            Console.WriteLine("[Dashboard] Statistics panel created and configured");
 
+            // Copyright label
             var copyrightLabel = new Label
             {
-                Text = "© 2025 BusBus Inc. All rights reserved.",
-                ForeColor = Color.Silver,
+                Text = "© 2025 BusBus Inc.",
+                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
                 Font = new Font(ThemeManager.CurrentTheme.SmallButtonFont.FontFamily, 8),
-                Dock = DockStyle.Right,
+                Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleRight,
                 Padding = new Padding(0, 0, 10, 0)
-            };
+            };            footerLayout.Controls.Add(versionLabel, 0, 0);
+            footerLayout.Controls.Add(statisticsPanel, 1, 0);
+            footerLayout.Controls.Add(copyrightLabel, 2, 0);
 
-            footerPanel.Controls.Add(versionLabel);
-            footerPanel.Controls.Add(copyrightLabel);
+            footerPanel.Controls.Add(footerLayout);
+            
+            Console.WriteLine($"[Dashboard] Footer panel setup complete. Controls added: Version, Statistics, Copyright. Footer panel size: {footerPanel.Size}");
         }
 
         public static void SetRouteInput(BusBus.Models.Route route)

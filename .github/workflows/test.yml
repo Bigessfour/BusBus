@@ -1,0 +1,72 @@
+name: BusBus Test Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+        
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: "**/*.trx"
+      if: always()
+        
+    - name: Setup Database
+      run: |
+        $env:ConnectionString = "Server=localhost;Database=BusBus_Test;User ID=sa;Password=P@ssw0rd!;TrustServerCertificate=True;"
+        sqlcmd -S localhost -U sa -P P@ssw0rd! -Q "CREATE DATABASE BusBus_Test"
+        
+        # Update appsettings.json for tests
+        $appsettingsPath = "./BusBus.Tests/appsettings.json"
+        $appsettingsContent = Get-Content $appsettingsPath -Raw | ConvertFrom-Json
+        $appsettingsContent.ConnectionStrings.DefaultConnection = $env:ConnectionString
+        $appsettingsContent | ConvertTo-Json -Depth 10 | Set-Content $appsettingsPath
+      shell: pwsh
+      
+    - name: Test
+      run: dotnet test --no-build --verbosity minimal --logger "console;verbosity=minimal"
+      
+    - name: Test with coverage
+      run: dotnet test --no-build --collect:"XPlat Code Coverage" --verbosity minimal
+      
+    - name: Generate coverage report
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator -reports:./BusBus.Tests/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:Html
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: TestResults
+      if: always()
+      
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: CoverageReport
+      if: always()

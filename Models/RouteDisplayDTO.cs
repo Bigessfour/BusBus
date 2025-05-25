@@ -41,9 +41,8 @@ namespace BusBus.Models
                 AMRiders = route.AMRiders,
                 PMStartMileage = route.PMStartMileage,
                 PMEndingMileage = route.PMEndingMileage,
-                PMRiders = route.PMRiders,
-                DriverName = route.Driver != null ? $"{route.Driver.FirstName} {route.Driver.LastName}".Trim() : "Unassigned",
-                VehicleName = route.Vehicle?.BusNumber ?? "Unassigned",
+                PMRiders = route.PMRiders,                DriverName = route.Driver != null ? $"{route.Driver.FirstName?.Trim()} {route.Driver.LastName?.Trim()}".Trim() : "Unassigned",
+                VehicleName = !string.IsNullOrWhiteSpace(route.Vehicle?.BusNumber) ? route.Vehicle.BusNumber : "Unassigned",
                 DriverId = route.DriverId,
                 VehicleId = route.VehicleId
             };

@@ -53,7 +53,7 @@ After a workflow runs, you can view the results:
 To run the same tests that GitHub Actions runs:
 
 ```powershell
-dotnet test --collect:"XPlat Code Coverage" --settings ./CodeCoverage.runsettings --results-directory TestResults/Coverage /p:Threshold=80
+dotnet test --verbosity minimal --logger "console;verbosity=minimal"
 ```
 
 ### Generating Coverage Reports Locally

@@ -1,0 +1,62 @@
+# GitHub Actions workflow for BusBus CI
+name: BusBus CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test with coverage
+      run: dotnet test --no-build --collect:"XPlat Code Coverage" --settings ./CodeCoverage.runsettings --results-directory TestResults/Coverage /p:Threshold=80
+      continue-on-error: false
+
+    - name: Check coverage threshold
+      run: |
+        $coverageFiles = Get-ChildItem -Path TestResults/Coverage -Filter coverage.cobertura.xml -Recurse
+        foreach ($file in $coverageFiles) {
+          $xml = [xml](Get-Content $file)
+          $lineRate = [float]$xml.coverage.'line-rate' * 100
+          if ($lineRate -lt 80) {
+            Write-Error "Coverage ($lineRate%) is below threshold of 80%"
+            exit 1
+          }
+        }
+      shell: pwsh
+
+    - name: Generate coverage report
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator -reports:TestResults/Coverage/**/coverage.cobertura.xml -targetdir:TestResults/Coverage/Report -reporttypes:Html
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: TestResults/Coverage/Report

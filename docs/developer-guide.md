@@ -14,10 +14,10 @@ cd BusBus
 dotnet build
 
 # Run tests
-dotnet test
+dotnet test --verbosity minimal
 
 # Run with coverage
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+dotnet test --collect:"XPlat Code Coverage" --verbosity minimal
 ```
 
 ### VS Code Tasks
@@ -33,13 +33,21 @@ Use these predefined tasks in VS Code:
 - ✅ Use `[Test]` for simple tests
 - ✅ Use `[TestCase]` for parameterized tests  
 - ✅ Use `[TestFixture]` for test classes
+- ✅ Use `[Category(TestCategories.Unit)]` for test categorization
 - ✅ Inherit from `TestBase` for database tests
 - ✅ Use `Assert.That()` modern syntax
+
+### Test Categories
+Organize tests using predefined categories:
+- `TestCategories.Unit` - Fast, isolated unit tests
+- `TestCategories.Integration` - Tests with real dependencies
+- `TestCategories.EndToEnd` - Full application workflow tests
 
 ### Test Template
 New tests should follow `docs/test-template.cs`:
 ```csharp
 [TestFixture]
+[Category(TestCategories.Unit)]
 public class MyClassTests : TestBase
 {
     [SetUp]
@@ -113,7 +121,7 @@ BusBus/
 dotnet build && dotnet run
 
 # Test specific class
-dotnet test --filter "DashboardTests"
+dotnet test --filter "DashboardTests" --verbosity minimal
 
 # Generate coverage report
 reportgenerator -reports:BusBus.Tests/coverage.cobertura.xml -targetdir:CoverageReport -reporttypes:Html

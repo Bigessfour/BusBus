@@ -230,16 +230,12 @@ namespace BusBus.UI
                 }
 
                 // Hook up the RouteListPanel's events to show/hide RoutePanel
-                if (_routeListPanel != null)
+                if (_routeListPanel != null && _routePanel != null)
                 {
                     _routeListPanel.RouteEditRequested += (s, args) =>
                     {
-                        if (_routePanel != null)
-                        {
-                            _routePanel.LoadRoute(args.Route);
-                            _routePanel.Visible = true;
-                            _routeListPanel.Visible = false;
-                        }
+                        _routePanel.LoadRoute(args.Route);
+                        LoadView(_routePanel); // Use LoadView to switch
                     };
                 }
 
@@ -248,8 +244,9 @@ namespace BusBus.UI
                 {
                     _routePanel.SaveButtonClicked += async (s, e) =>
                     {
-                        _routePanel.Visible = false;
-                        _routeListPanel.Visible = true;
+                        // Placeholder for any save logic before switching
+                        // if (!_routePanel.CanClose()) return; // Example
+                        LoadView(_routeListPanel); // Use LoadView to switch
                         if (_cancellationTokenSource != null)
                         {
                             await _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
@@ -258,8 +255,9 @@ namespace BusBus.UI
 
                     _routePanel.CancelButtonClicked += (s, e) =>
                     {
-                        _routePanel.Visible = false;
-                        _routeListPanel.Visible = true;
+                        // Placeholder for any cancel logic before switching
+                        // if (!_routePanel.CanClose()) return; // Example
+                        LoadView(_routeListPanel); // Use LoadView to switch
                     };
                 }
             }
@@ -477,79 +475,51 @@ namespace BusBus.UI
 
         private void LoadView(IDisplayable view)
         {
-            if (view == _currentView) return;
-
-            // Hide current panels
-            if (_routeListPanel != null) _routeListPanel.Visible = false;
-            if (_routePanel != null) _routePanel.Visible = false;
-
-            if (view is RouteListPanel rlp)
+            Control? targetControl = view as Control;
+            if (targetControl == null)
             {
-                if (_routeListPanel == null || _routeListPanel != rlp)
-                {
-                    _routeListPanel = rlp;
-                    if (!_contentPanel.Controls.Contains(rlp))
-                    {
-                        _contentPanel.Controls.Add(rlp);
-                        rlp.Dock = DockStyle.Fill;
-                    }
-
-                    rlp.RouteEditRequested += (s, args) =>
-                    {
-                        if (_routePanel == null)
-                        {
-                            _routePanel = new RoutePanel(_routeService);
-                            _contentPanel.Controls.Add(_routePanel);
-                            _routePanel.Dock = DockStyle.Fill;
-
-                            _routePanel.SaveButtonClicked += async (s, e) =>
-                            {
-                                _routePanel.Visible = false;
-                                _routeListPanel.Visible = true;
-                                if (_cancellationTokenSource != null)
-                                {
-                                    await _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
-                                }
-                            };
-
-                            _routePanel.CancelButtonClicked += (s, e) =>
-                            {
-                                _routePanel.Visible = false;
-                                _routeListPanel.Visible = true;
-                            };
-
-                            _routePanel.DeleteButtonClicked += async (s, e) =>
-                            {
-                                _routePanel.Visible = false;
-                                _routeListPanel.Visible = true;
-                                if (_cancellationTokenSource != null)
-                                {
-                                    await _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
-                                }
-                            };
-                        }
-
-                        _routePanel.LoadRoute(args.Route);
-                        _routePanel.Visible = true;
-                        rlp.Visible = false;
-                    };
-                }
-
-                _routeListPanel.Visible = true;
-            }
-            else if (view is RoutePanel rp)
-            {
-                _routePanel = rp;
-                if (!_contentPanel.Controls.Contains(rp))
-                {
-                    _contentPanel.Controls.Add(rp);
-                    rp.Dock = DockStyle.Fill;
-                }
-
-                rp.Visible = true;
+                Console.WriteLine($"[Dashboard] Error: View {view?.GetType().Name} is not a Control and cannot be displayed.");
+                return;
             }
 
-            _currentView = view;
+            // If already the current, visible view, do nothing more than ensure it's on top.
+            if (view == _currentView && targetControl.Visible)
+            {
+                targetControl.BringToFront();
+                return;
+            }
+
+            Console.WriteLine($"[Dashboard] Switching view to {view.GetType().Name}");
+
+            // Ensure the target control is in the content panel
+            if (!_contentPanel.Controls.Contains(targetControl))
+            {
+                _contentPanel.Controls.Add(targetControl);
+                targetControl.Dock = DockStyle.Fill;
+                Console.WriteLine($"[Dashboard] Added {view.GetType().Name} to _contentPanel.");
+            }
+
+            // Hide other main views
+            if (_routeListPanel != null && _routeListPanel != targetControl)
+            {
+                _routeListPanel.Visible = false;
+                // Console.WriteLine($"[Dashboard] Hid _routeListPanel.");
+            }
+            if (_routePanel != null && _routePanel != targetControl)
+            {
+                _routePanel.Visible = false;
+                // Console.WriteLine($"[Dashboard] Hid _routePanel.");
+            }
+            // Example for other potential panels:
+            // if (_vehiclesPanel != null && _vehiclesPanel != targetControl) _vehiclesPanel.Visible = false;
+            // if (_driversPanel != null && _driversPanel != targetControl) _driversPanel.Visible = false;
+
+            // Show and bring to front the target view
+            targetControl.Visible = true;
+            targetControl.BringToFront();
+            _currentView = view; // Update the current view
+
+            Console.WriteLine($"[Dashboard] View {view.GetType().Name} is now active and visible.");
         }
 
         private static Button CreateSidebarButton(string text, Font font)

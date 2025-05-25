@@ -12,6 +12,7 @@ namespace BusBus.Tests
     /// Tests for the {ClassName} class
     /// </summary>
     [TestFixture]
+    [Category(TestCategories.Unit)] // Change to appropriate category: Unit, Integration, or EndToEnd
     public class {ClassName}Tests : TestBase
     {
         /// <summary>

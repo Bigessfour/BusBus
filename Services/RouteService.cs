@@ -84,9 +84,21 @@ namespace BusBus
             }, cancellationToken);
         }
 
+        // Add overload without CancellationToken for backward compatibility
+        public async Task<Route> CreateRouteAsync(Route route)
+        {
+            return await CreateRouteAsync(route, CancellationToken.None);
+        }
+
         public async Task<List<Route>> GetRoutesAsync(CancellationToken cancellationToken = default)
         {
             return await Task.Run(() => _routes.ToList(), cancellationToken);
+        }
+
+        // Add overload without CancellationToken
+        public async Task<List<Route>> GetRoutesAsync()
+        {
+            return await GetRoutesAsync(CancellationToken.None);
         }
 
         public async Task<List<Route>> GetRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
@@ -102,6 +114,12 @@ namespace BusBus
         public async Task<Route?> GetRouteByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await Task.Run(() => _routes.FirstOrDefault(r => r.Id == id), cancellationToken);
+        }
+
+        // Add overload without CancellationToken
+        public async Task<Route?> GetRouteByIdAsync(Guid id)
+        {
+            return await GetRouteByIdAsync(id, CancellationToken.None);
         }
 
         public async Task<Route> UpdateRouteAsync(Route route, CancellationToken cancellationToken = default)
