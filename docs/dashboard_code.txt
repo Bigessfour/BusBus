@@ -1,0 +1,572 @@
+using BusBus.Models;
+using BusBus.Services;
+using BusBus.UI;
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Diagnostics;
+
+namespace BusBus.UI
+{
+#pragma warning disable CA2213 // Disposable fields should be disposed
+    public partial class Dashboard : Form
+    {
+        private readonly IRouteService _routeService;
+        private readonly Panel _sidePanel;
+        private readonly Panel _mainPanel;
+        private Button _settingsButton;
+        private readonly Panel _settingsPanel;
+        private readonly Panel _footerPanel;
+        private CancellationTokenSource? _cancellationTokenSource;
+        private readonly Panel _contentPanel;
+        private IDisplayable? _currentView;
+        private RoutePanel? _routePanel; // Added embedded RoutePanel
+        private RouteListPanel? _routeListPanel; // Reference to RouteListPanel
+        private readonly List<Task> _backgroundTasks = new List<Task>();
+#pragma warning restore CA2213
+
+        // NOTE: Always provide a real or mock IRouteService. Never pass null.
+        public Dashboard(IRouteService routeService)
+        {
+            _routeService = routeService ?? throw new ArgumentNullException(nameof(routeService));
+            _sidePanel = new Panel();
+            _mainPanel = new Panel();
+            _settingsButton = new Button();
+            _settingsPanel = new Panel();
+            _footerPanel = new Panel();
+            _cancellationTokenSource = new CancellationTokenSource();
+            _contentPanel = new Panel();
+            _currentView = null;
+
+            this.Size = new Size(UiConstants.FormWidth, UiConstants.FormHeight);
+            this.MinimumSize = new Size(UiConstants.MinPanelWidth + 300, 300);
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.MinimizeBox = true;
+            this.MaximizeBox = true;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.WindowState = FormWindowState.Maximized;
+            this.FormClosing += new FormClosingEventHandler(Dashboard_FormClosing);
+            Console.WriteLine($"[Dashboard] Constructor - Form Width: {this.Width}, ClientSize Width: {this.ClientSize.Width}");
+
+            ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
+
+            // InitializeComponents(); // Removed: all initialization is now in this file
+        }
+
+        // Expose a method for test to load routes into the grid (for test reflection)
+        public async Task LoadRoutesAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            if (_routeListPanel == null)
+            {
+                // NOTE: _routeService must never be null. Use DI or a mock in tests.
+                _routeListPanel = new RouteListPanel(_routeService);
+                LoadView(_routeListPanel);
+            }
+
+            await _routeListPanel.LoadRoutesAsync(page, pageSize, cancellationToken);
+        }
+
+        // Method to set the application-level cancellation token
+        public void SetApplicationCancellationToken(CancellationToken applicationToken)
+        {
+            // Create a linked token source that includes both our internal token and the application token
+            var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
+                _cancellationTokenSource?.Token ?? CancellationToken.None,
+                applicationToken);
+
+            // Dispose the old token source
+            _cancellationTokenSource?.Dispose();
+
+            // Replace with the linked source
+            _cancellationTokenSource = linkedSource;
+        }
+
+        public void AddBackgroundTask(Task task)
+        {
+            lock (_backgroundTasks)
+            {
+                _backgroundTasks.Add(task);
+            }
+            Console.WriteLine($"[Dashboard] Added background task. Total tasks: {_backgroundTasks.Count}");
+        }
+
+        private async void Dashboard_FormClosing(object? sender, FormClosingEventArgs e)
+        {
+            Console.WriteLine("[Dashboard] Form closing started");
+
+            if (e.CloseReason != CloseReason.UserClosing && e.CloseReason != CloseReason.ApplicationExitCall)
+                return;
+
+            try
+            {
+                Console.WriteLine($"Dashboard closing: {e.CloseReason}");
+
+                // Cancel any pending operations
+                _cancellationTokenSource?.Cancel();
+                Console.WriteLine("[Dashboard] Cancellation requested");
+
+                // Allow a brief moment for tasks to cancel
+                await Task.Delay(500);
+
+                // Force garbage collection to help with cleanup
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                // Disconnect event handlers that might prevent proper disposal
+                BusBus.UI.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+            }
+            catch (ObjectDisposedException ex)
+            {
+                Console.WriteLine($"[Dashboard] Object already disposed during shutdown: {ex.Message}");
+            }
+            finally
+            {
+                _cancellationTokenSource?.Dispose();
+                Console.WriteLine("[Dashboard] Form closing completed");
+            }
+        }
+
+        private void InitializeComponents()
+        {
+            Console.WriteLine("[Dashboard] Initializing components");
+
+            try
+            {
+                this.Text = "BusBus Dashboard";
+                this.BackColor = ThemeManager.CurrentTheme.MainBackground;
+
+                // Simplified layout with 80/20 split
+                var mainTableLayout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = ThemeManager.CurrentTheme.MainBackground,
+                    RowCount = 2,
+                    ColumnCount = 2,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0)
+                };
+                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+                mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80F));
+                mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 95F));
+                mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 5F));
+
+                _sidePanel.Dock = DockStyle.Fill;
+                _sidePanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
+                mainTableLayout.Controls.Add(_sidePanel, 0, 0);
+
+                _mainPanel.Dock = DockStyle.Fill;
+                _mainPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                mainTableLayout.Controls.Add(_mainPanel, 1, 0);
+
+                _footerPanel.Dock = DockStyle.Fill;
+                _footerPanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
+                mainTableLayout.SetColumnSpan(_footerPanel, 2);
+                mainTableLayout.Controls.Add(_footerPanel, 0, 1);
+
+                this.Controls.Add(mainTableLayout);
+
+                // Create a content layout with headline and content areas
+                var contentLayout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = ThemeManager.CurrentTheme.MainBackground,
+                    RowCount = 2,
+                    ColumnCount = 1,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0)
+                };
+                contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 10F)); // Headline (10%)
+                contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 90F)); // Content (90%)
+                contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+                // Create headline panel
+                var headlinePanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = ThemeManager.CurrentTheme.HeadlineBackground,
+                    Padding = new Padding(10)
+                };
+
+                // Add headline label
+                var headlineLabel = new Label
+                {
+                    Text = "BusBus Dashboard",
+                    Font = ThemeManager.CurrentTheme.CardFont,
+                    ForeColor = ThemeManager.CurrentTheme.CardText,
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 80 // Increased height for header (was 60)
+                };
+                headlinePanel.Height = 95; // Increased panel height (was 70)
+                headlinePanel.Controls.Add(headlineLabel);
+                contentLayout.Controls.Add(headlinePanel, 0, 0);
+
+                // Initialize main content panel
+                _contentPanel.Dock = DockStyle.Fill;
+                _contentPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                _contentPanel.Padding = new Padding(10);
+                contentLayout.Controls.Add(_contentPanel, 0, 1);
+
+                _mainPanel.Controls.Add(contentLayout);
+
+                SetupSidePanel(_sidePanel);
+                SetupFooterPanel(_footerPanel);
+
+                // Initialize RoutePanel but keep it hidden initially
+                // NOTE: _routeService must never be null. Use DI or a mock in tests.
+                _routePanel = new RoutePanel(_routeService);
+                _routePanel.Visible = false;
+                _routePanel.Dock = DockStyle.Fill;
+                _contentPanel.Controls.Add(_routePanel);
+
+                // Initialize and load RouteListPanel by default
+                _routeListPanel = new RouteListPanel(_routeService);
+                LoadView(_routeListPanel);
+                if (_cancellationTokenSource != null)
+                {
+                    var loadTask = _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
+                    AddBackgroundTask(loadTask);
+                }
+
+                // Hook up the RouteListPanel's events to show/hide RoutePanel
+                if (_routeListPanel != null && _routePanel != null)
+                {
+                    _routeListPanel.RouteEditRequested += (s, args) =>
+                    {
+                        _routePanel.LoadRoute(args.Route);
+                        LoadView(_routePanel); // Use LoadView to switch
+                    };
+                }
+
+                // Hook up RoutePanel's events to return to the list
+                if (_routePanel != null && _routeListPanel != null)
+                {
+                    _routePanel.SaveButtonClicked += async (s, e) =>
+                    {
+                        // Placeholder for any save logic before switching
+                        // if (!_routePanel.CanClose()) return; // Example
+                        LoadView(_routeListPanel); // Use LoadView to switch
+                        if (_cancellationTokenSource != null)
+                        {
+                            await _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
+                        }
+                    };
+
+                    _routePanel.CancelButtonClicked += (s, e) =>
+                    {
+                        // Placeholder for any cancel logic before switching
+                        // if (!_routePanel.CanClose()) return; // Example
+                        LoadView(_routeListPanel); // Use LoadView to switch
+                    };
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"[Dashboard] UI initialization error: {ex}");
+                var fallbackPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeManager.CurrentTheme.MainBackground };
+                this.Controls.Add(fallbackPanel);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
+            {
+                Console.WriteLine($"[Dashboard] Critical error: {ex}");
+                var fallbackPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeManager.CurrentTheme.MainBackground };
+                this.Controls.Add(fallbackPanel);
+            }
+        }
+
+        private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                ThemeManager.RefreshTheme(this);
+
+                if (_currentView != null)
+                {
+                    _contentPanel.Controls.Clear();
+                    _currentView.Render(_contentPanel);
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"Invalid operation when applying theme: {ex.Message}");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"Invalid argument when applying theme: {ex.Message}");
+            }
+            catch (NullReferenceException ex)
+            {
+                Console.WriteLine($"Null reference when applying theme: {ex.Message}");
+            }
+        }
+
+        private void SetupSidePanel(Panel sidePanel)
+        {
+            sidePanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
+            sidePanel.BorderStyle = BorderStyle.FixedSingle;
+            sidePanel.Padding = new Padding(1);
+
+            var buttonPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 300,
+                BackColor = ThemeManager.CurrentTheme.SidePanelBackground,
+                Margin = new Padding(0, 5, 0, 0),
+                RowCount = 4,
+                ColumnCount = 1
+            };
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 70F));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+
+            var routesButton = CreateSidebarButton("🚌 Routes", ThemeManager.CurrentTheme.ButtonFont);
+            routesButton.Dock = DockStyle.Fill;
+            routesButton.TextAlign = ContentAlignment.MiddleCenter;
+            routesButton.ImageAlign = ContentAlignment.MiddleCenter;
+            routesButton.Click += async (s, e) =>
+            {
+                _settingsPanel.Visible = false;
+                try
+                {
+                    // Show the list panel and hide the route panel
+                    if (_routeListPanel != null && _routePanel != null)
+                    {
+                        _routeListPanel.Visible = true;
+                        _routePanel.Visible = false;
+                        if (_cancellationTokenSource != null)
+                        {
+                            await _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
+                        }
+                    }
+                    else
+                    {
+                        // NOTE: _routeService must never be null. Use DI or a mock in tests.
+                        _routeListPanel = new RouteListPanel(_routeService);
+                        _routePanel = new RoutePanel(_routeService);
+                        LoadView(_routeListPanel);
+                        if (_cancellationTokenSource != null)
+                        {
+                            await _routeListPanel.LoadRoutesAsync(1, 10, _cancellationTokenSource.Token);
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
+                {
+                    MessageBox.Show($"Error loading routes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            buttonPanel.Controls.Add(routesButton, 0, 0);
+
+            var vehiclesButton = CreateSidebarButton("🚐 Vehicles", ThemeManager.CurrentTheme.ButtonFont);
+            vehiclesButton.Dock = DockStyle.Fill;
+            vehiclesButton.TextAlign = ContentAlignment.MiddleCenter;
+            vehiclesButton.ImageAlign = ContentAlignment.MiddleCenter;
+            vehiclesButton.Click += (s, e) =>
+            {
+                _settingsPanel.Visible = false;
+                MessageBox.Show("Vehicles functionality will be implemented in a future update.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            };
+            buttonPanel.Controls.Add(vehiclesButton, 0, 1);
+
+            var driversButton = CreateSidebarButton("👤 Drivers", ThemeManager.CurrentTheme.ButtonFont);
+            driversButton.Dock = DockStyle.Fill;
+            driversButton.TextAlign = ContentAlignment.MiddleCenter;
+            driversButton.ImageAlign = ContentAlignment.MiddleCenter;
+            driversButton.Click += (s, e) =>
+            {
+                _settingsPanel.Visible = false;
+                MessageBox.Show("Drivers functionality will be implemented in a future update.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            };
+            buttonPanel.Controls.Add(driversButton, 0, 2);
+
+            _settingsButton = CreateSidebarButton("⚙ Settings", ThemeManager.CurrentTheme.SmallButtonFont);
+            _settingsButton.Dock = DockStyle.Fill;
+            _settingsButton.TextAlign = ContentAlignment.MiddleCenter;
+            _settingsButton.ImageAlign = ContentAlignment.MiddleCenter;
+            _settingsButton.Click += (s, e) =>
+            {
+                _settingsPanel.Visible = !_settingsPanel.Visible;
+            };
+            buttonPanel.Controls.Add(_settingsButton, 0, 3);
+
+            sidePanel.Controls.Add(buttonPanel);
+
+            // Create settings panel
+            _settingsPanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
+            _settingsPanel.Dock = DockStyle.Fill;
+            _settingsPanel.Visible = false;
+            var settingsLabel = new Label
+            {
+                Text = "Settings",
+                ForeColor = ThemeManager.CurrentTheme.CardText,
+                Font = ThemeManager.CurrentTheme.CardFont,
+                Dock = DockStyle.Top,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Height = 40
+            };
+            _settingsPanel.Controls.Add(settingsLabel);
+
+            var themePanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 60,
+                Padding = new Padding(10)
+            };
+
+            var themeLabel = new Label
+            {
+                Text = "Theme:",
+                ForeColor = ThemeManager.CurrentTheme.CardText,
+                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                Dock = DockStyle.Left,
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoSize = true
+            };
+
+            var themeToggle = new Button
+            {
+                Text = "Toggle Dark/Light",
+                ForeColor = ThemeManager.CurrentTheme.CardText,
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                FlatStyle = FlatStyle.Flat,
+                Dock = DockStyle.Right,
+                FlatAppearance = { BorderSize = 1 }
+            };
+
+            themeToggle.Click += (s, e) =>
+            {
+                string currentTheme = ThemeManager.CurrentTheme.Name;
+                string newTheme = currentTheme == "Dark" ? "Light" : "Dark";
+                string oppositeTheme = currentTheme == "Dark" ? "Light" : "Dark";
+
+                // Update toggle button text to show opposite theme
+                themeToggle.Text = $"Switch to {oppositeTheme}";
+
+                ThemeManager.SetTheme(newTheme);
+            };
+
+            // Set initial button text
+            themeToggle.Text = $"Switch to {(ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark")}";
+
+            themePanel.Controls.Add(themeLabel);
+            themePanel.Controls.Add(themeToggle);
+            _settingsPanel.Controls.Add(themePanel);
+
+            // Add settings panel to the side panel
+            sidePanel.Controls.Add(_settingsPanel);
+        }
+
+        private static void SetupFooterPanel(Panel footerPanel)
+        {
+            footerPanel.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
+            var statusLabel = new Label
+            {
+                Text = "Ready",
+                ForeColor = ThemeManager.CurrentTheme.CardText,
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10, 0, 0, 0)
+            };
+            footerPanel.Controls.Add(statusLabel);
+        }
+
+        private void LoadView(IDisplayable view)
+        {
+            Control? targetControl = view as Control;
+            if (targetControl == null)
+            {
+                Console.WriteLine($"[Dashboard] Error: View {view?.GetType().Name} is not a Control and cannot be displayed.");
+                return;
+            }
+
+            // If already the current, visible view, do nothing more than ensure it's on top.
+            if (view == _currentView && targetControl.Visible)
+            {
+                targetControl.BringToFront();
+                return;
+            }
+
+            Console.WriteLine($"[Dashboard] Switching view to {view.GetType().Name}");
+
+            // Ensure the target control is in the content panel
+            if (!_contentPanel.Controls.Contains(targetControl))
+            {
+                _contentPanel.Controls.Add(targetControl);
+                targetControl.Dock = DockStyle.Fill;
+                Console.WriteLine($"[Dashboard] Added {view.GetType().Name} to _contentPanel.");
+            }
+
+            // Hide other main views
+            if (_routeListPanel != null && _routeListPanel != targetControl)
+            {
+                _routeListPanel.Visible = false;
+                // Console.WriteLine($"[Dashboard] Hid _routeListPanel.");
+            }
+            if (_routePanel != null && _routePanel != targetControl)
+            {
+                _routePanel.Visible = false;
+                // Console.WriteLine($"[Dashboard] Hid _routePanel.");
+            }
+            // Example for other potential panels:
+            // if (_vehiclesPanel != null && _vehiclesPanel != targetControl) _vehiclesPanel.Visible = false;
+            // if (_driversPanel != null && _driversPanel != targetControl) _driversPanel.Visible = false;
+
+            // Show and bring to front the target view
+            targetControl.Visible = true;
+            targetControl.BringToFront();
+            _currentView = view; // Update the current view
+
+            Console.WriteLine($"[Dashboard] View {view.GetType().Name} is now active and visible.");
+        }
+
+        private static Button CreateSidebarButton(string text, Font font)
+        {
+            var button = new Button
+            {
+                Text = text,
+                // Use HeadlineText for maximum contrast in dark theme, CardText in light
+                ForeColor = ThemeManager.CurrentTheme.Name == "Dark"
+                    ? ThemeManager.CurrentTheme.HeadlineText
+                    : ThemeManager.CurrentTheme.CardText,
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 0 },
+                Font = font,
+                Cursor = Cursors.Hand,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10, 0, 0, 0)
+            };
+
+            button.MouseEnter += (s, e) =>
+            {
+                button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                button.ForeColor = ThemeManager.CurrentTheme.Name == "Dark"
+                    ? ThemeManager.CurrentTheme.HeadlineText
+                    : ThemeManager.CurrentTheme.CardText;
+            };
+            button.MouseLeave += (s, e) =>
+            {
+                button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                button.ForeColor = ThemeManager.CurrentTheme.Name == "Dark"
+                    ? ThemeManager.CurrentTheme.HeadlineText
+                    : ThemeManager.CurrentTheme.CardText;
+            };
+
+            // Ensure font is always readable and bold for sidebar
+            button.Font = new Font(font.FontFamily, font.Size, FontStyle.Bold);
+
+            return button;
+        }
+
+
+    }
+}

@@ -1,398 +1,734 @@
+#nullable enable
+// <auto-added>
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Extensions.DependencyInjection;
-using BusBus.Models;
+
+#pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
+#pragma warning disable CA2254 // LoggerMessage delegates for logging performance
+#pragma warning disable CS8618 // Non-nullable field is uninitialized. Suppressed because fields are initialized in SetupLayout.
 using BusBus.Services;
 using BusBus.UI;
-using BusBus.UI.Common;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BusBus.UI
 {
-    public partial class Dashboard : Form, IDisplayable
-    {        private readonly IServiceProvider _serviceProvider;
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private Panel _headerPanel, _sidebarPanel, _mainContentPanel, _footerPanel;
-        private Label _titleLabel, _statusLabel;
-        private Button _themeToggleButton, _refreshButton, _routesButton, _driversButton, _vehiclesButton;
-        private RouteListPanel _routeListPanel;
-        private DriverListPanel _driverListPanel;
-        private Control? _currentPanel;
+    /// <summary>
+    /// Main application hub that manages navigation, state, and view lifecycle
+    /// </summary>
+    public partial class Dashboard : Form, IApplicationHub
+    {
+        #region Fields
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IRouteService _routeService;
+        private readonly ILogger<Dashboard> _logger;
+        private readonly Dictionary<string, IView> _viewCache = new();
+        private readonly Stack<string> _navigationHistory = new();
+        private readonly DashboardState _state = new();
 
-        public Dashboard(IServiceProvider serviceProvider)
+        private TableLayoutPanel _mainLayout;
+        private Panel _sidePanel;
+        private Panel _contentPanel;
+        private Panel _headerPanel;
+        private Panel _footerPanel;
+        private StatusStrip _statusStrip;
+        private ToolStripStatusLabel _statusLabel;
+        private ToolStripProgressBar _progressBar;
+
+        private IView? _currentView;
+        private CancellationTokenSource _cancellationTokenSource = new();
+        #endregion
+
+        #region Constructor
+        public Dashboard(IServiceProvider serviceProvider, IRouteService routeService, ILogger<Dashboard> logger)
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            if (serviceProvider == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] serviceProvider is null in Dashboard constructor");
+                throw new ArgumentNullException(nameof(serviceProvider));
+            }
+            if (routeService == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] routeService is null in Dashboard constructor!");
+                System.Diagnostics.Debugger.Break();
+                throw new ArgumentNullException(nameof(routeService));
+            }
+            if (logger == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] logger is null in Dashboard constructor");
+                throw new ArgumentNullException(nameof(logger));
+            }
+
+            _serviceProvider = serviceProvider;
+            _routeService = routeService;
+            _logger = logger;
+
+            _logger.LogDebug("[DEBUG] Dashboard constructor called. serviceProvider: {ServiceProvider}, routeService: {RouteService}, logger: {Logger}", serviceProvider, routeService, logger);
+
             InitializeComponent();
-            InitializeUI();
-            LoadRoutes();
+            SetupLayout();
+            RegisterViews();
+            SubscribeToEvents();
 
-            this.FormClosing += Dashboard_FormClosing;
-        }        private void Dashboard_FormClosing(object? sender, FormClosingEventArgs e)
-        {
-            // Disposal is already handled in the Dispose method
-            // No additional cleanup needed here to prevent double-disposal
+            _logger.LogInformation("Dashboard initialized successfully");
+            // pragma disables above
         }
+        #endregion
 
-        private void InitializeComponent()
+        #region Layout Setup
+        private void SetupLayout()
         {
             this.SuspendLayout();
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(1200, 800);
-            this.MinimumSize = new Size(800, 600);
-            this.Name = "Dashboard";
-            this.Text = "BusBus - Management Dashboard";
-            this.StartPosition = FormStartPosition.CenterScreen;
+
+            // Set form properties
+            this.Text = "BusBus - Transport Management System";
             this.WindowState = FormWindowState.Maximized;
+            this.MinimumSize = new Size(1024, 768);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            // Create main table layout
+            _mainLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                RowCount = 3,
+                ColumnCount = 2,
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None
+            };
+
+            // Configure layout proportions
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60)); // Header
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Content
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 25)); // Status
+
+            _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250)); // Sidebar
+            _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Main content
+
+            // Create panels
+            CreateHeaderPanel();
+            CreateSidePanel();
+            CreateContentPanel();
+            CreateStatusBar();
+
+            // Add panels to layout
+            _mainLayout.Controls.Add(_headerPanel, 0, 0);
+            _mainLayout.SetColumnSpan(_headerPanel, 2);
+
+            _mainLayout.Controls.Add(_sidePanel, 0, 1);
+            _mainLayout.Controls.Add(_contentPanel, 1, 1);
+
+            _mainLayout.Controls.Add(_statusStrip, 0, 2);
+            _mainLayout.SetColumnSpan(_statusStrip, 2);
+
+            this.Controls.Add(_mainLayout);
+
+            // Apply theme
+            ThemeManager.ApplyTheme(this, ThemeManager.CurrentTheme);
+
             this.ResumeLayout(false);
+            this.PerformLayout();
         }
 
-        private void InitializeUI()
+        private void CreateHeaderPanel()
         {
-            // Header Panel
             _headerPanel = new Panel
             {
-                Dock = DockStyle.Top,
-                Height = 60,
-                BackColor = ThemeManager.CurrentTheme.SidePanelBackground
+                Dock = DockStyle.Fill,
+                Tag = "HeaderPanel",
+                Height = 60
             };
 
-            _titleLabel = new Label
+            var titleLabel = new Label
             {
-                Text = "BusBus Management Dashboard",
-                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
+                Text = "BusBus Transport Management",
+                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                Dock = DockStyle.Left,
-                AutoSize = true,
-                Padding = new Padding(10)
+                Location = new Point(20, 15),
+                AutoSize = true
             };
 
-            var headerButtonPanel = new FlowLayoutPanel
+            var userInfoLabel = new Label
             {
-                Dock = DockStyle.Right,
-                AutoSize = true,
-                Padding = new Padding(5)
-            };            _themeToggleButton = CreateButton("Toggle Theme", ThemeToggleButton_Click, 120, 30);
-            _refreshButton = CreateButton("Refresh", RefreshButton_Click, 80, 30);
-
-            headerButtonPanel.Controls.AddRange(new Control[] { _refreshButton, _themeToggleButton });
-            _headerPanel.Controls.AddRange(new Control[] { _titleLabel, headerButtonPanel });
-
-            // Sidebar Panel
-            _sidebarPanel = new Panel
-            {
-                Dock = DockStyle.Left,
-                Width = 200,
-                BackColor = ThemeManager.CurrentTheme.SidePanelBackground
+                Text = $"Welcome, {Environment.UserName}",
+                Font = new Font("Segoe UI", 10F),
+                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Location = new Point(_headerPanel.Width - 200, 20),
+                AutoSize = true
             };
 
-            var sidebarLayout = new TableLayoutPanel
+            var themeToggle = new Button
             {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 3,
-                Padding = new Padding(10)
-            };
-            sidebarLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-            sidebarLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-            sidebarLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-
-            _routesButton = CreateButton("Routes", RoutesButton_Click, 180, 30);
-            _driversButton = CreateButton("Drivers", DriversButton_Click, 180, 30);
-            _vehiclesButton = CreateButton("Vehicles", VehiclesButton_Click, 180, 30);
-
-            sidebarLayout.Controls.Add(_routesButton, 0, 0);
-            sidebarLayout.Controls.Add(_driversButton, 0, 1);
-            sidebarLayout.Controls.Add(_vehiclesButton, 0, 2);
-            _sidebarPanel.Controls.Add(sidebarLayout);
-
-            // Main Content Panel
-            _mainContentPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(10),
-                BackColor = ThemeManager.CurrentTheme.MainBackground
+                Text = "🌙",
+                Font = new Font("Segoe UI", 12F),
+                Size = new Size(40, 40),
+                FlatStyle = FlatStyle.Flat,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Location = new Point(_headerPanel.Width - 50, 10),
+                Tag = "ThemeToggle"
             };
 
-            // Footer Panel
-            _footerPanel = new Panel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 30,
-                BackColor = ThemeManager.CurrentTheme.SidePanelBackground,
-                Padding = new Padding(10, 5, 10, 5)
-            };
+            themeToggle.Click += (s, e) => ToggleTheme();
 
-            _statusLabel = new Label
-            {
-                Text = "Ready",
-                Dock = DockStyle.Left,
-                AutoSize = true,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.CardFont
-            };
-            _footerPanel.Controls.Add(_statusLabel);
-
-            // Add Panels to Form
-            this.Controls.AddRange(new[] { _mainContentPanel, _sidebarPanel, _headerPanel, _footerPanel });
-
-            // Initialize Route List Panel
-            var routeService = _serviceProvider.GetRequiredService<IRouteService>();
-            _routeListPanel = new RouteListPanel(routeService)
-            {
-                Dock = DockStyle.Fill
-            };
-            _routeListPanel.RouteEditRequested += RouteListPanel_RouteSelected;
-            _currentPanel = _routeListPanel;
-            _mainContentPanel.Controls.Add(_routeListPanel);
-
-            RefreshTheme();
+            _headerPanel.Controls.AddRange(new Control[] { titleLabel, userInfoLabel, themeToggle });
         }
 
-        private static Button CreateButton(string text, EventHandler clickHandler, int width, int height)
+        private void CreateSidePanel()
+        {
+            _sidePanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Tag = "SidePanel",
+                AutoScroll = true
+            };
+
+            var navItems = new[]
+            {
+                new NavigationItem("🏠", "Dashboard", "dashboard", true),
+                new NavigationItem("🚌", "Routes", "routes"),
+                new NavigationItem("👥", "Drivers", "drivers"),
+                new NavigationItem("🚗", "Vehicles", "vehicles"),
+                new NavigationItem("📊", "Reports", "reports"),
+                new NavigationItem("⚙️", "Settings", "settings")
+            };
+
+            int yPos = 20;
+            foreach (var item in navItems)
+            {
+                var navButton = CreateNavigationButton(item);
+                navButton.Location = new Point(10, yPos);
+                _sidePanel.Controls.Add(navButton);
+                yPos += 50;
+            }
+        }
+
+        private Button CreateNavigationButton(NavigationItem item)
         {
             var button = new Button
             {
-                Text = text,
-                Size = new Size(width, height),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.ButtonFont,
+                Text = $"{item.Icon} {item.Text}",
+                Size = new Size(230, 40),
                 FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderColor = ThemeManager.CurrentTheme.BorderColor, BorderSize = 1 }
+                TextAlign = ContentAlignment.MiddleLeft,
+                Font = new Font("Segoe UI", 10F),
+                Tag = item.ViewName,
+                Padding = new Padding(10, 0, 0, 0)
             };
-            button.Click += clickHandler;
+
+            button.FlatAppearance.BorderSize = 0;
+            button.Click += async (s, e) => await NavigateToAsync(item.ViewName);
+
+            if (item.IsDefault)
+            {
+                button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+            }
+
             return button;
         }
 
-        private async void LoadRoutes()
+        private void CreateContentPanel()
         {
+            _contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Tag = "ContentPanel",
+                Padding = new Padding(20)
+            };
+        }
+
+        private void CreateStatusBar()
+        {
+            _statusStrip = new StatusStrip
+            {
+                Tag = "StatusBar"
+            };
+
+            _statusLabel = new ToolStripStatusLabel
+            {
+                Text = "Ready",
+                Spring = true,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            _progressBar = new ToolStripProgressBar
+            {
+                Visible = false,
+                Style = ProgressBarStyle.Marquee
+            };
+
+            var connectionLabel = new ToolStripStatusLabel
+            {
+                Text = "Connected",
+                ForeColor = Color.Green
+            };
+
+            _statusStrip.Items.AddRange(new ToolStripItem[]
+            {
+                _statusLabel,
+                _progressBar,
+                new ToolStripSeparator(),
+                connectionLabel
+            });
+        }
+        #endregion
+
+        #region Navigation
+        public async Task NavigateToAsync(string viewName)
+        {
+            if (viewName == null)
+            {
+                throw new ArgumentNullException(nameof(viewName));
+            }
+
             try
             {
-                UpdateStatus("Loading routes...");
-                await _routeListPanel.LoadRoutesAsync(1, 20, _cancellationTokenSource.Token);
-                UpdateStatus("Routes loaded successfully");
+                _logger.LogInformation($"Navigating to view: {viewName}");
+                // pragma disables above
+
+                ShowProgress($"Loading {viewName}...");
+
+                // Save current view state
+                if (_currentView != null)
+                {
+                    await _currentView.DeactivateAsync();
+                    _navigationHistory.Push(_currentView.ViewName);
+                }
+
+                // Get or create view
+                var view = GetOrCreateView(viewName);
+                if (view == null)
+                {
+                    _logger.LogWarning($"View not found: {viewName}");
+                    // pragma disables above
+                    ShowStatus($"View '{viewName}' not found", StatusType.Warning);
+                    return;
+                }
+
+                // Load view
+                _contentPanel.Controls.Clear();
+
+                if (view.Control != null)
+                {
+                    view.Control.Dock = DockStyle.Fill;
+                    _contentPanel.Controls.Add(view.Control);
+                }
+
+                // Activate view
+                await view.ActivateAsync(_cancellationTokenSource.Token);
+                _currentView = view;
+
+                // Update UI
+                UpdateNavigationButtons(viewName);
+                UpdateTitle(view.Title);
+
+                HideProgress();
+                ShowStatus($"{view.Title} loaded", StatusType.Success);
             }
             catch (Exception ex)
             {
-                UpdateStatus($"Error loading routes: {ex.Message}");
-                MessageBox.Show($"Failed to load routes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _logger.LogError(ex, $"Error navigating to {viewName}");
+                // pragma disables above
+                HideProgress();
+                ShowStatus($"Error loading {viewName}: {ex.Message}", StatusType.Error);
             }
         }
 
-        private async void RouteListPanel_RouteSelected(object? sender, RouteEventArgs e)
+        public async Task NavigateBackAsync()
         {
-            try
+            if (_navigationHistory.Count > 0)
             {
-                UpdateStatus($"Opening route: {e.Route.Name}");                await WithScopedServiceAsync<IRouteService>(routeService =>
-                {
-                    var routePanel = new RouteModalPanel(routeService, RouteDisplayDTO.FromRoute(e.Route));
-                    routePanel.ShowDialog(this);
-                    if (routePanel.IsSaved)
-                    {
-                        LoadRoutes();
-                        UpdateStatus("Route updated successfully");
-                    }
-                    return Task.CompletedTask;
-                }).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                UpdateStatus($"Error opening route: {ex.Message}");
-                MessageBox.Show($"Failed to open route: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var previousView = _navigationHistory.Pop();
+                await NavigateToAsync(previousView);
             }
         }
 
-        private void RoutesButton_Click(object? sender, EventArgs e)
+        private IView? GetOrCreateView(string viewName)
         {
-            SwitchPanel(_routeListPanel);
-            LoadRoutes();
-            UpdateStatus("Showing routes");
+            if (_viewCache.TryGetValue(viewName, out var cachedView))
+            {
+                return cachedView;
+            }
+
+            IView? view = viewName.ToLower() switch
+            {
+                "dashboard" => new DashboardView(_serviceProvider),
+                "routes" => new RouteListView(_routeService),
+                "drivers" => new DriverListView(_serviceProvider),
+                "vehicles" => new VehicleListView(_serviceProvider),
+                "reports" => new ReportsView(_serviceProvider),
+                "settings" => new SettingsView(_serviceProvider),
+                _ => null
+            };
+
+            if (view != null)
+            {
+                _viewCache[viewName] = view;
+                view.NavigationRequested += OnViewNavigationRequested;
+                view.StatusUpdated += OnViewStatusUpdated;
+            }
+
+            return view;
         }
 
-        private void DriversButton_Click(object? sender, EventArgs e)
+        private void UpdateNavigationButtons(string activeView)
         {
-            if (_driverListPanel == null)
+            foreach (Control control in _sidePanel.Controls)
             {
-                var driverService = _serviceProvider.GetRequiredService<IDriverService>();
-                _driverListPanel = new DriverListPanel(driverService)
+                if (control is Button button && button.Tag is string viewName)
                 {
-                    Dock = DockStyle.Fill
-                };
-                _driverListPanel.DriverEditRequested += DriverListPanel_DriverSelected;
-            }
-            SwitchPanel(_driverListPanel);
-            LoadDrivers();
-            UpdateStatus("Showing drivers");
-        }
-
-        private async void DriverListPanel_DriverSelected(object? sender, EntityEventArgs<Driver> e)
-        {
-            try
-            {
-                UpdateStatus($"Opening driver: {e.Entity.FirstName} {e.Entity.LastName}");                await WithScopedServiceAsync<IDriverService>(driverService =>
-                {
-                    var driverPanel = new DriverPanel(driverService, e.Entity);
-                    driverPanel.ShowDialog(this);
-                    if (driverPanel.IsSaved)
-                    {
-                        LoadDrivers();
-                        UpdateStatus("Driver updated successfully");
-                    }
-                    return Task.CompletedTask;
-                }).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                UpdateStatus($"Error opening driver: {ex.Message}");
-                MessageBox.Show($"Failed to open driver: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async void LoadDrivers()
-        {
-            if (_driverListPanel != null)
-            {
-                try
-                {
-                    UpdateStatus("Loading drivers...");
-                    await _driverListPanel.LoadDriversAsync();
-                    UpdateStatus("Drivers loaded successfully");
-                }
-                catch (Exception ex)
-                {
-                    UpdateStatus($"Error loading drivers: {ex.Message}");
-                    MessageBox.Show($"Failed to load drivers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    button.BackColor = viewName.Equals(activeView, StringComparison.OrdinalIgnoreCase)
+                        ? ThemeManager.CurrentTheme.ButtonHoverBackground
+                        : ThemeManager.CurrentTheme.SidePanelBackground;
                 }
             }
         }
 
-        private void VehiclesButton_Click(object? sender, EventArgs e)
+        private void UpdateTitle(string viewTitle)
         {
-            SwitchPanel(null);
-            UpdateStatus("Vehicles view not implemented yet");
-            // TODO: Implement VehicleListPanel similar to DriverListPanel
-        }        private void SwitchPanel(Control? newPanel)
+            this.Text = $"BusBus - {viewTitle}";
+        }
+        #endregion
+
+        #region View Management
+        private void RegisterViews()
         {
-            _mainContentPanel.Controls.Clear();
-            if (newPanel != null)
+            // Pre-register critical views for faster initial load
+            _viewCache["dashboard"] = new DashboardView(_serviceProvider);
+            _viewCache["routes"] = new RouteListView(_routeService);
+        }
+
+        private void OnViewNavigationRequested(object? sender, NavigationEventArgs e)
+        {
+            _ = NavigateToAsync(e.ViewName);
+        }
+
+        private void OnViewStatusUpdated(object? sender, StatusEventArgs e)
+        {
+            ShowStatus(e.Message, e.Type);
+        }
+        #endregion
+
+        #region Status Management
+        public void ShowStatus(string message, StatusType type = StatusType.Info)
+        {
+            if (InvokeRequired)
             {
-                _currentPanel = newPanel;
-                _mainContentPanel.Controls.Add(newPanel);
-                if (newPanel is IDisplayable displayable)
+                Invoke(() => ShowStatus(message, type));
+                return;
+            }
+
+            _statusLabel.Text = message;
+            _statusLabel.ForeColor = type switch
+            {
+                StatusType.Success => Color.Green,
+                StatusType.Warning => Color.Orange,
+                StatusType.Error => Color.Red,
+                _ => SystemColors.ControlText
+            };
+
+            _logger.LogInformation($"Status: {message} [{type}]");
+            // pragma disables above
+        }
+
+        public void ShowProgress(string message)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(() => ShowProgress(message));
+                return;
+            }
+
+            _statusLabel.Text = message;
+            _progressBar.Visible = true;
+        }
+
+        public void HideProgress()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(() => HideProgress());
+                return;
+            }
+
+            _progressBar.Visible = false;
+        }
+
+        public void UpdateStatusMessage(string message)
+        {
+            if (_statusLabel != null)
+            {
+                _statusLabel.Text = message;
+            }
+        }
+
+        public void RefreshCurrentView()
+        {
+            // Refresh the current view implementation
+            if (_contentPanel?.Controls.Count > 0)
+            {
+                var currentControl = _contentPanel.Controls[0];
+                if (currentControl is IRefreshable refreshable)
                 {
-                    displayable.RefreshTheme();
+                    refreshable.Refresh();
                 }
             }
         }
+        #endregion
 
-        private void RefreshButton_Click(object? sender, EventArgs e)
+        #region Theme Management
+        private void ToggleTheme()
         {
-            if (_currentPanel == _routeListPanel)
-                LoadRoutes();
-            else if (_currentPanel == _driverListPanel)
-                LoadDrivers();
-            else
-                UpdateStatus("Refresh not applicable");
+            var newTheme = ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark";
+            ThemeManager.SwitchTheme(newTheme);
+            _state.CurrentTheme = newTheme;
+            SaveState();
         }
 
-        private void ThemeToggleButton_Click(object? sender, EventArgs e)
+        private void SubscribeToEvents()
         {
-            try
+            ThemeManager.ThemeChanged += OnThemeChanged;
+            this.FormClosing += OnFormClosing;
+            this.Load += OnFormLoad;
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            // Update theme toggle button
+            var themeButton = _headerPanel.Controls.OfType<Button>()
+                .FirstOrDefault(b => b.Tag?.ToString() == "ThemeToggle");
+
+            if (themeButton != null)
             {
-                var currentTheme = ThemeManager.CurrentTheme.Name;
-                ThemeManager.SwitchTheme(currentTheme == "Dark" ? "Light" : "Dark");
-                RefreshTheme();
-                UpdateStatus("Theme switched successfully");
+                themeButton.Text = ThemeManager.CurrentTheme.Name == "Dark" ? "☀️" : "🌙";
             }
-            catch (Exception ex)
+        }
+        #endregion
+
+        #region State Management
+        private async void OnFormLoad(object? sender, EventArgs e)
+        {
+            LoadState();
+            await NavigateToAsync(_state.LastView ?? "dashboard");
+        }
+
+        private async void OnFormClosing(object? sender, FormClosingEventArgs e)
+        {
+            SaveState();
+
+            // Cleanup
+            _cancellationTokenSource.Cancel();
+
+            // Deactivate current view
+            if (_currentView != null)
             {
-                UpdateStatus($"Error switching theme: {ex.Message}");
-                MessageBox.Show($"Failed to switch theme: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                await _currentView.DeactivateAsync();
+            }
+
+            // Dispose all cached views
+            foreach (var view in _viewCache.Values)
+            {
+                view.Dispose();
+            }
+
+            _cancellationTokenSource.Dispose();
+        }
+
+        private void LoadState()
+        {
+            // Load state from settings/file
+            // For now, just use defaults
+            _state.CurrentTheme = "Dark";
+            _state.LastView = "dashboard";
+        }
+
+        private void SaveState()
+        {
+            _state.LastView = _currentView?.ViewName;
+            // Save state to settings/file
+        }
+        #endregion
+
+        #region IApplicationHub Implementation
+        public IServiceProvider ServiceProvider => _serviceProvider;
+
+        public void ShowNotification(string message, NotificationType type)
+        {
+            ShowStatus(message, type switch
+            {
+                NotificationType.Success => StatusType.Success,
+                NotificationType.Warning => StatusType.Warning,
+                NotificationType.Error => StatusType.Error,
+                _ => StatusType.Info
+            });
+        }
+
+        public async Task<bool> ShowConfirmationAsync(string message, string title)
+        {
+            var result = MessageBox.Show(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            return await Task.FromResult(result == DialogResult.Yes);
+        }
+
+        public void ShowBusyIndicator(string message)
+        {
+            ShowProgress(message);
+        }
+
+        public void HideBusyIndicator()
+        {
+            HideProgress();
+        }
+        #endregion
+
+        #region Helper Classes
+        private class NavigationItem
+        {
+            public string Icon { get; }
+            public string Text { get; }
+            public string ViewName { get; }
+            public bool IsDefault { get; }
+
+            public NavigationItem(string icon, string text, string viewName, bool isDefault = false)
+            {
+                Icon = icon;
+                Text = text;
+                ViewName = viewName;
+                IsDefault = isDefault;
             }
         }
 
-        public void RefreshTheme()
+        private class DashboardState
         {
-            var theme = ThemeManager.CurrentTheme;
-            this.BackColor = theme.MainBackground;
-            this.ForeColor = theme.CardText;
-
-            _headerPanel.BackColor = theme.SidePanelBackground;
-            _titleLabel.ForeColor = theme.HeadlineText;
-            _sidebarPanel.BackColor = theme.SidePanelBackground;
-            _mainContentPanel.BackColor = theme.MainBackground;
-            _footerPanel.BackColor = theme.SidePanelBackground;
-            _statusLabel.ForeColor = theme.CardText;
-            _statusLabel.Font = theme.CardFont;
-
-            foreach (var button in new[] { _themeToggleButton, _refreshButton, _routesButton, _driversButton, _vehiclesButton })
-            {
-                if (button != null)
-                {
-                    button.BackColor = theme.ButtonBackground;
-                    button.ForeColor = theme.CardText;
-                    button.Font = theme.ButtonFont;
-                    button.FlatAppearance.BorderColor = theme.BorderColor;
-                }
-            }
-
-            _routeListPanel?.RefreshTheme();
-            _driverListPanel?.RefreshTheme();
-            this.Invalidate(true);
+            public string? CurrentTheme { get; set; }
+            public string? LastView { get; set; }
+            public Dictionary<string, object> ViewStates { get; } = new();
         }
+        #endregion
 
-        private void UpdateStatus(string message)
+        private void InitializeComponent()
         {
-            if (_statusLabel != null && !_statusLabel.IsDisposed)
-            {
-                if (_statusLabel.InvokeRequired)
-                    _statusLabel.Invoke(new Action(() => _statusLabel.Text = message));
-                else
-                    _statusLabel.Text = message;
-            }
-        }
+            // Initialize layout panels
+            this._mainLayout = new TableLayoutPanel();
+            this._sidePanel = new Panel();
+            this._contentPanel = new Panel();
+            this._headerPanel = new Panel();
+            this._footerPanel = new Panel();
+            this._statusStrip = new StatusStrip();
+            this._statusLabel = new ToolStripStatusLabel();
+            this._progressBar = new ToolStripProgressBar();
 
-        public void Render(Control container)
-        {
-            if (container != null)
-            {
-                this.TopLevel = false;
-                this.Parent = container;
-                this.Dock = DockStyle.Fill;
-                this.Show();
-            }
-            else
-            {
-                this.Show();
-            }
-        }
+            // Configure main layout
+            this._mainLayout.Dock = DockStyle.Fill;
+            this._mainLayout.ColumnCount = 2;
+            this._mainLayout.RowCount = 3;
 
-        private async Task WithScopedServiceAsync<TService>(Func<TService, Task> action) where TService : notnull
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<TService>();
-            await action(service);
-        }        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
-                {
-                    _cancellationTokenSource.Cancel();
-                    _cancellationTokenSource.Dispose();
-                }
-                _cancellationTokenSource = null!;
-                _routeListPanel?.Dispose();
-                _driverListPanel?.Dispose();
-                _mainContentPanel?.Dispose();
-                _headerPanel?.Dispose();
-                _sidebarPanel?.Dispose();
-                _footerPanel?.Dispose();
-            }
-            base.Dispose(disposing);
+            // Add columns and rows
+            this._mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
+            this._mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+            this._mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
+            this._mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            this._mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+
+            // Configure panels
+            this._headerPanel.Dock = DockStyle.Fill;
+            this._headerPanel.BackColor = System.Drawing.Color.FromArgb(50, 100, 180);
+
+            this._sidePanel.Dock = DockStyle.Fill;
+            this._sidePanel.BackColor = System.Drawing.Color.FromArgb(40, 40, 40);
+
+            this._contentPanel.Dock = DockStyle.Fill;
+            this._contentPanel.BackColor = System.Drawing.Color.White;
+
+            this._footerPanel.Dock = DockStyle.Fill;
+            this._footerPanel.BackColor = System.Drawing.Color.FromArgb(240, 240, 240);
+
+            // Configure status strip
+            this._statusStrip.Items.Add(this._statusLabel);
+            this._statusStrip.Items.Add(this._progressBar);
+            this._progressBar.Visible = false;
+
+            // Add controls to layout
+            this._mainLayout.Controls.Add(this._headerPanel, 0, 0);
+            this._mainLayout.SetColumnSpan(this._headerPanel, 2);
+
+            this._mainLayout.Controls.Add(this._sidePanel, 0, 1);
+            this._mainLayout.Controls.Add(this._contentPanel, 1, 1);
+
+            this._mainLayout.Controls.Add(this._statusStrip, 0, 2);
+            this._mainLayout.SetColumnSpan(this._statusStrip, 2);
+
+            // Configure form
+            this.Controls.Add(this._mainLayout);
+            this.Size = new System.Drawing.Size(1024, 768);
+            this.Text = "BusBus Management System";
         }
     }
+
+    #region Interfaces
+    public interface IApplicationHub
+    {
+        IServiceProvider ServiceProvider { get; }
+        Task NavigateToAsync(string viewName);
+        Task NavigateBackAsync();
+        void ShowNotification(string message, NotificationType type);
+        Task<bool> ShowConfirmationAsync(string message, string title);
+        void ShowBusyIndicator(string message);
+        void HideBusyIndicator();
+    }
+
+    public interface IView : IDisposable
+    {
+        string ViewName { get; }
+        string Title { get; }
+        Control? Control { get; }
+        event EventHandler<NavigationEventArgs>? NavigationRequested;
+        event EventHandler<StatusEventArgs>? StatusUpdated;
+        Task ActivateAsync(CancellationToken cancellationToken);
+        Task DeactivateAsync();
+    }
+
+    public class NavigationEventArgs : EventArgs
+    {
+        public string ViewName { get; }
+        public object? Parameter { get; }
+
+        public NavigationEventArgs(string viewName, object? parameter = null)
+        {
+            ViewName = viewName;
+            Parameter = parameter;
+        }
+    }
+
+    public class StatusEventArgs : EventArgs
+    {
+        public string Message { get; }
+        public StatusType Type { get; }
+
+        public StatusEventArgs(string message, StatusType type = StatusType.Info)
+        {
+            Message = message;
+            Type = type;
+        }
+    }
+
+    public enum StatusType
+    {
+        Info,
+        Success,
+        Warning,
+        Error
+    }
+
+    public enum NotificationType
+    {
+        Info,
+        Success,
+        Warning,
+        Error
+    }
+    #endregion
 }

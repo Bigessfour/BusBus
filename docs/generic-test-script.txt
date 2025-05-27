@@ -1,0 +1,5 @@
+# Generic Test Script
+
+This file is intended as a placeholder for any future test scripts or notes about test automation for the BusBus project.
+
+You can move or consolidate any new test scripts here for review and organization.

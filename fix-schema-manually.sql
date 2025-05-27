@@ -1,0 +1,199 @@
+-- Manual Schema Fix for BusBus Database
+-- This script adds all missing columns to bring the database in sync with Entity Framework models
+
+USE BusBusDB;
+GO
+
+-- First, let's check what tables exist
+SELECT TABLE_NAME, TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';
+GO
+
+-- Add missing columns to Drivers table
+PRINT 'Adding missing columns to Drivers table...';
+
+-- Check if columns exist before adding them
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'ContactInfo')
+    ALTER TABLE Drivers ADD ContactInfo NVARCHAR(MAX) NOT NULL DEFAULT '';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'CreatedBy')
+    ALTER TABLE Drivers ADD CreatedBy NVARCHAR(MAX) NOT NULL DEFAULT '';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'CreatedDate')
+    ALTER TABLE Drivers ADD CreatedDate DATETIME2 NOT NULL DEFAULT GETDATE();
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'DriverID')
+    ALTER TABLE Drivers ADD DriverID INT NOT NULL DEFAULT 0;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'DriverName')
+    ALTER TABLE Drivers ADD DriverName NVARCHAR(MAX) NOT NULL DEFAULT '';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'EmergencyContactJson')
+    ALTER TABLE Drivers ADD EmergencyContactJson NVARCHAR(MAX) NOT NULL DEFAULT '{}';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'HireDate')
+    ALTER TABLE Drivers ADD HireDate DATETIME2 NOT NULL DEFAULT GETDATE();
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'LastPerformanceReview')
+    ALTER TABLE Drivers ADD LastPerformanceReview DATETIME2 NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'ModifiedDate')
+    ALTER TABLE Drivers ADD ModifiedDate DATETIME2 NOT NULL DEFAULT GETDATE();
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'PerformanceScore')
+    ALTER TABLE Drivers ADD PerformanceScore DECIMAL(18,2) NOT NULL DEFAULT 5.0;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'PersonalDetails')
+    ALTER TABLE Drivers ADD PersonalDetails NVARCHAR(MAX) NOT NULL DEFAULT '{}';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'RowVersion')
+    ALTER TABLE Drivers ADD RowVersion ROWVERSION;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'SalaryGrade')
+    ALTER TABLE Drivers ADD SalaryGrade INT NOT NULL DEFAULT 1;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'Status')
+    ALTER TABLE Drivers ADD Status NVARCHAR(MAX) NOT NULL DEFAULT 'Active';
+
+-- Fix the Name computed column by updating existing DriverName or adding Name as computed column
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Drivers' AND COLUMN_NAME = 'Name')
+    ALTER TABLE Drivers ADD Name AS (TRIM(FirstName + ' ' + LastName)) PERSISTED;
+
+PRINT 'Drivers table columns added successfully.';
+GO
+
+-- Add missing columns to Vehicles table
+PRINT 'Adding missing columns to Vehicles table...';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'CreatedDate')
+    ALTER TABLE Vehicles ADD CreatedDate DATETIME2 NOT NULL DEFAULT GETDATE();
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'FuelType')
+    ALTER TABLE Vehicles ADD FuelType NVARCHAR(MAX) NOT NULL DEFAULT '';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'IsMaintenanceRequired')
+    ALTER TABLE Vehicles ADD IsMaintenanceRequired BIT NOT NULL DEFAULT 0;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'LastLocationUpdate')
+    ALTER TABLE Vehicles ADD LastLocationUpdate DATETIME2 NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'LastMaintenanceDate')
+    ALTER TABLE Vehicles ADD LastMaintenanceDate DATETIME2 NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'Latitude')
+    ALTER TABLE Vehicles ADD Latitude FLOAT NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'Longitude')
+    ALTER TABLE Vehicles ADD Longitude FLOAT NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'MaintenanceDue')
+    ALTER TABLE Vehicles ADD MaintenanceDue BIT NOT NULL DEFAULT 0;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'MaintenanceHistoryJson')
+    ALTER TABLE Vehicles ADD MaintenanceHistoryJson NVARCHAR(MAX) NOT NULL DEFAULT '[]';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'MakeModel')
+    ALTER TABLE Vehicles ADD MakeModel NVARCHAR(MAX) NOT NULL DEFAULT '';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'Mileage')
+    ALTER TABLE Vehicles ADD Mileage DECIMAL(18,2) NOT NULL DEFAULT 0;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'ModifiedDate')
+    ALTER TABLE Vehicles ADD ModifiedDate DATETIME2 NOT NULL DEFAULT GETDATE();
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'NextMaintenanceDate')
+    ALTER TABLE Vehicles ADD NextMaintenanceDate DATETIME2 NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'RowVersion')
+    ALTER TABLE Vehicles ADD RowVersion ROWVERSION;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'SpecificationsJson')
+    ALTER TABLE Vehicles ADD SpecificationsJson NVARCHAR(MAX) NOT NULL DEFAULT '{}';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'Status')
+    ALTER TABLE Vehicles ADD Status NVARCHAR(MAX) NOT NULL DEFAULT 'Available';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'VehicleCode')
+    ALTER TABLE Vehicles ADD VehicleCode NVARCHAR(MAX) NULL;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'VehicleGuid')
+    ALTER TABLE Vehicles ADD VehicleGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID();
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'VehicleId')
+    ALTER TABLE Vehicles ADD VehicleId INT NOT NULL DEFAULT 0;
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'Year')
+    ALTER TABLE Vehicles ADD Year INT NULL;
+
+-- Add computed columns for compatibility
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Vehicles' AND COLUMN_NAME = 'BusNumber')
+    ALTER TABLE Vehicles ADD BusNumber AS Number PERSISTED;
+
+PRINT 'Vehicles table columns added successfully.';
+GO
+
+-- Update data in new columns where possible
+PRINT 'Updating data in new columns...';
+
+-- Update Drivers data
+UPDATE Drivers
+SET
+    DriverName = COALESCE(FirstName + ' ' + LastName, 'Unknown Driver'),
+    ContactInfo = COALESCE(PhoneNumber + '; ' + Email, ''),
+    CreatedBy = 'System Migration',
+    CreatedDate = COALESCE(CreatedDate, GETDATE()),
+    ModifiedDate = COALESCE(ModifiedDate, GETDATE()),
+    Status = 'Active',
+    HireDate = COALESCE(HireDate, GETDATE()),
+    PerformanceScore = 5.0,
+    SalaryGrade = 1,
+    EmergencyContactJson = '{}',
+    PersonalDetails = '{}'
+WHERE DriverName = '' OR DriverName IS NULL;
+
+-- Update Vehicles data
+UPDATE Vehicles
+SET
+    CreatedDate = COALESCE(CreatedDate, GETDATE()),
+    ModifiedDate = COALESCE(ModifiedDate, GETDATE()),
+    Status = 'Available',
+    FuelType = 'Diesel',
+    MakeModel = COALESCE(Make + ' ' + Model, 'Unknown Make/Model'),
+    Mileage = 0,
+    MaintenanceHistoryJson = '[]',
+    SpecificationsJson = '{}',
+    VehicleGuid = COALESCE(VehicleGuid, NEWID()),
+    VehicleId = COALESCE(VehicleId, Id)
+WHERE MakeModel = '' OR MakeModel IS NULL;
+
+PRINT 'Data update completed.';
+GO
+
+-- Verify the schema
+PRINT 'Schema verification:';
+PRINT '===================';
+
+SELECT
+    t.TABLE_NAME,
+    COUNT(c.COLUMN_NAME) as ColumnCount
+FROM INFORMATION_SCHEMA.TABLES t
+LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME
+WHERE t.TABLE_TYPE = 'BASE TABLE'
+GROUP BY t.TABLE_NAME
+ORDER BY t.TABLE_NAME;
+
+-- Show specific columns for Drivers and Vehicles
+PRINT '';
+PRINT 'Drivers table columns:';
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'Drivers'
+ORDER BY ORDINAL_POSITION;
+
+PRINT '';
+PRINT 'Vehicles table columns:';
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'Vehicles'
+ORDER BY ORDINAL_POSITION;
+
+PRINT 'Schema fix completed successfully!';

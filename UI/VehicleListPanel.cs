@@ -1,7 +1,9 @@
+// Enable nullable reference types for this file
+#nullable enable
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.Models;
@@ -14,16 +16,16 @@ namespace BusBus.UI
     public partial class VehicleListPanel : ThemeableControl, IDisplayable
     {
         private readonly IVehicleService _vehicleService;
-        private DataGridView _vehiclesDataGridView;
-        private Button _addButton;
-        private Button _editButton;
-        private Button _deleteButton;
-        private Button _previousPageButton;
-        private Button _nextPageButton;
-        private Label _pageInfoLabel;
-        private Panel _buttonPanel;
-        private Panel _paginationPanel;
-        
+        private DataGridView _vehiclesDataGridView = null!;
+        private Button _addButton = null!;
+        private Button _editButton = null!;
+        private Button _deleteButton = null!;
+        private Button _previousPageButton = null!;
+        private Button _nextPageButton = null!;
+        private Label _pageInfoLabel = null!;
+        private Panel _buttonPanel = null!;
+        private Panel? _paginationPanel;
+
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1;
@@ -193,11 +195,13 @@ namespace BusBus.UI
             _addButton = new Button
             {
                 Text = "Add Vehicle",
-                Size = new Size(100, 30),
+                Size = new Size(100, 40),
                 Margin = new Padding(0, 10, 10, 10),
                 BackColor = Color.FromArgb(52, 152, 219),
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
+                FlatStyle = FlatStyle.Flat,
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = false
             };
             _addButton.FlatAppearance.BorderSize = 0;
             _addButton.Click += AddButton_Click;
@@ -205,12 +209,14 @@ namespace BusBus.UI
             _editButton = new Button
             {
                 Text = "Edit",
-                Size = new Size(80, 30),
+                Size = new Size(80, 40),
                 Margin = new Padding(0, 10, 10, 10),
                 BackColor = Color.FromArgb(46, 204, 113),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Enabled = false,
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = false
             };
             _editButton.FlatAppearance.BorderSize = 0;
             _editButton.Click += EditButton_Click;
@@ -247,12 +253,14 @@ namespace BusBus.UI
             _previousPageButton = new Button
             {
                 Text = "Previous",
-                Size = new Size(80, 30),
+                Size = new Size(80, 40),
                 Margin = new Padding(0, 5, 10, 5),
                 BackColor = Color.FromArgb(149, 165, 166),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Enabled = false,
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = false
             };
             _previousPageButton.FlatAppearance.BorderSize = 0;
             _previousPageButton.Click += PreviousPageButton_Click;
@@ -268,12 +276,14 @@ namespace BusBus.UI
             _nextPageButton = new Button
             {
                 Text = "Next",
-                Size = new Size(80, 30),
+                Size = new Size(80, 40),
                 Margin = new Padding(0, 5, 10, 5),
                 BackColor = Color.FromArgb(149, 165, 166),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Enabled = false,
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = false
             };
             _nextPageButton.FlatAppearance.BorderSize = 0;
             _nextPageButton.Click += NextPageButton_Click;
@@ -281,7 +291,7 @@ namespace BusBus.UI
             paginationLayout.Controls.Add(_previousPageButton);
             paginationLayout.Controls.Add(_pageInfoLabel);
             paginationLayout.Controls.Add(_nextPageButton);
-            _paginationPanel.Controls.Add(paginationLayout);
+            _paginationPanel!.Controls.Add(paginationLayout);
         }
 
         public async Task LoadVehiclesAsync()
@@ -289,7 +299,7 @@ namespace BusBus.UI
             {
                 var totalCount = await _vehicleService.GetCountAsync();
                 _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
-                
+
                 _currentVehicles = await _vehicleService.GetPagedAsync(_currentPage, _pageSize);
 
                 _vehiclesDataGridView.DataSource = _currentVehicles;
@@ -297,7 +307,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading vehicles: {ex.Message}", "Error", 
+                MessageBox.Show($"Error loading vehicles: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -437,18 +447,12 @@ namespace BusBus.UI
         {
             ArgumentNullException.ThrowIfNull(container);
             container.Controls.Add(this);
-        }
-
-        protected override void ApplyTheme()
+        }        protected override void ApplyTheme()
         {
             base.ApplyTheme();
-            
+
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _vehiclesDataGridView.BackgroundColor = ThemeManager.CurrentTheme.GridBackground;
-            _vehiclesDataGridView.DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _vehiclesDataGridView.DefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.CardText;
-            _vehiclesDataGridView.ColumnHeadersDefaultCellStyle.BackColor = ThemeManager.CurrentTheme.HeadlineBackground;
-            _vehiclesDataGridView.ColumnHeadersDefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+            ThemeManager.CurrentTheme.StyleDataGrid(_vehiclesDataGridView);
             _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
         }
     }

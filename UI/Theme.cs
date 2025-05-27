@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +9,59 @@ using System.Windows.Forms;
 namespace BusBus.UI
 {
     /// <summary>
-    /// Base class for application themes
+    /// Defines centralized color values used across different themes
+    /// </summary>
+    public static class ThemeColors
+    {
+        // Light theme colors
+        public static readonly Color LightMainBackground = Color.FromArgb(240, 240, 240);
+        public static readonly Color LightSidePanelBackground = Color.FromArgb(210, 210, 220);
+        public static readonly Color LightHeadlineBackground = Color.FromArgb(200, 200, 220);
+        public static readonly Color LightCardBackground = Color.FromArgb(220, 220, 230);
+        public static readonly Color LightGridBackground = Color.FromArgb(230, 230, 240);
+        public static readonly Color LightButtonBackground = Color.FromArgb(180, 180, 200);
+        public static readonly Color LightButtonHoverBackground = Color.FromArgb(160, 160, 180);
+        public static readonly Color LightButtonPressedBackground = Color.FromArgb(140, 140, 160);
+        public static readonly Color LightButtonDisabledBackground = Color.FromArgb(200, 200, 210);
+        public static readonly Color LightCardText = Color.DarkGray;
+        public static readonly Color LightHeadlineText = Color.Black;
+        public static readonly Color LightTextBoxBackground = Color.White;
+        public static readonly Color LightButtonText = Color.Black;
+        public static readonly Color LightButtonDisabledText = Color.Gray;
+
+        // Dark theme colors
+        public static readonly Color DarkMainBackground = Color.FromArgb(30, 30, 30);
+        public static readonly Color DarkSidePanelBackground = Color.FromArgb(36, 36, 46);
+        public static readonly Color DarkHeadlineBackground = Color.FromArgb(44, 51, 73);
+        public static readonly Color DarkCardBackground = Color.FromArgb(40, 40, 50);
+        public static readonly Color DarkGridBackground = Color.FromArgb(35, 35, 45);
+        public static readonly Color DarkButtonBackground = Color.FromArgb(44, 51, 73);
+        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(60, 70, 100);
+        public static readonly Color DarkButtonPressedBackground = Color.FromArgb(80, 90, 120);
+        public static readonly Color DarkButtonDisabledBackground = Color.FromArgb(25, 25, 35);
+        public static readonly Color DarkCardText = Color.Gainsboro;
+        public static readonly Color DarkHeadlineText = Color.White;
+        public static readonly Color DarkTextBoxBackground = Color.FromArgb(50, 50, 60);
+        public static readonly Color DarkButtonText = Color.White;
+        public static readonly Color DarkButtonDisabledText = Color.DarkGray;
+    }
+
+    public class ColorScheme
+    {
+        public Color Primary { get; set; } = Color.FromArgb(60, 120, 200);
+        public Color Secondary { get; set; } = Color.FromArgb(80, 160, 220);
+        public Color Background { get; set; } = Color.White;
+        public Color Text { get; set; } = Color.Black;
+        public Color Accent { get; set; } = Color.FromArgb(240, 100, 50);
+        public Color Disabled { get; set; } = Color.Gray;
+        public Color Error { get; set; } = Color.Red;
+        public Color Success { get; set; } = Color.Green;
+        public Color Warning { get; set; } = Color.Orange;
+        public static readonly Color DarkButtonDisabledText = Color.DarkGray;
+    }
+
+    /// <summary>
+    /// Represents a UI theme with color and font definitions
     /// </summary>
     public abstract class Theme : IDisposable
     {
@@ -63,6 +116,26 @@ namespace BusBus.UI
         public abstract Color ButtonHoverBackground { get; }
 
         /// <summary>
+        /// Button pressed background color
+        /// </summary>
+        public abstract Color ButtonPressedBackground { get; }
+
+        /// <summary>
+        /// Button disabled background color
+        /// </summary>
+        public abstract Color ButtonDisabledBackground { get; }
+
+        /// <summary>
+        /// Button text color
+        /// </summary>
+        public abstract Color ButtonText { get; }
+
+        /// <summary>
+        /// Button disabled text color
+        /// </summary>
+        public abstract Color ButtonDisabledText { get; }
+
+        /// <summary>
         /// Card text color
         /// </summary>
         public abstract Color CardText { get; }
@@ -80,8 +153,8 @@ namespace BusBus.UI
         /// <summary>
         /// Light variant of text box background color for better readability
         /// </summary>
-        public virtual Color LightTextBoxBackground => 
-            Color.FromArgb(255, 
+        public virtual Color LightTextBoxBackground =>
+            Color.FromArgb(255,
                 Math.Min(255, TextBoxBackground.R + 20),
                 Math.Min(255, TextBoxBackground.G + 20),
                 Math.Min(255, TextBoxBackground.B + 20));
@@ -89,19 +162,19 @@ namespace BusBus.UI
         /// <summary>
         /// Gets border color (derived from other colors if not overridden)
         /// </summary>
-        public virtual Color BorderColor => 
+        public virtual Color BorderColor =>
             Color.FromArgb(128, CardText.R, CardText.G, CardText.B);
 
         /// <summary>
         /// Gets disabled text color (derived from CardText if not overridden)
         /// </summary>
-        public virtual Color DisabledText => 
+        public virtual Color DisabledText =>
             Color.FromArgb(128, CardText.R, CardText.G, CardText.B);
 
         /// <summary>
         /// Gets secondary text color (lighter than CardText for less prominent text)
         /// </summary>
-        public virtual Color SecondaryText => 
+        public virtual Color SecondaryText =>
             Color.FromArgb(180, CardText.R, CardText.G, CardText.B);
 
         /// <summary>
@@ -235,12 +308,53 @@ namespace BusBus.UI
         public virtual void StyleDataGrid(DataGridView grid)
         {
             ArgumentNullException.ThrowIfNull(grid);
+
+            // Grid background and basic styling
             grid.BackgroundColor = GridBackground;
             grid.ForeColor = CardText;
             grid.BorderStyle = BorderStyle.None;
-            grid.ColumnHeadersDefaultCellStyle.BackColor = ButtonBackground;
-            grid.ColumnHeadersDefaultCellStyle.ForeColor = HeadlineText;
             grid.EnableHeadersVisualStyles = false;
+
+            // Header styling with crystal-like theme colors
+            grid.ColumnHeadersDefaultCellStyle.BackColor = HeadlineBackground;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = HeadlineText;
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(8);
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            grid.ColumnHeadersHeight = 35;
+
+            // Cell styling for consistent dark theme appearance
+            grid.DefaultCellStyle.BackColor = CardBackground;
+            grid.DefaultCellStyle.ForeColor = CardText;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            grid.DefaultCellStyle.SelectionBackColor = ButtonBackground;
+            grid.DefaultCellStyle.SelectionForeColor = HeadlineText;
+            grid.DefaultCellStyle.Padding = new Padding(6);
+            grid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+
+            // Alternating row colors for better readability in dark theme
+            grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(
+                Math.Min(255, CardBackground.R + 8),
+                Math.Min(255, CardBackground.G + 8),
+                Math.Min(255, CardBackground.B + 8)
+            );
+            grid.AlternatingRowsDefaultCellStyle.ForeColor = CardText;            // Row and grid appearance
+            grid.RowTemplate.Height = 32;
+            grid.RowHeadersVisible = false;
+            grid.AllowUserToResizeRows = false;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            // Use a solid color for GridColor since transparent colors are not allowed
+            // Create a darker version of the card background for subtle grid lines
+            var gridLineColor = Color.FromArgb(
+                Math.Max(0, CardBackground.R - 30),
+                Math.Max(0, CardBackground.G - 30),
+                Math.Max(0, CardBackground.B - 30));
+            grid.GridColor = gridLineColor;
+
+            // Selection and behavior
+            grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            grid.MultiSelect = false;
         }
 
         /// <summary>
@@ -254,6 +368,54 @@ namespace BusBus.UI
             textBox.ForeColor = CardText;
             textBox.Font = TextBoxFont;
             textBox.BorderStyle = BorderStyle.FixedSingle;
+        }
+
+        /// <summary>
+        /// Styles a button with theme colors and hover effects
+        /// </summary>
+        /// <param name="button">The Button to style</param>
+        public virtual void StyleButton(Button button)
+        {
+            ArgumentNullException.ThrowIfNull(button);
+
+            button.BackColor = ButtonBackground;
+            button.ForeColor = ButtonText;
+            button.Font = ButtonFont;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.MouseOverBackColor = ButtonHoverBackground;
+            button.FlatAppearance.MouseDownBackColor = ButtonPressedBackground;
+            button.Cursor = Cursors.Hand;
+
+            // Handle enabled state
+            button.EnabledChanged += (s, e) =>
+            {
+                if (button.Enabled)
+                {
+                    button.BackColor = ButtonBackground;
+                    button.ForeColor = ButtonText;
+                }
+                else
+                {
+                    button.BackColor = ButtonDisabledBackground;
+                    button.ForeColor = ButtonDisabledText;
+                }
+            };
+        }
+
+        /// <summary>
+        /// Styles a side panel button with specific styling
+        /// </summary>
+        /// <param name="button">The Button to style as a side panel button</param>
+        public virtual void StyleSidePanelButton(Button button)
+        {
+            ArgumentNullException.ThrowIfNull(button);
+
+            StyleButton(button);
+            button.Font = MediumButtonFont;
+            button.TextAlign = ContentAlignment.MiddleLeft;
+            button.Padding = new Padding(10, 0, 0, 0);
+            button.Height = 40;
         }
 
         /// <summary>
@@ -288,7 +450,8 @@ namespace BusBus.UI
             }
             else if (control is Button button)
             {
-                return button.BackColor == ButtonBackground;
+                return button.BackColor == ButtonBackground &&
+                       button.FlatAppearance.MouseOverBackColor == ButtonHoverBackground;
             }
             else if (control is TextBox textBox)
             {
@@ -357,14 +520,14 @@ namespace BusBus.UI
         public virtual Color GetElevatedBackground(int elevation = 0)
         {
             if (Name != "Dark") return CardBackground;
-            
+
             // Base dark color (#121212) with increasing lightness for elevation
             var baseColor = Color.FromArgb(18, 18, 18);
             var elevationStep = Math.Min(elevation * 8, 64); // Max 64 steps
-            
+
             return Color.FromArgb(
                 Math.Min(255, baseColor.R + elevationStep),
-                Math.Min(255, baseColor.G + elevationStep), 
+                Math.Min(255, baseColor.G + elevationStep),
                 Math.Min(255, baseColor.B + elevationStep)
             );
         }
@@ -376,11 +539,11 @@ namespace BusBus.UI
         public virtual Color GetElevatedTextColor(int elevation = 0)
         {
             if (Name != "Dark") return CardText;
-            
+
             // For very light elevated surfaces, use darker text
             if (elevation > 6)
                 return Color.FromArgb(33, 33, 33);
-            
+
             return CardText;
         }
     }
@@ -398,6 +561,10 @@ namespace BusBus.UI
         public override Color GridBackground => ThemeColors.LightGridBackground;
         public override Color ButtonBackground => ThemeColors.LightButtonBackground;
         public override Color ButtonHoverBackground => ThemeColors.LightButtonHoverBackground;
+        public override Color ButtonPressedBackground => ThemeColors.LightButtonPressedBackground;
+        public override Color ButtonDisabledBackground => ThemeColors.LightButtonDisabledBackground;
+        public override Color ButtonText => ThemeColors.LightButtonText;
+        public override Color ButtonDisabledText => ThemeColors.LightButtonDisabledText;
         public override Color CardText => ThemeColors.LightCardText;
         public override Color HeadlineText => ThemeColors.LightHeadlineText;
         public override Color TextBoxBackground => ThemeColors.LightTextBoxBackground;
@@ -416,40 +583,13 @@ namespace BusBus.UI
         public override Color GridBackground => ThemeColors.DarkGridBackground;
         public override Color ButtonBackground => ThemeColors.DarkButtonBackground;
         public override Color ButtonHoverBackground => ThemeColors.DarkButtonHoverBackground;
+        public override Color ButtonPressedBackground => ThemeColors.DarkButtonPressedBackground;
+        public override Color ButtonDisabledBackground => ThemeColors.DarkButtonDisabledBackground;
+        public override Color ButtonText => ThemeColors.DarkButtonText;
+        public override Color ButtonDisabledText => ThemeColors.DarkButtonDisabledText;
         public override Color CardText => ThemeColors.DarkCardText;
         public override Color HeadlineText => ThemeColors.DarkHeadlineText;
         public override Color TextBoxBackground => ThemeColors.DarkTextBoxBackground;
     }
-
-    /// <summary>
-    /// Static theme colors for compatibility
-    /// </summary>
-    public static class ThemeColors
-    {
-        public static readonly Color LightMainBackground = Color.White;
-        public static readonly Color LightSidePanelBackground = Color.FromArgb(248, 249, 250);
-        public static readonly Color LightHeadlineBackground = Color.FromArgb(233, 236, 239);
-        public static readonly Color LightCardBackground = Color.White;
-        public static readonly Color LightGridBackground = Color.White;
-        public static readonly Color LightButtonBackground = Color.FromArgb(0, 123, 255);
-        public static readonly Color LightButtonHoverBackground = Color.FromArgb(0, 86, 179);
-        public static readonly Color LightCardText = Color.Black;
-        public static readonly Color LightHeadlineText = Color.FromArgb(33, 37, 41);
-        public static readonly Color LightTextBoxBackground = Color.White;
-
-        // Crystal Dark Theme Colors - inspired by Telerik Crystal Dark
-        // Using deep dark base with subtle blue-gray tints for modern crystal-like appearance
-        // Enhanced contrast ratios and premium visual depth
-        // Following both Material Design and crystal-like aesthetic principles
-        public static readonly Color DarkMainBackground = Color.FromArgb(15, 17, 20);        // Deep charcoal base
-        public static readonly Color DarkSidePanelBackground = Color.FromArgb(28, 32, 38);   // Cool gray with blue undertones
-        public static readonly Color DarkHeadlineBackground = Color.FromArgb(42, 48, 55);    // Elevated surface with crystal depth
-        public static readonly Color DarkCardBackground = Color.FromArgb(32, 36, 42);        // Card surface with subtle blue tint
-        public static readonly Color DarkGridBackground = Color.FromArgb(24, 28, 32);        // Grid container with depth
-        public static readonly Color DarkButtonBackground = Color.FromArgb(52, 144, 220);    // Crystal blue accent
-        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(42, 120, 195); // Deeper crystal blue on hover
-        public static readonly Color DarkCardText = Color.FromArgb(230, 235, 240);           // Cool white for excellent readability
-        public static readonly Color DarkHeadlineText = Color.FromArgb(248, 250, 252);       // Pure white for headlines
-        public static readonly Color DarkTextBoxBackground = Color.FromArgb(48, 54, 61);     // Input fields with crystal-like elevation
-    }
 }
+// NOTE: ThemeManager implementation has been moved to ThemeManager.cs to avoid duplication.

@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -206,12 +208,12 @@ namespace BusBus.Services
             }
         }
 
-        public async Task<List<Vehicle>> GetVehiclesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<BusBus.Models.Vehicle>> GetVehiclesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 if (IsServiceProviderDisposed())
-                    return new List<Vehicle>();
+                    return new List<BusBus.Models.Vehicle>();
 
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -219,7 +221,7 @@ namespace BusBus.Services
             }
             catch (ObjectDisposedException)
             {
-                return new List<Vehicle>();
+                return new List<BusBus.Models.Vehicle>();
             }
         }
 

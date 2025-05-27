@@ -1,3 +1,8 @@
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor
+#pragma warning disable CS0169 // The field is never used
+#pragma warning disable CA1416 // Platform compatibility (Windows-only)
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -14,19 +19,19 @@ namespace BusBus.UI
     public partial class DriverListPanel : ThemeableControl, IDisplayable
     {
         private readonly IDriverService _driverService;
-        private DataGridView _driversDataGridView;
-        private Button _addButton;
-        private Button _editButton;
-        private Button _deleteButton;
-        private Button _previousPageButton;
-        private Button _nextPageButton;
-        private Label _pageInfoLabel;
-        private Panel _buttonPanel;
+        private DataGridView _driversDataGridView = null!;
+        private Button _addButton = null!;
+        private Button _editButton = null!;
+        private Button _deleteButton = null!;
+        private Button _previousPageButton = null!;
+        private Button _nextPageButton = null!;
+        private Label _pageInfoLabel = null!;
+        private Panel _buttonPanel = null!;
         private Panel _paginationPanel;
-        
+
         private int _currentPage = 1;
         private int _pageSize = 10;
-        private int _totalPages = 1;        private List<Driver> _currentDrivers = new List<Driver>();
+        private int _totalPages = 1; private List<Driver> _currentDrivers = new List<Driver>();
 
         public event EventHandler<EntityEventArgs<Driver>>? DriverEditRequested;
 
@@ -73,9 +78,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
             };
-            mainLayout.Controls.Add(_buttonPanel, 0, 0);
-
-            // DataGridView
+            mainLayout.Controls.Add(_buttonPanel, 0, 0);            // DataGridView
             _driversDataGridView = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -89,8 +92,20 @@ namespace BusBus.UI
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false
+                EnableHeadersVisualStyles = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AutoSize = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
+                GridColor = System.Drawing.Color.FromArgb(200, 200, 200),
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
+                RowHeadersVisible = false,
+                RowTemplate = { Height = 32 },
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
+
+            // Apply consistent theme styling to the grid
+            ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
+
             mainLayout.Controls.Add(_driversDataGridView, 0, 1);
 
             // Pagination panel
@@ -104,7 +119,6 @@ namespace BusBus.UI
 
             ResumeLayout(false);
         }
-
         private void SetupDataGridView()
         {
             _driversDataGridView.Columns.Clear();
@@ -115,7 +129,8 @@ namespace BusBus.UI
                 Name = "FirstName",
                 HeaderText = "First Name",
                 DataPropertyName = "FirstName",
-                Width = 150,
+                FillWeight = 150,
+                MinimumWidth = 120,
                 ReadOnly = false
             };
             _driversDataGridView.Columns.Add(firstNameColumn);
@@ -126,7 +141,8 @@ namespace BusBus.UI
                 Name = "LastName",
                 HeaderText = "Last Name",
                 DataPropertyName = "LastName",
-                Width = 150,
+                FillWeight = 150,
+                MinimumWidth = 120,
                 ReadOnly = false
             };
             _driversDataGridView.Columns.Add(lastNameColumn);
@@ -137,7 +153,8 @@ namespace BusBus.UI
                 Name = "LicenseNumber",
                 HeaderText = "License Number",
                 DataPropertyName = "LicenseNumber",
-                Width = 200,
+                FillWeight = 200,
+                MinimumWidth = 150,
                 ReadOnly = false
             };
             _driversDataGridView.Columns.Add(licenseColumn);
@@ -155,103 +172,140 @@ namespace BusBus.UI
             _driversDataGridView.CellEndEdit += DriversDataGridView_CellEndEdit;
             _driversDataGridView.SelectionChanged += DriversDataGridView_SelectionChanged;
         }
-
         private void SetupButtons()
         {
-            var buttonLayout = new FlowLayoutPanel
+            var buttonLayout = new TableLayoutPanel
             {
-                Dock = DockStyle.Left,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                BackColor = Color.Transparent
+                Dock = DockStyle.Fill,
+                Height = 50,
+                ColumnCount = 3,
+                RowCount = 1,
+                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                Padding = new Padding(5)
             };
+            buttonLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+            buttonLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+            buttonLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
 
             _addButton = new Button
             {
                 Text = "Add Driver",
-                Size = new Size(100, 30),
-                Margin = new Padding(0, 10, 10, 10),
-                BackColor = Color.FromArgb(52, 152, 219),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
+                Dock = DockStyle.Fill,
+                Margin = new Padding(3),
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                FlatStyle = FlatStyle.Flat,
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                AutoSize = false,
+                MinimumSize = new Size(80, 30)
             };
-            _addButton.FlatAppearance.BorderSize = 0;
+            _addButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _addButton.FlatAppearance.BorderSize = 1;
             _addButton.Click += AddButton_Click;
 
             _editButton = new Button
             {
                 Text = "Edit",
-                Size = new Size(80, 30),
-                Margin = new Padding(0, 10, 10, 10),
-                BackColor = Color.FromArgb(46, 204, 113),
-                ForeColor = Color.White,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(3),
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                AutoSize = false,
+                MinimumSize = new Size(80, 30),
                 Enabled = false
             };
-            _editButton.FlatAppearance.BorderSize = 0;
+            _editButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _editButton.FlatAppearance.BorderSize = 1;
             _editButton.Click += EditButton_Click;
 
             _deleteButton = new Button
             {
                 Text = "Delete",
-                Size = new Size(80, 30),
-                Margin = new Padding(0, 10, 10, 10),
-                BackColor = Color.FromArgb(231, 76, 60),
-                ForeColor = Color.White,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(3),
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                AutoSize = false,
+                MinimumSize = new Size(80, 30),
                 Enabled = false
             };
-            _deleteButton.FlatAppearance.BorderSize = 0;
+            _deleteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _deleteButton.FlatAppearance.BorderSize = 1;
             _deleteButton.Click += DeleteButton_Click;
 
-            buttonLayout.Controls.Add(_addButton);
-            buttonLayout.Controls.Add(_editButton);
-            buttonLayout.Controls.Add(_deleteButton);
+            buttonLayout.Controls.Add(_addButton, 0, 0);
+            buttonLayout.Controls.Add(_editButton, 1, 0);
+            buttonLayout.Controls.Add(_deleteButton, 2, 0);
             _buttonPanel.Controls.Add(buttonLayout);
         }
-
         private void SetupPagination()
         {
+            // Create a horizontal layout for pagination controls
             var paginationLayout = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
                 AutoSize = true,
-                BackColor = Color.Transparent
+                Padding = new Padding(5),
+                BackColor = ThemeManager.CurrentTheme.CardBackground
             };
 
+            // Previous page button
             _previousPageButton = new Button
             {
-                Text = "Previous",
-                Size = new Size(80, 30),
-                Margin = new Padding(0, 5, 10, 5),
-                BackColor = Color.FromArgb(149, 165, 166),
-                ForeColor = Color.White,
+                Text = "◀ Previous",
+                Size = new Size(100, 35),
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                Enabled = false,
+                Margin = new Padding(3)
             };
-            _previousPageButton.FlatAppearance.BorderSize = 0;
+            _previousPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _previousPageButton.FlatAppearance.BorderSize = 1;
             _previousPageButton.Click += PreviousPageButton_Click;
 
+            // Page info label
             _pageInfoLabel = new Label
             {
-                Text = "Page 1 of 1",
-                AutoSize = true,
-                Margin = new Padding(10, 8, 10, 5),
-                ForeColor = Color.FromArgb(52, 73, 94)
+                Text = "Page 1",
+                Size = new Size(100, 35),
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                AutoSize = false,
+                Margin = new Padding(10, 3, 10, 3)
             };
 
+            // Next page button
             _nextPageButton = new Button
             {
-                Text = "Next",
-                Size = new Size(80, 30),
-                Margin = new Padding(0, 5, 10, 5),
-                BackColor = Color.FromArgb(149, 165, 166),
-                ForeColor = Color.White,
+                Text = "Next ▶",
+                Size = new Size(100, 35),
+                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                Enabled = false,
+                Margin = new Padding(3)
             };
-            _nextPageButton.FlatAppearance.BorderSize = 0;
+            _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _nextPageButton.FlatAppearance.BorderSize = 1;
             _nextPageButton.Click += NextPageButton_Click;
 
             paginationLayout.Controls.Add(_previousPageButton);
@@ -260,12 +314,13 @@ namespace BusBus.UI
             _paginationPanel.Controls.Add(paginationLayout);
         }
 
-        public async Task LoadDriversAsync()        {
+        public async Task LoadDriversAsync()
+        {
             try
             {
                 var totalCount = await _driverService.GetCountAsync();
                 _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
-                
+
                 _currentDrivers = await _driverService.GetPagedAsync(_currentPage, _pageSize);
 
                 _driversDataGridView.DataSource = _currentDrivers;
@@ -273,7 +328,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading drivers: {ex.Message}", "Error", 
+                MessageBox.Show($"Error loading drivers: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -316,7 +371,8 @@ namespace BusBus.UI
             }
         }
 
-        private void EditButton_Click(object? sender, EventArgs e)        {
+        private void EditButton_Click(object? sender, EventArgs e)
+        {
             if (_driversDataGridView.SelectedRows.Count > 0)
             {
                 var selectedDriver = (Driver)_driversDataGridView.SelectedRows[0].DataBoundItem;
@@ -384,7 +440,8 @@ namespace BusBus.UI
 
         private async void NextPageButton_Click(object? sender, EventArgs e)
         {
-            if (_currentPage < _totalPages)            {
+            if (_currentPage < _totalPages)
+            {
                 _currentPage++;
                 await LoadDriversAsync();
             }
@@ -397,18 +454,71 @@ namespace BusBus.UI
             container.Controls.Add(this);
             this.Dock = DockStyle.Fill;
         }
-
         protected override void ApplyTheme()
         {
             base.ApplyTheme();
-            
+
+            // Apply theme to main panel
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _driversDataGridView.BackgroundColor = ThemeManager.CurrentTheme.GridBackground;
-            _driversDataGridView.DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _driversDataGridView.DefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.CardText;
-            _driversDataGridView.ColumnHeadersDefaultCellStyle.BackColor = ThemeManager.CurrentTheme.HeadlineBackground;
-            _driversDataGridView.ColumnHeadersDefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
-            _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+
+            // Apply theme to data grid
+            if (_driversDataGridView != null)
+            {
+                ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
+            }
+
+            // Apply theme to buttons
+            if (_addButton != null)
+            {
+                _addButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _addButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _addButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            }
+
+            if (_editButton != null)
+            {
+                _editButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _editButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _editButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            }
+
+            if (_deleteButton != null)
+            {
+                _deleteButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _deleteButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _deleteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            }
+
+            if (_previousPageButton != null)
+            {
+                _previousPageButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _previousPageButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _previousPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            }
+
+            if (_nextPageButton != null)
+            {
+                _nextPageButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _nextPageButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            }
+
+            // Apply theme to labels
+            if (_pageInfoLabel != null)
+            {
+                _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+            }
+
+            // Apply theme to panels
+            if (_buttonPanel != null)
+            {
+                _buttonPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            }
+
+            if (_paginationPanel != null)
+            {
+                _paginationPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            }
         }
     }
 }

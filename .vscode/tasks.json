@@ -1,6 +1,44 @@
 {
 	"version": "2.0.0",
 	"tasks": [
+	{
+		"label": "Delete and Recreate Database",
+		"type": "shell",
+		"command": "powershell",
+		"args": [
+			"-ExecutionPolicy",
+			"Bypass",
+			"-File",
+			"delete-and-recreate-database.ps1"
+		],
+		"group": "build",
+		"presentation": {
+			"reveal": "always",
+			"panel": "new"
+		},
+		"problemMatcher": []
+	},
+	{
+	  "label": "Analyze C# with MCP",
+	  "type": "shell",
+	  "command": "node analyze-csharp.js Dashboard.cs",
+	  "group": "test",
+	  "presentation": {
+		"reveal": "always",
+		"panel": "new"
+	  }
+	},
+	{
+	  "label": "Full Clean, Analyze, Build",
+	  "dependsOn": [
+		"clean and rebuild",
+		"Analyze C# with MCP",
+		"build BusBus solution"
+	  ],
+	  "dependsOrder": "sequence",
+	  "group": "build",
+	  "problemMatcher": []
+	},
 		{
 			"label": "Reset GitHub Integration",
 			"type": "shell",
@@ -486,6 +524,20 @@
 				"clear": true
 			},
 			"problemMatcher": []
+		},
+		{
+			"label": "Fix Database Schema Manually",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Write-Host 'Running manual schema fix...' -ForegroundColor Cyan; if (Test-Path 'fix-schema-manually.sql') { try { Write-Host 'Attempting to connect to SQL Server...' -ForegroundColor Yellow; sqlcmd -S 'localhost\\SQLEXPRESS' -d 'BusBusDB' -E -i 'fix-schema-manually.sql' -o 'schema-fix-output.log'; Write-Host 'Schema fix completed. Check schema-fix-output.log for details.' -ForegroundColor Green } catch { Write-Host 'Error with SQLEXPRESS, trying SQLEXPRESS01...' -ForegroundColor Yellow; sqlcmd -S 'localhost\\SQLEXPRESS01' -d 'BusBusDB' -E -i 'fix-schema-manually.sql' -o 'schema-fix-output.log' } } else { Write-Host 'SQL script not found!' -ForegroundColor Red }"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
 		}
 	]
 }

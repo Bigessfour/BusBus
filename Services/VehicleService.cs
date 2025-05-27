@@ -1,3 +1,5 @@
+// Enable nullable reference types for this file
+#nullable enable
 using BusBus.DataAccess;
 using BusBus.Models;
 using BusBus.UI.Common;
@@ -19,7 +21,7 @@ namespace BusBus.Services
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
-        public async Task<Vehicle> CreateAsync(Vehicle entity, CancellationToken cancellationToken = default)
+        public async Task<BusBus.Models.Vehicle> CreateAsync(BusBus.Models.Vehicle entity, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -47,14 +49,14 @@ namespace BusBus.Services
             return await dbContext.Vehicles.CountAsync(cancellationToken);
         }
 
-        public async Task<Vehicle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<BusBus.Models.Vehicle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             return await dbContext.Vehicles.FindAsync(new object[] { id }, cancellationToken);
         }
 
-        public async Task<List<Vehicle>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<List<BusBus.Models.Vehicle>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -65,7 +67,7 @@ namespace BusBus.Services
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<Vehicle> UpdateAsync(Vehicle entity, CancellationToken cancellationToken = default)
+        public async Task<BusBus.Models.Vehicle> UpdateAsync(BusBus.Models.Vehicle entity, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -74,7 +76,7 @@ namespace BusBus.Services
             return entity;
         }
 
-        public (bool IsValid, string ErrorMessage) ValidateEntity(Vehicle entity)        {
+        public (bool IsValid, string ErrorMessage) ValidateEntity(BusBus.Models.Vehicle entity)        {
             ArgumentNullException.ThrowIfNull(entity);
 
             if (string.IsNullOrWhiteSpace(entity.Number))

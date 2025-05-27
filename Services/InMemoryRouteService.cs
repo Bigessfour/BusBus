@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,13 +17,13 @@ namespace BusBus.Services
     {
         private readonly List<Route> _routes;
         private readonly List<Driver> _drivers;
-        private readonly List<Vehicle> _vehicles;
+        private readonly List<BusBus.Models.Vehicle> _vehicles;
 
         public InMemoryRouteService()
         {
             _routes = new List<Route>();
             _drivers = new List<Driver>();
-            _vehicles = new List<Vehicle>();
+            _vehicles = new List<BusBus.Models.Vehicle>();
         }
 
         public async Task SeedSampleDataAsync(CancellationToken cancellationToken = default)
@@ -41,8 +43,8 @@ namespace BusBus.Services
                 {
                     _vehicles.AddRange(new[]
                     {
-                        new Vehicle { Id = Guid.NewGuid(), Number = "BUS001", Capacity = 50 },
-                        new Vehicle { Id = Guid.NewGuid(), Number = "BUS002", Capacity = 40 }
+                        new BusBus.Models.Vehicle { Id = Guid.NewGuid(), Number = "BUS001", Capacity = 50 },
+                        new BusBus.Models.Vehicle { Id = Guid.NewGuid(), Number = "BUS002", Capacity = 40 }
                     });
                 }
 
@@ -139,7 +141,7 @@ namespace BusBus.Services
             return await Task.Run(() => _drivers.ToList(), cancellationToken);
         }
 
-        public async Task<List<Vehicle>> GetVehiclesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<BusBus.Models.Vehicle>> GetVehiclesAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return await Task.Run(() => _vehicles.ToList(), cancellationToken);

@@ -1,3 +1,4 @@
+#nullable enable
 using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI.Common;
@@ -12,16 +13,15 @@ namespace BusBus.UI
     {
         private readonly IDriverService _driverService;
         private Driver? _driver;
-        private bool _isNewDriver;
-
-        private TextBox _firstNameTextBox;
-        private TextBox _lastNameTextBox;
-        private TextBox _licenseNumberTextBox;
-        private Button _saveButton;
-        private Button _cancelButton;
+        private bool _isNewDriver;        private TextBox _firstNameTextBox = null!;
+        private TextBox _lastNameTextBox = null!;
+        private TextBox _licenseNumberTextBox = null!;
+        private Button _saveButton = null!;
+        private Button _cancelButton = null!;
 
         public Driver? Driver => _driver;
         public bool IsSaved { get; private set; }
+        public static bool SuppressDialogsForTests { get; set; } = false;
 
         public DriverPanel(IDriverService driverService, Driver? driver = null)
         {
@@ -169,6 +169,12 @@ namespace BusBus.UI
             }
         }
 
+        public void LoadDriver(Driver driver)
+        {
+            _driver = driver;
+            LoadDriverData();
+        }
+
         private async void SaveButton_Click(object? sender, EventArgs e)
         {
             try
@@ -208,7 +214,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving driver: {ex.Message}", "Save Error", 
+                MessageBox.Show($"Error saving driver: {ex.Message}", "Save Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -222,7 +228,7 @@ namespace BusBus.UI
         {
             if (string.IsNullOrWhiteSpace(_firstNameTextBox.Text))
             {
-                MessageBox.Show("First name is required.", "Validation Error", 
+                MessageBox.Show("First name is required.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _firstNameTextBox.Focus();
                 return false;
@@ -230,7 +236,7 @@ namespace BusBus.UI
 
             if (string.IsNullOrWhiteSpace(_lastNameTextBox.Text))
             {
-                MessageBox.Show("Last name is required.", "Validation Error", 
+                MessageBox.Show("Last name is required.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _lastNameTextBox.Focus();
                 return false;
@@ -238,7 +244,7 @@ namespace BusBus.UI
 
             if (string.IsNullOrWhiteSpace(_licenseNumberTextBox.Text))
             {
-                MessageBox.Show("License number is required.", "Validation Error", 
+                MessageBox.Show("License number is required.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _licenseNumberTextBox.Focus();
                 return false;

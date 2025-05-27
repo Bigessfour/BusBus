@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -218,6 +220,40 @@ namespace BusBus.Utils
         }
 
         /// <summary>
+        /// Updates a UI control safely from any thread
+        /// </summary>
+        /// <param name="control">The control to update</param>
+        /// <param name="updateAction">The update action</param>
+        public static void UpdateUI(Control control, Action updateAction)
+        {
+            Invoke(control, updateAction);
+        }
+
+        // Overload for UpdateUI with 3 arguments (for test compatibility)
+        public static void UpdateUI(Control control, Action updateAction, string operation)
+        {
+            Invoke(control, updateAction, operation);
+        }
+
+        /// <summary>
+        /// Updates multiple controls safely from any thread
+        /// </summary>
+        /// <param name="controls">The controls to update</param>
+        /// <param name="updateAction">The update action</param>
+        public static void UpdateControls(System.Collections.Generic.IEnumerable<Control> controls, Action<Control> updateAction)
+        {
+            if (controls == null || updateAction == null) return;
+
+            foreach (var control in controls)
+            {
+                if (control != null)
+                {
+                    Invoke(control, () => updateAction(control));
+                }
+            }
+        }
+
+        /// <summary>
         /// Update a control text property thread-safely
         /// </summary>
         public static void UpdateText(Control control, string text)
@@ -253,6 +289,32 @@ namespace BusBus.Utils
             {
                 if (_logger != null) Log.ErrorInTextUpdate(_logger, ex.Message, ex);
             }
+        }
+    }
+
+    /// <summary>
+    /// Extension methods for thread-safe control operations
+    /// </summary>
+    public static class ControlExtensions
+    {
+        /// <summary>
+        /// Sets a property on a control thread-safely
+        /// </summary>
+        /// <param name="control">The control</param>
+        /// <param name="propertyName">The property name</param>
+        /// <param name="value">The value to set</param>
+        public static void SetPropertyThreadSafe(this Control control, string propertyName, object value)
+        {
+            if (control == null || string.IsNullOrEmpty(propertyName)) return;
+
+            ThreadSafeUI.Invoke(control, () =>
+            {
+                var property = control.GetType().GetProperty(propertyName);
+                if (property != null && property.CanWrite)
+                {
+                    property.SetValue(control, value);
+                }
+            });
         }
     }
 }

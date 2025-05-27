@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI.Common;
@@ -94,7 +96,7 @@ namespace BusBus.UI
             {
                 _routePanel = new RoutePanel(_routeService);
                 _routePanel.Dock = DockStyle.Fill;
-                
+
                 // Find the main panel and add the route panel
                 foreach (Control control in this.Controls)
                 {
@@ -135,7 +137,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error initializing route panel: {ex.Message}", "Initialization Error", 
+                MessageBox.Show($"Error initializing route panel: {ex.Message}", "Initialization Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -146,7 +148,7 @@ namespace BusBus.UI
             {
                 if (_routePanel == null)
                 {
-                    MessageBox.Show("Route panel not initialized.", "Error", 
+                    MessageBox.Show("Route panel not initialized.", "Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -168,7 +170,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving route: {ex.Message}", "Save Error", 
+                MessageBox.Show($"Error saving route: {ex.Message}", "Save Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally

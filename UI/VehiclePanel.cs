@@ -1,7 +1,10 @@
+// Enable nullable reference types for this file
+#nullable enable
 using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI.Common;
 using System;
+using System.Linq;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,16 +17,17 @@ namespace BusBus.UI
         private Vehicle? _vehicle;
         private bool _isNewVehicle;
 
-        private TextBox _numberTextBox;
-        private NumericUpDown _capacityNumericUpDown;
-        private TextBox _modelTextBox;
-        private TextBox _licensePlateTextBox;
-        private CheckBox _isActiveCheckBox;
-        private Button _saveButton;
-        private Button _cancelButton;
+        private TextBox _numberTextBox = null!;
+        private NumericUpDown _capacityNumericUpDown = null!;
+        private TextBox _modelTextBox = null!;
+        private TextBox _licensePlateTextBox = null!;
+        private CheckBox _isActiveCheckBox = null!;
+        private Button _saveButton = null!;
+        private Button _cancelButton = null!;
 
         public Vehicle? Vehicle => _vehicle;
         public bool IsSaved { get; private set; }
+        public static bool SuppressDialogsForTests { get; set; } = false;
 
         public VehiclePanel(IVehicleService vehicleService, Vehicle? vehicle = null)
         {
@@ -222,6 +226,12 @@ namespace BusBus.UI
             }
         }
 
+        public void LoadVehicle(Vehicle vehicle)
+        {
+            _vehicle = vehicle;
+            LoadVehicleData();
+        }
+
         private async void SaveButton_Click(object? sender, EventArgs e)
         {
             try
@@ -265,7 +275,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving vehicle: {ex.Message}", "Save Error", 
+                MessageBox.Show($"Error saving vehicle: {ex.Message}", "Save Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -279,7 +289,7 @@ namespace BusBus.UI
         {
             if (string.IsNullOrWhiteSpace(_numberTextBox.Text))
             {
-                MessageBox.Show("Vehicle number is required.", "Validation Error", 
+                MessageBox.Show("Vehicle number is required.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _numberTextBox.Focus();
                 return false;
@@ -287,7 +297,7 @@ namespace BusBus.UI
 
             if (string.IsNullOrWhiteSpace(_modelTextBox.Text))
             {
-                MessageBox.Show("Vehicle model is required.", "Validation Error", 
+                MessageBox.Show("Vehicle model is required.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _modelTextBox.Focus();
                 return false;
@@ -295,7 +305,7 @@ namespace BusBus.UI
 
             if (string.IsNullOrWhiteSpace(_licensePlateTextBox.Text))
             {
-                MessageBox.Show("License plate is required.", "Validation Error", 
+                MessageBox.Show("License plate is required.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _licensePlateTextBox.Focus();
                 return false;

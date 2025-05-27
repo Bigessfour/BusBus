@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -62,7 +64,7 @@ namespace BusBus.UI.Common
         public async Task<T> UpdateEntityAsync(T entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-            
+
             var id = _getIdFunc(entity);
             if (IsDefaultOrEmpty(id))
             {
@@ -185,7 +187,7 @@ namespace BusBus.UI.Common
             // Handle specific types with their own "empty" definitions
             if (value is string str)
                 return string.IsNullOrWhiteSpace(str);
-            
+
             if (value is Guid guid)
                 return guid == Guid.Empty;
 

@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,7 +29,7 @@ namespace BusBus.UI.Common
                 if (File.Exists(ConfigPath))
                 {
                     var json = File.ReadAllText(ConfigPath);
-                    _customFields = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, CustomField>>>(json) 
+                    _customFields = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, CustomField>>>(json)
                                   ?? new Dictionary<string, Dictionary<string, CustomField>>();
                 }
                 else
@@ -50,8 +52,8 @@ namespace BusBus.UI.Common
         public static Dictionary<string, CustomField> GetCustomFields(string entityType)
         {
             var allFields = LoadCustomFields();
-            return allFields.TryGetValue(entityType, out var fields) 
-                ? fields 
+            return allFields.TryGetValue(entityType, out var fields)
+                ? fields
                 : new Dictionary<string, CustomField>();
         }
 

@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -23,15 +25,15 @@ namespace BusBus.UI.Common
         private readonly string _entityName;
         private readonly string _entityPluralName;
 
-        private DataGridView _dataGrid;
-        private Button _addButton;
-        private Button _editButton;
-        private Button _deleteButton;
-        private Button _refreshButton;
-        private Button _prevPageButton;
-        private Button _nextPageButton;
-        private Label _pageInfoLabel;
-        private Label _titleLabel;
+        private DataGridView? _dataGrid;
+        private Button? _addButton;
+        private Button? _editButton;
+        private Button? _deleteButton;
+        private Button? _refreshButton;
+        private Button? _prevPageButton;
+        private Button? _nextPageButton;
+        private Label? _pageInfoLabel;
+        private Label? _titleLabel;
 
         private int _currentPage = 1;
         private int _pageSize = 20;
@@ -45,7 +47,7 @@ namespace BusBus.UI.Common
         /// <summary>
         /// Gets the underlying DataGridView for advanced customization
         /// </summary>
-        public DataGridView DataGrid => _dataGrid;
+        public DataGridView DataGrid => _dataGrid!;
 
         /// <summary>
         /// Gets or sets the page size for pagination
@@ -241,23 +243,23 @@ namespace BusBus.UI.Common
 
         private void SetupDataGrid()
         {
-            _setupColumnsAction(_dataGrid);
+            _setupColumnsAction(_dataGrid!);
         }
 
         private void SetupEventHandlers()
         {
-            _addButton.Click += async (s, e) => await OnAddEntityAsync();
-            _editButton.Click += async (s, e) => await OnEditEntityAsync();
-            _deleteButton.Click += async (s, e) => await OnDeleteEntityAsync();
-            _refreshButton.Click += async (s, e) => await LoadEntitiesAsync();
-            _prevPageButton.Click += async (s, e) => await GoToPreviousPageAsync();
-            _nextPageButton.Click += async (s, e) => await GoToNextPageAsync();
+            _addButton!.Click += async (s, e) => await OnAddEntityAsync();
+            _editButton!.Click += async (s, e) => await OnEditEntityAsync();
+            _deleteButton!.Click += async (s, e) => await OnDeleteEntityAsync();
+            _refreshButton!.Click += async (s, e) => await LoadEntitiesAsync();
+            _prevPageButton!.Click += async (s, e) => await GoToPreviousPageAsync();
+            _nextPageButton!.Click += async (s, e) => await GoToNextPageAsync();
 
-            _dataGrid.SelectionChanged += OnDataGridSelectionChanged;
-            _dataGrid.CellDoubleClick += OnDataGridCellDoubleClick;
+            _dataGrid!.SelectionChanged += OnDataGridSelectionChanged;
+            _dataGrid!.CellDoubleClick += OnDataGridCellDoubleClick;
 
             // Handle data errors gracefully
-            _dataGrid.DataError += OnDataGridDataError;
+            _dataGrid!.DataError += OnDataGridDataError;
         }
         /// <summary>
         /// Handles DataGridView data errors to provide user-friendly feedback and suppress default dialogs.
@@ -265,8 +267,8 @@ namespace BusBus.UI.Common
         private void OnDataGridDataError(object? sender, DataGridViewDataErrorEventArgs e)
         {
             // Show a user-friendly message for format/conversion errors
-            string columnName = e.ColumnIndex >= 0 && _dataGrid.Columns.Count > e.ColumnIndex
-                ? _dataGrid.Columns[e.ColumnIndex].HeaderText
+            string columnName = e.ColumnIndex >= 0 && _dataGrid!.Columns.Count > e.ColumnIndex
+                ? _dataGrid!.Columns[e.ColumnIndex].HeaderText
                 : "Unknown";
             string message = $"Invalid value for column '{columnName}'. Please enter a value of the correct type.";
             MessageBox.Show(message, "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -276,11 +278,11 @@ namespace BusBus.UI.Common
 
         private void OnDataGridSelectionChanged(object? sender, EventArgs e)
         {
-            bool hasSelection = _dataGrid.SelectedRows.Count > 0;
-            _editButton.Enabled = hasSelection;
-            _deleteButton.Enabled = hasSelection;
+            bool hasSelection = _dataGrid!.SelectedRows.Count > 0;
+            _editButton!.Enabled = hasSelection;
+            _deleteButton!.Enabled = hasSelection;
 
-            if (hasSelection && _dataGrid.SelectedRows[0].DataBoundItem is T selectedEntity)
+            if (hasSelection && _dataGrid!.SelectedRows[0].DataBoundItem is T selectedEntity)
             {
                 EntitySelected?.Invoke(this, new EntityEventArgs<T>(selectedEntity));
             }
@@ -302,6 +304,8 @@ namespace BusBus.UI.Common
 
         private async Task OnEditEntityAsync()
         {
+            if (_dataGrid == null)
+                return;
             if (_dataGrid.SelectedRows.Count > 0 && _dataGrid.SelectedRows[0].DataBoundItem is T selectedEntity)
             {
                 // Override in derived classes or handle via events
@@ -312,6 +316,8 @@ namespace BusBus.UI.Common
 
         private async Task OnDeleteEntityAsync()
         {
+            if (_dataGrid == null)
+                return;
             if (_dataGrid.SelectedRows.Count > 0 && _dataGrid.SelectedRows[0].DataBoundItem is T selectedEntity)
             {
                 try
@@ -360,14 +366,14 @@ namespace BusBus.UI.Common
                 _entities = await _crudHelper.GetEntitiesAsync(_currentPage, _pageSize);
 
                 // Update data grid
-                _dataGrid.DataSource = _entities;
+                _dataGrid!.DataSource = _entities;
 
                 // Update pagination info
                 var totalPages = Math.Max(1, (int)Math.Ceiling((double)_totalItems / _pageSize));
-                _pageInfoLabel.Text = $"Page {_currentPage} of {totalPages} ({_totalItems} total)";
+                _pageInfoLabel!.Text = $"Page {_currentPage} of {totalPages} ({_totalItems} total)";
 
-                _prevPageButton.Enabled = _currentPage > 1;
-                _nextPageButton.Enabled = _currentPage < totalPages;
+                _prevPageButton!.Enabled = _currentPage > 1;
+                _nextPageButton!.Enabled = _currentPage < totalPages;
             }
             catch (Exception ex)
             {
@@ -379,12 +385,17 @@ namespace BusBus.UI.Common
                 this.Cursor = Cursors.Default;
             }
         }
-
         protected override void ApplyTheme()
         {
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _titleLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
-            _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+            _titleLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
+            _pageInfoLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
+
+            // Apply consistent data grid styling
+            if (_dataGrid != null)
+            {
+                ThemeManager.CurrentTheme.StyleDataGrid(_dataGrid);
+            }
         }
 
         public override void Render(Control container)

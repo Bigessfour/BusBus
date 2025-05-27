@@ -1,8 +1,16 @@
+// Suppress unassigned and unused field warnings for WinForms designer fields
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor
+#pragma warning disable CS0169 // The field is never used
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value null
+#pragma warning disable CA1416 // Platform compatibility (Windows-only)
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+// <auto-added>
+#nullable enable
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,30 +37,31 @@ namespace BusBus.UI
         /// </summary>
         public static bool SuppressDialogsForTests { get; set; }
         private readonly IRouteService _routeService;
-        private Route? _currentRoute;        private TextBox _nameTextBox;
-        private DateTimePicker _datePicker;
-        private NumericUpDown _amStartMileage, _amEndMileage, _amRiders;
-        private NumericUpDown _pmStartMileage, _pmEndMileage, _pmRiders;
-        private ComboBox _driverComboBox, _vehicleComboBox;
-        private Button _saveButton, _cancelButton;
-        private Label _titleLabel;
-          // Additional UI controls for advanced functionality
-        private DateTimePicker _tripDatePicker;
-        private DateTimePicker _scheduledTimePicker;
-        private TextBox _startLocationTextBox;
-        private TextBox _endLocationTextBox;
-        private Label _errorLabel;
-        private TableLayoutPanel _tableLayoutPanel;
-        private Button _editButton;
-        private Button _deleteButton;
+        private Route? _currentRoute;
+        private TextBox? _nameTextBox;
+        private DateTimePicker? _datePicker;
+        private NumericUpDown? _amStartMileage, _amEndMileage, _amRiders;
+        private NumericUpDown? _pmStartMileage, _pmEndMileage, _pmRiders;
+        private ComboBox? _driverComboBox, _vehicleComboBox;
+        private Button? _saveButton, _cancelButton;
+        private Label? _titleLabel;
+        // Additional UI controls for advanced functionality
+        private DateTimePicker? _tripDatePicker;
+        private DateTimePicker? _scheduledTimePicker;
+        private TextBox? _startLocationTextBox;
+        private TextBox? _endLocationTextBox;
+        private Label? _errorLabel;
+        private TableLayoutPanel? _tableLayoutPanel;
+        private Button? _editButton;
+        private Button? _deleteButton;
 
         // Mileage fields
-        private NumericUpDown _amStartingMileage;
-        private NumericUpDown _amEndingMileage;
-        private NumericUpDown _pmEndingMileage;
+        private NumericUpDown? _amStartingMileage;
+        private NumericUpDown? _amEndingMileage;
+        private NumericUpDown? _pmEndingMileage;
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private bool _disposedValue;public event EventHandler? SaveButtonClicked;
+        private bool _disposedValue; public event EventHandler? SaveButtonClicked;
         public event EventHandler? CancelButtonClicked;
         public event EventHandler? DeleteButtonClicked;
 
@@ -248,17 +257,17 @@ namespace BusBus.UI
         private Route CreateRouteFromForm()
         {
             var route = _currentRoute ?? new Route();
-            route.Name = _nameTextBox.Text;
-            route.RouteDate = _datePicker.Value;
-            route.AMStartingMileage = (int)_amStartMileage.Value;
-            route.AMEndingMileage = (int)_amEndMileage.Value;
-            route.AMRiders = (int)_amRiders.Value;
-            route.PMStartMileage = (int)_pmStartMileage.Value;
-            route.PMEndingMileage = (int)_pmEndMileage.Value;
-            route.PMRiders = (int)_pmRiders.Value;
+            route.Name = _nameTextBox!.Text;
+            route.RouteDate = _datePicker!.Value;
+            route.AMStartingMileage = (int)_amStartMileage!.Value;
+            route.AMEndingMileage = (int)_amEndMileage!.Value;
+            route.AMRiders = (int)_amRiders!.Value;
+            route.PMStartMileage = (int)_pmStartMileage!.Value;
+            route.PMEndingMileage = (int)_pmEndMileage!.Value;
+            route.PMRiders = (int)_pmRiders!.Value;
 
             // Driver
-            if (_driverComboBox.SelectedItem != null)
+            if (_driverComboBox!.SelectedItem != null)
             {
                 var driverId = _driverComboBox.SelectedItem.GetType().GetProperty("Id")?.GetValue(_driverComboBox.SelectedItem) as Guid?;
                 route.DriverId = driverId;
@@ -269,7 +278,7 @@ namespace BusBus.UI
             }
 
             // Vehicle
-            if (_vehicleComboBox.SelectedItem != null)
+            if (_vehicleComboBox!.SelectedItem != null)
             {
                 var vehicleId = _vehicleComboBox.SelectedItem.GetType().GetProperty("Id")?.GetValue(_vehicleComboBox.SelectedItem) as Guid?;
                 route.VehicleId = vehicleId;
@@ -280,7 +289,8 @@ namespace BusBus.UI
             }
 
             return route;
-        }        private async void LoadDropdownData()
+        }
+        private async void LoadDropdownData()
         {
             try
             {
@@ -289,25 +299,25 @@ namespace BusBus.UI
 
                 var drivers = await _routeService.GetDriversAsync();
                 if (IsDisposed) return;
-                _driverComboBox.Items.Clear();
-                _driverComboBox.Items.Add(new { Id = (Guid?)null, Display = "-- No Driver --" });
+                _driverComboBox!.Items.Clear();
+                _driverComboBox!.Items.Add(new { Id = (Guid?)null, Display = "-- No Driver --" });
                 foreach (var driver in drivers)
                 {
-                    _driverComboBox.Items.Add(new { Id = (Guid?)driver.Id, Display = $"{driver.FirstName} {driver.LastName}" });
+                    _driverComboBox!.Items.Add(new { Id = (Guid?)driver.Id, Display = $"{driver.FirstName} {driver.LastName}" });
                 }
-                _driverComboBox.DisplayMember = "Display";
-                _driverComboBox.ValueMember = "Id";
+                _driverComboBox!.DisplayMember = "Display";
+                _driverComboBox!.ValueMember = "Id";
 
                 var vehicles = await _routeService.GetVehiclesAsync();
                 if (IsDisposed) return;
-                _vehicleComboBox.Items.Clear();
-                _vehicleComboBox.Items.Add(new { Id = (Guid?)null, Display = "-- No Vehicle --" });
+                _vehicleComboBox!.Items.Clear();
+                _vehicleComboBox!.Items.Add(new { Id = (Guid?)null, Display = "-- No Vehicle --" });
                 foreach (var vehicle in vehicles)
                 {
-                    _vehicleComboBox.Items.Add(new { Id = (Guid?)vehicle.Id, Display = vehicle.BusNumber });
+                    _vehicleComboBox!.Items.Add(new { Id = (Guid?)vehicle.Id, Display = vehicle.BusNumber });
                 }
-                _vehicleComboBox.DisplayMember = "Display";
-                _vehicleComboBox.ValueMember = "Id";
+                _vehicleComboBox!.DisplayMember = "Display";
+                _vehicleComboBox!.ValueMember = "Id";
             }
             catch (ObjectDisposedException)
             {
@@ -315,7 +325,8 @@ namespace BusBus.UI
                 Console.WriteLine("[RoutePanel] Service disposed during LoadDropdownData");
             }
             catch (Exception ex)
-            {                if (!IsDisposed)
+            {
+                if (!IsDisposed)
                 {
                     Console.WriteLine($"[RoutePanel] Error loading dropdown data: {ex.Message}");
                     // Only show message box if not disposed and not a disposal-related error
@@ -330,34 +341,35 @@ namespace BusBus.UI
             _currentRoute = route;
             if (route != null)
             {
-                _nameTextBox.Text = route.Name;
-                _datePicker.Value = route.RouteDate;
-                _amStartMileage.Value = route.AMStartingMileage;
-                _amEndMileage.Value = route.AMEndingMileage;
-                _amRiders.Value = route.AMRiders;
-                _pmStartMileage.Value = route.PMStartMileage;
-                _pmEndMileage.Value = route.PMEndingMileage;
-                _pmRiders.Value = route.PMRiders;                // Set driver
-                foreach (var item in _driverComboBox.Items)
+                _nameTextBox!.Text = route.Name;
+                _datePicker!.Value = route.RouteDate;
+                _amStartMileage!.Value = route.AMStartingMileage;
+                _amEndMileage!.Value = route.AMEndingMileage;
+                _amRiders!.Value = route.AMRiders;
+                _pmStartMileage!.Value = route.PMStartMileage;
+                _pmEndMileage!.Value = route.PMEndingMileage;
+                _pmRiders!.Value = route.PMRiders;
+                // Set driver
+                foreach (var item in _driverComboBox!.Items)
                 {
                     if (item is object obj && obj.GetType().GetProperty("Id")?.GetValue(obj) is Guid id && id == route.DriverId)
                     {
-                        _driverComboBox.SelectedItem = item;
+                        _driverComboBox!.SelectedItem = item;
                         break;
                     }
                 }
 
                 // Set vehicle
-                foreach (var item in _vehicleComboBox.Items)
+                foreach (var item in _vehicleComboBox!.Items)
                 {
                     if (item is object obj && obj.GetType().GetProperty("Id")?.GetValue(obj) is Guid id && id == route.VehicleId)
                     {
-                        _vehicleComboBox.SelectedItem = item;
+                        _vehicleComboBox!.SelectedItem = item;
                         break;
                     }
                 }
 
-                _titleLabel.Text = route.Id == Guid.Empty ? "New Route" : "Edit Route";
+                _titleLabel!.Text = route.Id == Guid.Empty ? "New Route" : "Edit Route";
             }
         }
 
@@ -370,24 +382,24 @@ namespace BusBus.UI
                     _currentRoute = new Route { Id = Guid.NewGuid() };
                 }
 
-                _currentRoute.Name = _nameTextBox.Text;
-                _currentRoute.RouteDate = _datePicker.Value;
-                _currentRoute.AMStartingMileage = (int)_amStartMileage.Value;
-                _currentRoute.AMEndingMileage = (int)_amEndMileage.Value;
-                _currentRoute.AMRiders = (int)_amRiders.Value;
-                _currentRoute.PMStartMileage = (int)_pmStartMileage.Value;
-                _currentRoute.PMEndingMileage = (int)_pmEndMileage.Value;
-                _currentRoute.PMRiders = (int)_pmRiders.Value;
+                _currentRoute.Name = _nameTextBox!.Text;
+                _currentRoute.RouteDate = _datePicker!.Value;
+                _currentRoute.AMStartingMileage = (int)_amStartMileage!.Value;
+                _currentRoute.AMEndingMileage = (int)_amEndMileage!.Value;
+                _currentRoute.AMRiders = (int)_amRiders!.Value;
+                _currentRoute.PMStartMileage = (int)_pmStartMileage!.Value;
+                _currentRoute.PMEndingMileage = (int)_pmEndMileage!.Value;
+                _currentRoute.PMRiders = (int)_pmRiders!.Value;
 
-                if (_driverComboBox.SelectedItem != null)
+                if (_driverComboBox!.SelectedItem != null)
                 {
-                    var driverId = _driverComboBox.SelectedItem.GetType().GetProperty("Id")?.GetValue(_driverComboBox.SelectedItem) as Guid?;
+                    var driverId = _driverComboBox!.SelectedItem.GetType().GetProperty("Id")?.GetValue(_driverComboBox!.SelectedItem) as Guid?;
                     _currentRoute.DriverId = driverId;
                 }
 
-                if (_vehicleComboBox.SelectedItem != null)
+                if (_vehicleComboBox!.SelectedItem != null)
                 {
-                    var vehicleId = _vehicleComboBox.SelectedItem.GetType().GetProperty("Id")?.GetValue(_vehicleComboBox.SelectedItem) as Guid?;
+                    var vehicleId = _vehicleComboBox!.SelectedItem.GetType().GetProperty("Id")?.GetValue(_vehicleComboBox!.SelectedItem) as Guid?;
                     _currentRoute.VehicleId = vehicleId;
                 }
 
@@ -431,8 +443,9 @@ namespace BusBus.UI
                 {
                     _cancellationTokenSource.Cancel();
                     _cancellationTokenSource.Dispose();
-                    _saveButton.Click -= SaveButton_Click;
-                    _cancelButton.Click -= (s, e) => CancelButtonClicked?.Invoke(this, EventArgs.Empty);                }
+                    _saveButton!.Click -= SaveButton_Click;
+                    _cancelButton!.Click -= (s, e) => CancelButtonClicked?.Invoke(this, EventArgs.Empty);
+                }
                 _disposedValue = true;
             }
             base.Dispose(disposing);
@@ -464,10 +477,10 @@ namespace BusBus.UI
 
                     // Switch back to view mode
                     SetFormEditable(false);
-                    _saveButton.Visible = false;
-                    _cancelButton.Visible = false;
-                    _editButton.Visible = true;
-                    _deleteButton.Visible = true;
+                    _saveButton!.Visible = false;
+                    _cancelButton!.Visible = false;
+                    _editButton!.Visible = true;
+                    _deleteButton!.Visible = true;
 
                     // Notify listeners about the update
                     SaveButtonClicked?.Invoke(this, EventArgs.Empty);
@@ -477,20 +490,20 @@ namespace BusBus.UI
             }
             catch (InvalidOperationException ex)
             {
-                _errorLabel.Text = $"Error saving route: {ex.Message}";
-                _errorLabel.Visible = true;
+                _errorLabel!.Text = $"Error saving route: {ex.Message}";
+                _errorLabel!.Visible = true;
                 return false;
             }
             catch (HttpRequestException ex)
             {
-                _errorLabel.Text = $"Network error: {ex.Message}";
-                _errorLabel.Visible = true;
+                _errorLabel!.Text = $"Network error: {ex.Message}";
+                _errorLabel!.Visible = true;
                 return false;
             }
             catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
             {
-                _errorLabel.Text = $"Unexpected error: {ex.Message}";
-                _errorLabel.Visible = true;
+                _errorLabel!.Text = $"Unexpected error: {ex.Message}";
+                _errorLabel!.Visible = true;
                 return false;
             }
         }
@@ -501,7 +514,8 @@ namespace BusBus.UI
             container.Controls.Clear();
             container.Controls.Add(this);
             this.Dock = DockStyle.Fill;
-        }        private async void DeleteButton_Click(object? sender, EventArgs e)
+        }
+        private async void DeleteButton_Click(object? sender, EventArgs e)
         {
             if (_currentRoute != null && _currentRoute.Id != Guid.Empty)
             {
@@ -519,8 +533,8 @@ namespace BusBus.UI
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
                 {
-                    _errorLabel.Text = $"Failed to delete route: {ex.Message}";
-                    _errorLabel.Visible = true;
+                    _errorLabel!.Text = $"Failed to delete route: {ex.Message}";
+                    _errorLabel!.Visible = true;
                 }
             }
         }
@@ -528,7 +542,7 @@ namespace BusBus.UI
         // Method to initialize the UI
         private void InitializeUI()
         {            // Create main layout
-            _tableLayoutPanel.Dock = DockStyle.Fill;
+            _tableLayoutPanel!.Dock = DockStyle.Fill;
             _tableLayoutPanel.ColumnCount = 2;
             _tableLayoutPanel.RowCount = 16; // Increased to fit all rows including new fields and buttons
             _tableLayoutPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
@@ -553,46 +567,46 @@ namespace BusBus.UI
             }
 
             // Add title label
-            _titleLabel.Text = "Route Details";
-            _titleLabel.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-            _titleLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
-            _tableLayoutPanel.Controls.Add(_titleLabel, 0, 0);
-            _tableLayoutPanel.SetColumnSpan(_titleLabel, 2);            // Configure DateTimePicker
-            _tripDatePicker.Format = DateTimePickerFormat.Short;
-            _tripDatePicker.Width = 200;
+            _titleLabel!.Text = "Route Details";
+            _titleLabel!.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            _titleLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
+            _tableLayoutPanel!.Controls.Add(_titleLabel, 0, 0);
+            _tableLayoutPanel!.SetColumnSpan(_titleLabel, 2);            // Configure DateTimePicker
+            _tripDatePicker!.Format = DateTimePickerFormat.Short;
+            _tripDatePicker!.Width = 200;
 
             // Configure ScheduledTime DateTimePicker
-            _scheduledTimePicker.Format = DateTimePickerFormat.Custom;
-            _scheduledTimePicker.CustomFormat = "MM/dd/yyyy hh:mm tt";
-            _scheduledTimePicker.Width = 200;
+            _scheduledTimePicker!.Format = DateTimePickerFormat.Custom;
+            _scheduledTimePicker!.CustomFormat = "MM/dd/yyyy hh:mm tt";
+            _scheduledTimePicker!.Width = 200;
 
             // Configure numeric inputs
-            _amStartingMileage.Maximum = 999999;
-            _amEndingMileage.Maximum = 999999;
-            _amRiders.Maximum = 999;
-            _pmStartMileage.Maximum = 999999;
-            _pmEndingMileage.Maximum = 999999;
-            _pmRiders.Maximum = 999;
+            _amStartingMileage!.Maximum = 999999;
+            _amEndingMileage!.Maximum = 999999;
+            _amRiders!.Maximum = 999;
+            _pmStartMileage!.Maximum = 999999;
+            _pmEndingMileage!.Maximum = 999999;
+            _pmRiders!.Maximum = 999;
 
             // Add form fields with labels
-            AddFormRow("Route Name:", _nameTextBox, 1);
-            AddFormRow("Trip Date:", _tripDatePicker, 2);
-            AddFormRow("Start Location:", _startLocationTextBox, 3);
-            AddFormRow("End Location:", _endLocationTextBox, 4);
-            AddFormRow("Scheduled Time:", _scheduledTimePicker, 5);
-            AddFormRow("AM Starting Mileage:", _amStartingMileage, 6);
-            AddFormRow("AM Ending Mileage:", _amEndingMileage, 7);
-            AddFormRow("AM Riders:", _amRiders, 8);
-            AddFormRow("PM Starting Mileage:", _pmStartMileage, 9);
-            AddFormRow("PM Ending Mileage:", _pmEndingMileage, 10);
-            AddFormRow("PM Riders:", _pmRiders, 11);
-            AddFormRow("Driver:", _driverComboBox, 12);
-            AddFormRow("Vehicle:", _vehicleComboBox, 13);            // Configure error label
-            _errorLabel.ForeColor = System.Drawing.Color.Red;
-            _errorLabel.AutoSize = true;
-            _errorLabel.Visible = false;
-            _tableLayoutPanel.Controls.Add(_errorLabel, 0, 14);
-            _tableLayoutPanel.SetColumnSpan(_errorLabel, 2);
+            AddFormRow("Route Name:", _nameTextBox!, 1);
+            AddFormRow("Trip Date:", _tripDatePicker!, 2);
+            AddFormRow("Start Location:", _startLocationTextBox!, 3);
+            AddFormRow("End Location:", _endLocationTextBox!, 4);
+            AddFormRow("Scheduled Time:", _scheduledTimePicker!, 5);
+            AddFormRow("AM Starting Mileage:", _amStartingMileage!, 6);
+            AddFormRow("AM Ending Mileage:", _amEndingMileage!, 7);
+            AddFormRow("AM Riders:", _amRiders!, 8);
+            AddFormRow("PM Starting Mileage:", _pmStartMileage!, 9);
+            AddFormRow("PM Ending Mileage:", _pmEndingMileage!, 10);
+            AddFormRow("PM Riders:", _pmRiders!, 11);
+            AddFormRow("Driver:", _driverComboBox!, 12);
+            AddFormRow("Vehicle:", _vehicleComboBox!, 13);            // Configure error label
+            _errorLabel!.ForeColor = System.Drawing.Color.Red;
+            _errorLabel!.AutoSize = true;
+            _errorLabel!.Visible = false;
+            _tableLayoutPanel!.Controls.Add(_errorLabel, 0, 14);
+            _tableLayoutPanel!.SetColumnSpan(_errorLabel, 2);
 
             // Create button panel for CRUD operations
             var buttonPanel = new TableLayoutPanel
@@ -603,37 +617,37 @@ namespace BusBus.UI
                 BackColor = ThemeManager.CurrentTheme.CardBackground,
                 Visible = true // Explicitly set Visible to true
             };
-              // Configure CRUD buttons
-            ConfigureButton(_saveButton, "Save", ThemeManager.CurrentTheme.ButtonBackground);
-            ConfigureButton(_editButton, "Edit", ThemeManager.CurrentTheme.ButtonBackground);
-            ConfigureButton(_cancelButton, "Cancel", ThemeManager.CurrentTheme.ButtonBackground);
-            ConfigureButton(_deleteButton, "Delete", System.Drawing.Color.FromArgb(220, 53, 69)); // Red for delete
+            // Configure CRUD buttons
+            ConfigureButton(_saveButton!, "Save", ThemeManager.CurrentTheme.ButtonBackground);
+            ConfigureButton(_editButton!, "Edit", ThemeManager.CurrentTheme.ButtonBackground);
+            ConfigureButton(_cancelButton!, "Cancel", ThemeManager.CurrentTheme.ButtonBackground);
+            ConfigureButton(_deleteButton!, "Delete", System.Drawing.Color.FromArgb(220, 53, 69)); // Red for delete
 
             // Set button names for proper identification
-            _saveButton.Name = "SaveButton";
-            _editButton.Name = "EditButton";
-            _cancelButton.Name = "CancelButton";
-            _deleteButton.Name = "DeleteButton";
+            _saveButton!.Name = "SaveButton";
+            _editButton!.Name = "EditButton";
+            _cancelButton!.Name = "CancelButton";
+            _deleteButton!.Name = "DeleteButton";
 
             // Add buttons to panel
-            buttonPanel.Controls.Add(_saveButton, 0, 0);
-            buttonPanel.Controls.Add(_editButton, 1, 0);
-            buttonPanel.Controls.Add(_cancelButton, 2, 0);
-            buttonPanel.Controls.Add(_deleteButton, 3, 0);
+            buttonPanel.Controls.Add(_saveButton!, 0, 0);
+            buttonPanel.Controls.Add(_editButton!, 1, 0);
+            buttonPanel.Controls.Add(_cancelButton!, 2, 0);
+            buttonPanel.Controls.Add(_deleteButton!, 3, 0);
 
             // Set equal widths for buttons
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));            // Add button panel to main layout
-            _tableLayoutPanel.Controls.Add(buttonPanel, 0, 15);
-            _tableLayoutPanel.SetColumnSpan(buttonPanel, 2);
+            _tableLayoutPanel!.Controls.Add(buttonPanel, 0, 15);
+            _tableLayoutPanel!.SetColumnSpan(buttonPanel, 2);
 
             // Add the edit button click event handler
-            _editButton.Click += EditButton_Click;
+            _editButton!.Click += EditButton_Click;
 
             // Add the main layout to the control
-            this.Controls.Add(_tableLayoutPanel);
+            this.Controls.Add(_tableLayoutPanel!);
         }
 
         // Helper method to add a row with label and control
@@ -649,8 +663,8 @@ namespace BusBus.UI
 
             control.Dock = DockStyle.Fill;
 
-            _tableLayoutPanel.Controls.Add(label, 0, rowIndex);
-            _tableLayoutPanel.Controls.Add(control, 1, rowIndex);
+            _tableLayoutPanel!.Controls.Add(label, 0, rowIndex);
+            _tableLayoutPanel!.Controls.Add(control, 1, rowIndex);
         }        // Helper method to configure button appearance
         private static void ConfigureButton(Button button, string text, System.Drawing.Color backColor)
         {
@@ -673,32 +687,32 @@ namespace BusBus.UI
                 SetFormEditable(true);
 
                 // Hide Edit button and show Save/Cancel buttons
-                _editButton.Visible = false;
-                _saveButton.Visible = true;
-                _cancelButton.Visible = true;
-                _deleteButton.Visible = true;
+                _editButton!.Visible = false;
+                _saveButton!.Visible = true;
+                _cancelButton!.Visible = true;
+                _deleteButton!.Visible = true;
             }
         }        // Helper method to set form fields editable or read-only
         private void SetFormEditable(bool editable)
         {
-            _nameTextBox.Enabled = editable;
-            _tripDatePicker.Enabled = editable;
-            _startLocationTextBox.Enabled = editable;
-            _endLocationTextBox.Enabled = editable;
-            _scheduledTimePicker.Enabled = editable;
-            _amStartingMileage.Enabled = editable;
-            _amEndingMileage.Enabled = editable;
-            _amRiders.Enabled = editable;
-            _pmStartMileage.Enabled = editable;
-            _pmEndingMileage.Enabled = editable;
-            _pmRiders.Enabled = editable;
-            _driverComboBox.Enabled = editable;
-            _driverComboBox.Enabled = editable;
-            _vehicleComboBox.Enabled = editable;
+            _nameTextBox!.Enabled = editable;
+            _tripDatePicker!.Enabled = editable;
+            _startLocationTextBox!.Enabled = editable;
+            _endLocationTextBox!.Enabled = editable;
+            _scheduledTimePicker!.Enabled = editable;
+            _amStartingMileage!.Enabled = editable;
+            _amEndingMileage!.Enabled = editable;
+            _amRiders!.Enabled = editable;
+            _pmStartMileage!.Enabled = editable;
+            _pmEndingMileage!.Enabled = editable;
+            _pmRiders!.Enabled = editable;
+            _driverComboBox!.Enabled = editable;
+            _driverComboBox!.Enabled = editable;
+            _vehicleComboBox!.Enabled = editable;
         }
     }
 
 
-// Restore unused event warning
+    // Restore unused event warning
 #pragma warning restore CS0067
 }

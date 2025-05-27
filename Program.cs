@@ -1,3 +1,5 @@
+// Enable nullable reference types for this file
+#nullable enable
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +13,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using BusBus.Analytics;
 
 namespace BusBus
 {
@@ -30,8 +34,8 @@ namespace BusBus
             }
             Console.WriteLine($"[Program] Added background task. Total tasks: {_backgroundTasks.Count}");
         }        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>        [STAThread]
+                 /// The main entry point for the application.
+                 /// </summary>        [STAThread]
         static async Task Main(string[] args)
         {
             Console.WriteLine("[Program] Application starting...");
@@ -119,7 +123,7 @@ namespace BusBus
                     Console.WriteLine("[Program] Starting with dark theme (default)...");
                     ThemeManager.SwitchTheme("Dark");
                 }
-                  Console.WriteLine($"[Program] Current theme: {ThemeManager.CurrentTheme.Name}");
+                Console.WriteLine($"[Program] Current theme: {ThemeManager.CurrentTheme.Name}");
                 Console.WriteLine($"[Program] Available themes: {string.Join(", ", ThemeManager.AvailableThemes)}");
             }
             catch (Exception ex)
@@ -133,7 +137,7 @@ namespace BusBus
                 ShutdownApplication();
             };
 
-            Application.ApplicationExit += applicationExitHandler;            try
+            Application.ApplicationExit += applicationExitHandler; try
             {
                 // Seed sample data using a scoped service
                 using (var scope = _serviceProvider.CreateScope())
@@ -171,7 +175,8 @@ namespace BusBus
                 Console.WriteLine("[Program] Application.Run completed - ensuring shutdown");
                 ShutdownApplication();
             }
-        }        private static void ShutdownApplication()
+        }
+        private static void ShutdownApplication()
         {
             Console.WriteLine("[Program] Starting application shutdown");
 
@@ -216,7 +221,8 @@ namespace BusBus
             }
 
             Console.WriteLine("[Program] Application shutdown complete");
-        }private static void ConfigureServices(IServiceCollection services)
+        }
+        private static void ConfigureServices(IServiceCollection services)
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
@@ -269,11 +275,15 @@ namespace BusBus
             services.AddScoped<IStatisticsService, StatisticsService>();
 
             // Register UI components
-            services.AddTransient<Dashboard>();
-            services.AddTransient<UI.DiagnosticsTester>();
+            services.AddTransient<Dashboard>((provider) =>
+            {
+                var routeService = provider.GetRequiredService<IRouteService>();
+                var logger = provider.GetRequiredService<ILogger<Dashboard>>();
+                return new Dashboard(provider, routeService, logger);
+            });
         }        /// <summary>
-        /// Tests database connection and reports status
-        /// </summary>
+                 /// Tests database connection and reports status
+                 /// </summary>
         private static async Task TestDatabaseConnectionAsync()
         {
             Console.WriteLine("Testing database connection...");
@@ -349,16 +359,15 @@ namespace BusBus
             Console.WriteLine("[Program] Launching Debug Console...");
 
             try
-            {                if (_serviceProvider == null)
+            {
+                if (_serviceProvider == null)
                 {
                     Console.WriteLine("ERROR: Service provider is null");
                     return;
                 }
-                  // Get the diagnostics tester from DI
-                var diagnosticsTester = _serviceProvider.GetRequiredService<UI.DiagnosticsTester>();
 
-                // Run the form
-                Application.Run(diagnosticsTester);
+                Console.WriteLine("Debug console functionality has been removed.");
+                Console.WriteLine("Use the main Dashboard application for debugging.");
             }
             catch (Exception ex)
             {
@@ -563,7 +572,8 @@ namespace BusBus
                     var resources = Utils.ResourceTracker.GetTrackedResources();
 
                     foreach (var resource in resources)
-                    {                        var item = new ListViewItem(resource.Id.ToString());
+                    {
+                        var item = new ListViewItem(resource.Id.ToString());
                         item.SubItems.Add(resource.ResourceType);
                         item.SubItems.Add(resource.Description);
                         item.SubItems.Add(resource.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture));

@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using BusBus.DataAccess;
 using BusBus.Models;
 using BusBus.UI.Common;

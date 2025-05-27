@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 
 #nullable disable
 
@@ -10,7 +11,7 @@ namespace BusBus.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             ArgumentNullException.ThrowIfNull(migrationBuilder);
-            
+
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 table: "Vehicles",
@@ -22,7 +23,7 @@ namespace BusBus.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             ArgumentNullException.ThrowIfNull(migrationBuilder);
-            
+
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 table: "Vehicles",

@@ -1,7 +1,9 @@
+﻿#nullable enable
 using System;
-using System.Configuration;
+using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
+using System.Windows.Forms;
+using Microsoft.Extensions.Configuration;
 
 namespace BusBus.UI
 {
@@ -68,18 +70,28 @@ namespace BusBus.UI
         public const int LoadingTimeout = 5000; // milliseconds
         public const int DatabaseTimeout = 30000; // milliseconds
 
+        private static IConfiguration? _configuration;
+
+        static UiConstants()
+        {
+            _configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+        }
+
         // Helper method to read settings from config or use defaults
         private static int GetIntSetting(string key, int defaultValue)
         {
             try
             {
-                string? value = ConfigurationManager.AppSettings[key];
+                string? value = _configuration?.GetValue<string>(key);
                 if (int.TryParse(value, out int result))
                 {
                     return result;
                 }
             }
-            catch (ConfigurationErrorsException ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Error reading configuration: {ex.Message}");
             }
@@ -87,21 +99,17 @@ namespace BusBus.UI
             return defaultValue;
         }
 
-        // Save settings (can be used by a configuration UI)
-        public static void SaveSettings(string key, string value)
+        public static void UpdateConfiguration(string key, string value)
         {
-            try
+            // Use Microsoft.Extensions.Configuration approach instead of System.Configuration
+            var config = new Dictionary<string, string>
             {
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                config.AppSettings.Settings.Remove(key);
-                config.AppSettings.Settings.Add(key, value);
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection("appSettings");
-            }
-            catch (System.Configuration.ConfigurationErrorsException ex)
-            {
-                Console.WriteLine($"Error saving configuration: {ex.Message}");
-            }
+                {key, value}
+            };
+
+            // Write to appsettings.json or use another persistence method
+            var json = System.Text.Json.JsonSerializer.Serialize(config);
+            System.IO.File.WriteAllText("appsettings.json", json);
         }
-    }
-}
+    } // End of UiConstants class
+} // End of namespace BusBus.UI

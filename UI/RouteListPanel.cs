@@ -1,3 +1,5 @@
+// Enable nullable reference types for this file
+#nullable enable
 using BusBus.Models;
 using BusBus.Services;
 using System;
@@ -6,6 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.UI.Common;
+using System.Drawing;
+using System.Linq;
+using System.Net.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace BusBus.UI
@@ -24,7 +29,8 @@ namespace BusBus.UI
     public partial class RouteListPanel : ThemeableControl, IDisplayable
     {
         private readonly IRouteService _routeService;
-        private List<RouteDisplayDTO> _routes = new List<RouteDisplayDTO>();
+        // Use BindingList for better data binding and notification support
+        private System.ComponentModel.BindingList<RouteDisplayDTO> _routes = new System.ComponentModel.BindingList<RouteDisplayDTO>();
         private List<Driver> _drivers = new List<Driver>();
         private List<Vehicle> _vehicles = new List<Vehicle>();
         private int _totalRoutes = 0;
@@ -70,52 +76,64 @@ namespace BusBus.UI
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this.Controls.Add(mainContainer);
-
-            // Buttons
+            this.Controls.Add(mainContainer);            // Buttons
             _addRouteButton = new Button
             {
                 Text = "Add New Route",
                 Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.None,
-                Width = 150,
+                Margin = new Padding(3),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderSize = 1 },
-                Font = new System.Drawing.Font("Segoe UI", 10F)
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                AutoSize = false,
+                MinimumSize = new Size(120, 30)
             };
+            _addRouteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _addRouteButton.FlatAppearance.BorderSize = 1;
+
             _editRouteButton = new Button
             {
                 Text = "Edit Selected",
                 Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.None,
-                Width = 120,
+                Margin = new Padding(3),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderSize = 1 },
-                Font = new System.Drawing.Font("Segoe UI", 10F)
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                AutoSize = false,
+                MinimumSize = new Size(100, 30)
             };
+            _editRouteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _editRouteButton.FlatAppearance.BorderSize = 1;
+
             _deleteRouteButton = new Button
             {
                 Text = "Delete",
                 Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.None,
-                Width = 100,
+                Margin = new Padding(3),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderSize = 1 },
-                Font = new System.Drawing.Font("Segoe UI", 10F)
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                AutoSize = false,
+                MinimumSize = new Size(80, 30)
             };
-            var buttonPanel = new TableLayoutPanel
+            _deleteRouteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _deleteRouteButton.FlatAppearance.BorderSize = 1;            var buttonPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 Height = 50,
                 ColumnCount = 3,
                 RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                Padding = new Padding(5)
             };
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
@@ -123,60 +141,40 @@ namespace BusBus.UI
             buttonPanel.Controls.Add(_addRouteButton, 0, 0);
             buttonPanel.Controls.Add(_editRouteButton, 1, 0);
             buttonPanel.Controls.Add(_deleteRouteButton, 2, 0);
-            mainContainer.Controls.Add(buttonPanel, 0, 0);
-
-            // DataGridView
+            mainContainer.Controls.Add(buttonPanel, 0, 0);            // DataGridView
             _routesGrid = new DataGridView
             {
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                AutoGenerateColumns = false,
+                MultiSelect = false,
+                ReadOnly = false,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
-                MultiSelect = false,
-                Visible = true,
+                AutoGenerateColumns = false,
+                EnableHeadersVisualStyles = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AutoSize = false,
-                Dock = DockStyle.Fill,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
-                CellBorderStyle = DataGridViewCellBorderStyle.Single,
                 GridColor = System.Drawing.Color.FromArgb(200, 200, 200),
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular),
-                    BackColor = ThemeManager.CurrentTheme.CardBackground,
-                    ForeColor = ThemeManager.CurrentTheme.CardText,
-                    SelectionBackColor = System.Drawing.Color.FromArgb(100, 150, 255),
-                    SelectionForeColor = ThemeManager.CurrentTheme.CardText,
-                    Padding = new Padding(3),
-                    Alignment = DataGridViewContentAlignment.MiddleLeft
-                },
-                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = System.Drawing.Color.FromArgb(235, 235, 235)
-                },
-                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single,
-                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold),
-                    BackColor = ThemeManager.CurrentTheme.HeadlineBackground,
-                    ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                    Alignment = DataGridViewContentAlignment.MiddleCenter,
-                    Padding = new Padding(3)
-                },
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
                 RowHeadersVisible = false,
                 RowTemplate = { Height = 32 },
-                EditMode = DataGridViewEditMode.EditOnEnter,
-                ReadOnly = false
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
-            mainContainer.Controls.Add(_routesGrid, 0, 1);
 
-            // Columns (updated)
+            // Apply consistent theme styling to the grid
+            ThemeManager.CurrentTheme.StyleDataGrid(_routesGrid);
+
+            mainContainer.Controls.Add(_routesGrid, 0, 1);// Columns (updated)
             _routesGrid.Columns.Clear();
             _routesGrid.Columns.AddRange(new DataGridViewColumn[]
             {
                 new DataGridViewTextBoxColumn { HeaderText = "Route Name", DataPropertyName = "Name", FillWeight = 150, MinimumWidth = 120 },
-                new DataGridViewTextBoxColumn { HeaderText = "Date", DataPropertyName = "TripDate", FillWeight = 100, MinimumWidth = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "d" } },
+                new DataGridViewTextBoxColumn { HeaderText = "Date", DataPropertyName = "RouteDate", FillWeight = 100, MinimumWidth = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "d" } },
                 new DataGridViewTextBoxColumn { HeaderText = "AM Start", DataPropertyName = "AMStartingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
                 new DataGridViewTextBoxColumn { HeaderText = "AM End", DataPropertyName = "AMEndingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
                 new DataGridViewTextBoxColumn { HeaderText = "AM Miles", Name = "AMTotalMiles", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Format = "N1", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 70, MinimumWidth = 70 },
@@ -184,10 +182,8 @@ namespace BusBus.UI
                 new DataGridViewTextBoxColumn { HeaderText = "PM End", DataPropertyName = "PMEndingMileage", DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 80, MinimumWidth = 80 },
                 new DataGridViewTextBoxColumn { HeaderText = "PM Miles", Name = "PMTotalMiles", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Format = "N1", Alignment = DataGridViewContentAlignment.MiddleRight }, FillWeight = 70, MinimumWidth = 70 },
                 new DataGridViewTextBoxColumn { HeaderText = "Driver", Name = "DriverName", ReadOnly = true, FillWeight = 120, MinimumWidth = 100 },
-                new DataGridViewTextBoxColumn { HeaderText = "Vehicle", Name = "VehicleNumber", ReadOnly = true, FillWeight = 80, MinimumWidth = 80 }
-            });
-
-            // Pagination panel
+                new DataGridViewTextBoxColumn { HeaderText = "Vehicle", Name = "Number", ReadOnly = true, FillWeight = 80, MinimumWidth = 80 }
+            });            // Pagination panel
             var paginationPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -196,44 +192,65 @@ namespace BusBus.UI
             };
             mainContainer.Controls.Add(paginationPanel, 0, 2);
 
+            // Create a horizontal layout for pagination controls
+            var paginationLayout = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                Padding = new Padding(5),
+                BackColor = ThemeManager.CurrentTheme.CardBackground
+            };
+
             // Previous page button
             _prevPageButton = new Button
             {
                 Text = "◀ Previous",
-                Dock = DockStyle.Left,
-                Width = 100,
+                Size = new Size(100, 35),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderSize = 1 },
-                Enabled = false
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                Enabled = false,
+                Margin = new Padding(3)
             };
-            paginationPanel.Controls.Add(_prevPageButton);
+            _prevPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _prevPageButton.FlatAppearance.BorderSize = 1;
 
             // Page info label
             _pageInfoLabel = new Label
             {
                 Text = "Page 1",
-                Dock = DockStyle.Left,
-                Width = 150,
+                Size = new Size(100, 35),
                 TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = new System.Drawing.Font("Segoe UI", 9F)
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                AutoSize = false,
+                Margin = new Padding(10, 3, 10, 3)
             };
-            paginationPanel.Controls.Add(_pageInfoLabel);
 
             // Next page button
             _nextPageButton = new Button
             {
                 Text = "Next ▶",
-                Dock = DockStyle.Left,
-                Width = 100,
+                Size = new Size(100, 35),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderSize = 1 }
+                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                Margin = new Padding(3)
             };
-            paginationPanel.Controls.Add(_nextPageButton);
+            _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _nextPageButton.FlatAppearance.BorderSize = 1;
+
+            paginationLayout.Controls.Add(_prevPageButton);
+            paginationLayout.Controls.Add(_pageInfoLabel);
+            paginationLayout.Controls.Add(_nextPageButton);
+            paginationPanel.Controls.Add(paginationLayout);
 
             // Event handlers (add as needed)
             _routesGrid.CellFormatting += (s, e) =>
@@ -257,11 +274,18 @@ namespace BusBus.UI
                     e.Value = route.Driver != null ? $"{route.Driver.FirstName} {route.Driver.LastName}".Trim() : "Unassigned";
                     e.FormattingApplied = true;
                 }
-                else if (colName == "VehicleNumber")
+                else if (colName == "Number")
                 {
-                    e.Value = route.Vehicle?.BusNumber ?? "Unassigned";
+                    e.Value = route.Vehicle?.Number ?? "Unassigned";
                     e.FormattingApplied = true;
                 }
+            };
+
+            // DataError event handler to suppress default dialogs and log errors
+            _routesGrid.DataError += (sender, e) =>
+            {
+                Console.WriteLine($"DataError: {e.Exception?.Message}");
+                e.ThrowException = false;
             };
 
             // Handle row selection for better UX
@@ -285,14 +309,17 @@ namespace BusBus.UI
             {
                 if (e.RowIndex < 0 || e.RowIndex >= _routes.Count) return;
                 var route = _routes[e.RowIndex];
-                if (e.ColumnIndex == _routesGrid.Columns["DriverId"].Index)
+                // Only handle columns that exist in the grid
+                var colName = _routesGrid.Columns[e.ColumnIndex].Name;
+                if (colName == "DriverName")
                 {
-                    route.DriverId = (Guid?)_routesGrid[e.ColumnIndex, e.RowIndex].Value;
+                    // Optionally implement logic if editing driver name is allowed
                 }
-                else if (e.ColumnIndex == _routesGrid.Columns["VehicleId"].Index)
+                else if (colName == "VehicleNumber")
                 {
-                    route.VehicleId = (Guid?)_routesGrid[e.ColumnIndex, e.RowIndex].Value;
-                }                try
+                    // Optionally implement logic if editing vehicle number is allowed
+                }
+                try
                 {
                     await _routeService.UpdateRouteAsync(route.ToRoute());
                 }
@@ -407,7 +434,10 @@ namespace BusBus.UI
                 if (moreRoutes != null && moreRoutes.Count > 0)
                 {
                     var moreRouteDTOs = moreRoutes.Select(RouteDisplayDTO.FromRoute).ToList();
-                    _routes.AddRange(moreRouteDTOs);
+                    foreach (var dto in moreRouteDTOs)
+                    {
+                        _routes.Add(dto);
+                    }
                     _routesGrid.DataSource = null;
                     _routesGrid.DataSource = _routes;
                 }
@@ -533,7 +563,11 @@ namespace BusBus.UI
                     return;
                 }                cancellationToken.ThrowIfCancellationRequested();
                 var routes = await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
-                _routes = routes.Select(RouteDisplayDTO.FromRoute).ToList();
+                _routes.Clear();
+                foreach (var dto in routes.Select(RouteDisplayDTO.FromRoute))
+                {
+                    _routes.Add(dto);
+                }
                 if (cancellationToken.IsCancellationRequested || IsDisposed)
                 {
                     Console.WriteLine("LoadRoutesAsync canceled before updating UI");

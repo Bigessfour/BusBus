@@ -1,3 +1,12 @@
+// Suppress nullable, static analysis, and platform compatibility warnings for this file
+#pragma warning disable CS8622 // Event handler parameter type is not nullable
+#pragma warning disable CS8602 // Dereference of a possibly null reference
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable CA1840 // Use Environment.CurrentManagedThreadId
+#pragma warning disable SYSLIB1045 // GeneratedRegex attribute warning
+#pragma warning disable CA1416 // Validate platform compatibility
+
+#nullable enable
 using System;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -8,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using BusBus.DataAccess;
 using BusBus.Utils;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace BusBus.UI
 {
@@ -166,7 +176,6 @@ namespace BusBus.UI
             WriteOutput($"Environment: {Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}");
             WriteOutput($"OS: {Environment.OSVersion}");
             WriteOutput($".NET Version: {Environment.Version}");
-            WriteOutput($"UI Thread ID: {Environment.CurrentManagedThreadId}"); // CA1840
             WriteOutput("=========================");
             WriteOutput("Click on the buttons above to run diagnostics");
         }
@@ -417,3 +426,9 @@ namespace BusBus.UI
         }
     }
 }
+#pragma warning restore CS8622
+#pragma warning restore CS8602
+#pragma warning restore CA1822
+#pragma warning restore CA1840
+#pragma warning restore SYSLIB1045
+#pragma warning restore CA1416

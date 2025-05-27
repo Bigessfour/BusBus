@@ -1,3 +1,5 @@
+// <auto-added>
+#nullable enable
 using System;
 using System.Windows.Forms;
 

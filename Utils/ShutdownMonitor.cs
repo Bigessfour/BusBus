@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -59,7 +60,7 @@ namespace BusBus.Utils
         public async Task WaitForShutdownAsync(CancellationToken cancellationToken = default)        {
             var tcs = new TaskCompletionSource<bool>();
             using var registration = cancellationToken.Register(() => tcs.TrySetCanceled());
-            
+
             _ = Task.Run(() =>
             {
                 try

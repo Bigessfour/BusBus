@@ -17,10 +17,34 @@ namespace BusBus.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.5")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("BusBus.Models.CustomField", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DefaultValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Required")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("CustomFields");
+                });
 
             modelBuilder.Entity("BusBus.Models.Driver", b =>
                 {
@@ -28,26 +52,76 @@ namespace BusBus.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ContactInfo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DriverID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DriverName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmergencyContactJson")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("HireDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastPerformanceReview")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LicenseNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("PerformanceScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PersonalDetailsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("PersonalDetails");
+
                     b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("SalaryGrade")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -58,42 +132,107 @@ namespace BusBus.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            ContactInfo = "",
+                            CreatedBy = "",
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DriverID = 0,
+                            DriverName = "",
+                            EmergencyContactJson = "",
                             FirstName = "John",
+                            HireDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastName = "Smith",
                             LicenseNumber = "DL123456",
-                            Name = "John Smith"
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "John Smith",
+                            PerformanceScore = 5.0m,
+                            PersonalDetailsJson = "",
+                            RowVersion = new byte[0],
+                            SalaryGrade = 0,
+                            Status = "Active"
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            ContactInfo = "",
+                            CreatedBy = "",
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DriverID = 0,
+                            DriverName = "",
+                            EmergencyContactJson = "",
                             FirstName = "Mary",
+                            HireDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastName = "Johnson",
                             LicenseNumber = "DL234567",
-                            Name = "Mary Johnson"
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Mary Johnson",
+                            PerformanceScore = 5.0m,
+                            PersonalDetailsJson = "",
+                            RowVersion = new byte[0],
+                            SalaryGrade = 0,
+                            Status = "Active"
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ContactInfo = "",
+                            CreatedBy = "",
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DriverID = 0,
+                            DriverName = "",
+                            EmergencyContactJson = "",
                             FirstName = "Robert",
+                            HireDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastName = "Brown",
                             LicenseNumber = "DL345678",
-                            Name = "Robert Brown"
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Robert Brown",
+                            PerformanceScore = 5.0m,
+                            PersonalDetailsJson = "",
+                            RowVersion = new byte[0],
+                            SalaryGrade = 0,
+                            Status = "Active"
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ContactInfo = "",
+                            CreatedBy = "",
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DriverID = 0,
+                            DriverName = "",
+                            EmergencyContactJson = "",
                             FirstName = "Lisa",
+                            HireDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastName = "Davis",
                             LicenseNumber = "DL456789",
-                            Name = "Lisa Davis"
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Lisa Davis",
+                            PerformanceScore = 5.0m,
+                            PersonalDetailsJson = "",
+                            RowVersion = new byte[0],
+                            SalaryGrade = 0,
+                            Status = "Active"
                         },
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ContactInfo = "",
+                            CreatedBy = "",
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DriverID = 0,
+                            DriverName = "",
+                            EmergencyContactJson = "",
                             FirstName = "Michael",
+                            HireDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastName = "Wilson",
                             LicenseNumber = "DL567890",
-                            Name = "Michael Wilson"
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Michael Wilson",
+                            PerformanceScore = 5.0m,
+                            PersonalDetailsJson = "",
+                            RowVersion = new byte[0],
+                            SalaryGrade = 0,
+                            Status = "Active"
                         });
                 });
 
@@ -112,12 +251,28 @@ namespace BusBus.Migrations
                     b.Property<int>("AMStartingMileage")
                         .HasColumnType("int");
 
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Distance")
+                        .HasColumnType("int");
+
                     b.Property<Guid?>("DriverId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("EndLocation")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -133,8 +288,19 @@ namespace BusBus.Migrations
                     b.Property<int>("PMStartMileage")
                         .HasColumnType("int");
 
+                    b.Property<string>("RouteCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("RouteDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("RouteID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RouteName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -142,10 +308,18 @@ namespace BusBus.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("ScheduleJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("ScheduledTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("StartLocation")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StopsJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -174,21 +348,86 @@ namespace BusBus.Migrations
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FuelType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsMaintenanceRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastLocationUpdate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastMaintenanceDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
 
                     b.Property<string>("LicensePlate")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<bool>("MaintenanceDue")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MaintenanceHistoryJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MakeModel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Mileage")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Model")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("NextMaintenanceDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("SpecificationsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VehicleCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("VehicleGuid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Year")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -200,50 +439,110 @@ namespace BusBus.Migrations
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             BusNumber = "101",
                             Capacity = 72,
+                            CreatedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4706),
+                            FuelType = "",
                             IsActive = true,
+                            IsMaintenanceRequired = false,
                             LicensePlate = "BUS-101",
+                            MaintenanceDue = false,
+                            MaintenanceHistoryJson = "",
+                            MakeModel = "",
+                            Mileage = 0m,
                             Model = "Blue Bird All American FE",
-                            Number = "101"
+                            ModifiedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4793),
+                            Number = "101",
+                            SpecificationsJson = "",
+                            Status = "Available",
+                            VehicleGuid = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            VehicleId = 0
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             BusNumber = "102",
                             Capacity = 66,
+                            CreatedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4802),
+                            FuelType = "",
                             IsActive = true,
+                            IsMaintenanceRequired = false,
                             LicensePlate = "BUS-102",
+                            MaintenanceDue = false,
+                            MaintenanceHistoryJson = "",
+                            MakeModel = "",
+                            Mileage = 0m,
                             Model = "Thomas C2 Jouley",
-                            Number = "102"
+                            ModifiedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4803),
+                            Number = "102",
+                            SpecificationsJson = "",
+                            Status = "Available",
+                            VehicleGuid = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            VehicleId = 0
                         },
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                             BusNumber = "103",
                             Capacity = 78,
+                            CreatedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4806),
+                            FuelType = "",
                             IsActive = true,
+                            IsMaintenanceRequired = false,
                             LicensePlate = "BUS-103",
+                            MaintenanceDue = false,
+                            MaintenanceHistoryJson = "",
+                            MakeModel = "",
+                            Mileage = 0m,
                             Model = "IC Bus CE Series",
-                            Number = "103"
+                            ModifiedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4807),
+                            Number = "103",
+                            SpecificationsJson = "",
+                            Status = "Available",
+                            VehicleGuid = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                            VehicleId = 0
                         },
                         new
                         {
                             Id = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                             BusNumber = "104",
                             Capacity = 72,
+                            CreatedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4809),
+                            FuelType = "",
                             IsActive = false,
+                            IsMaintenanceRequired = false,
                             LicensePlate = "BUS-104",
+                            MaintenanceDue = false,
+                            MaintenanceHistoryJson = "",
+                            MakeModel = "",
+                            Mileage = 0m,
                             Model = "Blue Bird Vision",
-                            Number = "104"
+                            ModifiedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4811),
+                            Number = "104",
+                            SpecificationsJson = "",
+                            Status = "Available",
+                            VehicleGuid = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                            VehicleId = 0
                         },
                         new
                         {
                             Id = new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
                             BusNumber = "105",
                             Capacity = 90,
+                            CreatedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4813),
+                            FuelType = "",
                             IsActive = true,
+                            IsMaintenanceRequired = false,
                             LicensePlate = "BUS-105",
+                            MaintenanceDue = false,
+                            MaintenanceHistoryJson = "",
+                            MakeModel = "",
+                            Mileage = 0m,
                             Model = "Thomas HDX",
-                            Number = "105"
+                            ModifiedDate = new DateTime(2025, 5, 26, 12, 42, 55, 3, DateTimeKind.Local).AddTicks(4814),
+                            Number = "105",
+                            SpecificationsJson = "",
+                            Status = "Available",
+                            VehicleGuid = new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                            VehicleId = 0
                         });
                 });
 
