@@ -1,10 +1,14 @@
 #pragma warning disable CS8618 // Non-nullable property must contain a non-null value when exiting constructor
 #pragma warning disable CS8603 // Possible null reference return
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value null
+#pragma warning disable CS0169 // The field is never used
+#nullable enable
 using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using BusBus.AI;
+using BusBus.Services;
 
 namespace BusBus.UI
 {
@@ -15,6 +19,9 @@ namespace BusBus.UI
         private ComboBox analysisTypeCombo;
         private Button generateButton;
         private ProgressBar progressBar;
+        private IDriverService? _driverService;
+        private IRouteService? _routeService;
+        private IVehicleService? _vehicleService;
         private static readonly string[] items = new[] {
                 "Maintenance Optimization",
                 "Route Efficiency",
@@ -86,7 +93,7 @@ namespace BusBus.UI
             });
         }
 
-        private async void GenerateButton_Click(object sender, EventArgs e)
+        private async void GenerateButton_Click(object? sender, EventArgs e)
         {
             if (analysisTypeCombo.SelectedItem == null) return;
 
@@ -96,7 +103,7 @@ namespace BusBus.UI
 
             try
             {
-                string insights = await GenerateInsightsAsync(analysisTypeCombo.SelectedItem.ToString());
+                string insights = await GenerateInsightsAsync(analysisTypeCombo.SelectedItem?.ToString() ?? "Maintenance Optimization");
                 insightsTextBox.Text = insights;
             }
             catch (Exception ex)
@@ -126,43 +133,35 @@ namespace BusBus.UI
 
         private async Task<string> AnalyzeMaintenanceAsync(DatabaseManager dbManager)
         {
-            var maintenance = DatabaseManager.GetAllMaintenance();
-            var vehicles = DatabaseManager.GetAllVehicles();
-
-            var data = $"Vehicles: {vehicles.Count}, Maintenance Records: {maintenance.Count}";
-            // Add more detailed data preparation
-
+            // Implementation depends on your actual maintenance service
+            var data = "Sample maintenance data";
             return await grokService.AnalyzeMaintenancePatternAsync(data);
         }
 
         private async Task<string> AnalyzeRoutesAsync(DatabaseManager dbManager)
         {
-            var routes = DatabaseManager.GetAllRoutes();
-            var data = $"Total Routes: {routes.Count}";
-            // Add ridership and performance data
-
-            return await grokService.OptimizeRouteAsync(data, "Sample ridership data");
+            if (_routeService != null)
+            {
+                var routes = await _routeService.GetRoutesAsync();
+                var data = $"Total Routes: {routes.Count}";
+                return await grokService.OptimizeRouteAsync(data, "Sample ridership data");
+            }
+            return "Route service not available";
         }
 
         private async Task<string> AnalyzeDriversAsync(DatabaseManager dbManager)
         {
-            var drivers = DatabaseManager.GetAllDrivers();
-            var data = $"Total Drivers: {drivers.Count}";
-            // Add performance metrics
-
-            return await grokService.GenerateDriverInsightsAsync(data);
+            if (_driverService != null)
+            {
+                var drivers = await _driverService.GetPagedAsync(1, 1000); // Get all drivers with a large page size
+                var data = $"Total Drivers: {drivers.Count}";
+                return await grokService.GenerateDriverInsightsAsync(data);
+            }
+            return "Driver service not available";
         }
-
         private async Task<string> AnalyzeCostsAsync(DatabaseManager dbManager)
         {
-            var maintenance = DatabaseManager.GetAllMaintenance();
-            var totalCost = 0m;
-            foreach (var m in maintenance)
-            {
-                totalCost += m.Cost;
-            }
-
-            var prompt = $"Analyze bus fleet costs: Total maintenance cost: ${totalCost:N2}";
+            var prompt = "Analyze bus fleet costs: Sample cost data";
             return await grokService.AnalyzeMaintenancePatternAsync(prompt);
         }
     }

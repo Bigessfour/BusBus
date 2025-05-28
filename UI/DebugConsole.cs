@@ -15,16 +15,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using BusBus.DataAccess;
+using BusBus.UI.Common;
 using BusBus.Utils;
 using System.Text.RegularExpressions;
 using System.Linq;
 
 namespace BusBus.UI
-{
-    /// <summary>
-    /// Debug console for development and diagnostics
-    /// </summary>
-    public partial class DebugConsole : Form
+{    /// <summary>
+     /// Debug console for development and diagnostics
+     /// </summary>
+    public partial class DebugConsole : BaseForm
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger _logger;
@@ -52,115 +52,131 @@ namespace BusBus.UI
 
             // Form properties
             this.Text = "BusBus Debug Console";
-            this.Size = new Size(800, 600);
-            this.MinimumSize = new Size(640, 480);
+            this.Size = new Size(900, 700); // Increased default size
+            this.MinimumSize = new Size(800, 600); // Increased minimum size
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Icon = SystemIcons.Information;
-
-            // Output text box
+            this.Icon = SystemIcons.Information;            // Output text box
             _outputTextBox = new TextBox
             {
                 Multiline = true,
                 ReadOnly = true,
                 Dock = DockStyle.Fill,
                 ScrollBars = ScrollBars.Vertical,
-                BackColor = Color.Black,
-                ForeColor = Color.Lime,
+                BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
+                ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = new Font("Consolas", 10F)
             };
 
-            // Control panel
+            // Control panel with flow layout for better button management
             var controlPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 70,
-                BackColor = SystemColors.Control
+                Height = 100, // Increased height to accommodate two rows
+                BackColor = SystemColors.Control,
+                Padding = new Padding(10)
             };
 
-            // Status bar
+            // Use FlowLayoutPanel for buttons
+            var buttonFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoScroll = false
+            };            // Status bar
             _statusLabel = new Label
             {
                 Dock = DockStyle.Bottom,
                 Height = 25,
-                BackColor = Color.Navy,
-                ForeColor = Color.White,
+                BackColor = ThemeManager.CurrentTheme.HeadlineBackground,
+                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(10, 0, 0, 0),
                 Text = "Ready"
             };
 
+            // Create buttons with consistent sizing
+            var buttonSize = new Size(130, 35);
+            var buttonMargin = new Padding(5);
+
             // Buttons
             _testDbButton = new Button
             {
                 Text = "Test Database",
-                Width = 120,
-                Location = new Point(10, 10),
-                Height = 30
+                Size = buttonSize,
+                Margin = buttonMargin
             };
             _testDbButton.Click += TestDbButton_Click;
 
             _showActiveThreadsButton = new Button
             {
                 Text = "Show Threads",
-                Width = 120,
-                Location = new Point(140, 10),
-                Height = 30
+                Size = buttonSize,
+                Margin = buttonMargin
             };
             _showActiveThreadsButton.Click += ShowActiveThreadsButton_Click;
 
             _clearOutputButton = new Button
             {
                 Text = "Clear Output",
-                Width = 120,
-                Location = new Point(270, 10),
-                Height = 30
+                Size = buttonSize,
+                Margin = buttonMargin
             };
             _clearOutputButton.Click += ClearOutputButton_Click;
 
             _testUiThreadButton = new Button
             {
                 Text = "Test UI Thread",
-                Width = 120,
-                Location = new Point(400, 10),
-                Height = 30
+                Size = buttonSize,
+                Margin = buttonMargin
             };
             _testUiThreadButton.Click += TestUiThreadButton_Click;
 
             _showDbContextInfoButton = new Button
             {
                 Text = "DbContext Info",
-                Width = 120,
-                Location = new Point(530, 10),
-                Height = 30
+                Size = buttonSize,
+                Margin = buttonMargin
             };
             _showDbContextInfoButton.Click += ShowDbContextInfoButton_Click;
 
-            // Logging level
+            // Logging level panel
+            var loggingPanel = new Panel
+            {
+                Size = new Size(280, 40),
+                Margin = buttonMargin
+            };
+
             var loggingLevelLabel = new Label
             {
                 Text = "Logging Level:",
                 AutoSize = true,
-                Location = new Point(10, 45)
+                Location = new Point(0, 10)
             };
 
             _loggingLevelComboBox = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Width = 150,
-                Location = new Point(100, 42)
+                Location = new Point(90, 7)
             };
             _loggingLevelComboBox.Items.AddRange(new object[] { "Trace", "Debug", "Information", "Warning", "Error", "Critical" });
             _loggingLevelComboBox.SelectedIndex = 1; // Debug
             _loggingLevelComboBox.SelectedIndexChanged += LoggingLevelComboBox_SelectedIndexChanged;
 
-            // Add controls
-            controlPanel.Controls.Add(_testDbButton);
-            controlPanel.Controls.Add(_showActiveThreadsButton);
-            controlPanel.Controls.Add(_clearOutputButton);
-            controlPanel.Controls.Add(_testUiThreadButton);
-            controlPanel.Controls.Add(_showDbContextInfoButton);
-            controlPanel.Controls.Add(loggingLevelLabel);
-            controlPanel.Controls.Add(_loggingLevelComboBox);
+            loggingPanel.Controls.Add(loggingLevelLabel);
+            loggingPanel.Controls.Add(_loggingLevelComboBox);
+
+            // Add buttons to flow panel
+            buttonFlow.Controls.Add(_testDbButton);
+            buttonFlow.Controls.Add(_showActiveThreadsButton);
+            buttonFlow.Controls.Add(_clearOutputButton);
+            buttonFlow.Controls.Add(_testUiThreadButton);
+            buttonFlow.Controls.Add(_showDbContextInfoButton);
+            buttonFlow.Controls.Add(loggingPanel);
+
+            // Add flow panel to control panel
+            controlPanel.Controls.Add(buttonFlow);
 
             this.Controls.Add(_outputTextBox);
             this.Controls.Add(controlPanel);

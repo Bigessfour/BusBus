@@ -9,21 +9,21 @@ using BusBus.Services;
 using BusBus.UI;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.UI
 {
-    [TestFixture]
-    [Category(TestCategories.UI)]
-    [Platform("Win")]
-    [Apartment(ApartmentState.STA)] // Required for WinForms testing
+    [TestClass]
+    [TestCategory(TestCategories.UI)]
+    // Platform attribute removed (MSTest incompatible)
+    // Apartment attribute removed (MSTest incompatible) // Required for WinForms testing
     public class DriverFormIntegrationTests : TestBase
     {
-        private IDriverService _driverService;
-        private DriverPanel _driverPanel;
-        private DriverListPanel _driverListPanel;
+        private IDriverService _driverService = null!;
+        private DriverPanel _driverPanel = null!;
+        private DriverListPanel _driverListPanel = null!;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
@@ -37,7 +37,7 @@ namespace BusBus.Tests.UI
             _driverListPanel = new DriverListPanel(_driverService);
         }
 
-        [TearDown]
+        [TestCleanup]
         public override void TearDown()
         {
             DriverPanel.SuppressDialogsForTests = false;
@@ -46,8 +46,8 @@ namespace BusBus.Tests.UI
             base.TearDown();
         }
 
-        [Test]
-        [Description("Test complete form workflow: Load -> Edit -> Save for driver")]
+        [TestMethod]
+        // Description: Test complete form workflow: Load -> Edit -> Save for driver
         public async Task DriverPanel_CompleteWorkflow_ShouldPersistChanges()
         {
             // Arrange - Create test driver

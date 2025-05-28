@@ -55,12 +55,12 @@ namespace BusBus.Services
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             return await dbContext.Drivers.FindAsync(new object[] { id }, cancellationToken);
         }
-
         public async Task<List<Driver>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             return await dbContext.Drivers
+                .AsNoTracking()  // Use AsNoTracking to avoid entity tracking issues
                 .OrderBy(d => d.LastName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -76,7 +76,8 @@ namespace BusBus.Services
             return entity;
         }
 
-        public (bool IsValid, string ErrorMessage) ValidateEntity(Driver entity)        {
+        public (bool IsValid, string ErrorMessage) ValidateEntity(Driver entity)
+        {
             ArgumentNullException.ThrowIfNull(entity);
 
             if (string.IsNullOrWhiteSpace(entity.FirstName) || string.IsNullOrWhiteSpace(entity.LastName))

@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using BusBus.Models;
+using BusBus.UI.Common;
 
 namespace BusBus.UI
 {
-    public class AdvancedDriverForm : Form
+    public class AdvancedDriverForm : BaseForm
     {
         private DatabaseManager dbManager;
         private int? driverId;
@@ -161,7 +162,8 @@ namespace BusBus.UI
             });
 
             tab.Controls.Add(panel);
-        }        private void LoadDriverData()
+        }
+        private void LoadDriverData()
         {
             if (driverId.HasValue)
             {

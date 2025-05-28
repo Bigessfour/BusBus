@@ -9,19 +9,19 @@ using BusBus.AI;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.AI
 {
-    [TestFixture]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Unit)]
     public class GrokServiceTests
     {
         private Mock<HttpMessageHandler> _mockHttpMessageHandler;
         private HttpClient _httpClient;
         private GrokService _grokService;
 
-        [SetUp]
+        [TestInitialize]
         public void SetUp()
         {
             // Setup mock HTTP handler
@@ -32,14 +32,14 @@ namespace BusBus.Tests.AI
             _grokService = CreateGrokServiceWithMockedHttpClient(_httpClient);
         }
 
-        [TearDown]
+        [TestCleanup]
         public void TearDown()
         {
             _httpClient?.Dispose();
         }
 
-        [Test]
-        [Description("Test maintenance pattern analysis with Grok API")]
+        [TestMethod]
+        // Description: Test maintenance pattern analysis with Grok API
         public async Task AnalyzeMaintenancePatternAsync_ShouldCallGrokWithCorrectPrompt()
         {
             // Arrange
@@ -58,8 +58,8 @@ namespace BusBus.Tests.AI
             VerifyHttpRequestMade(request => request.Contains("maintenance") && request.Contains(maintenanceData));
         }
 
-        [Test]
-        [Description("Test route optimization with Grok API")]
+        [TestMethod]
+        // Description: Test route optimization with Grok API
         public async Task OptimizeRouteAsync_ShouldCallGrokWithCorrectPrompt()
         {
             // Arrange
@@ -82,8 +82,8 @@ namespace BusBus.Tests.AI
                 request.Contains(ridership));
         }
 
-        [Test]
-        [Description("Test driver insights with Grok API")]
+        [TestMethod]
+        // Description: Test driver insights with Grok API
         public async Task GenerateDriverInsightsAsync_ShouldCallGrokWithCorrectPrompt()
         {
             // Arrange
@@ -104,8 +104,8 @@ namespace BusBus.Tests.AI
                 request.Contains(driverData));
         }
 
-        [Test]
-        [Description("Test handling of API errors")]
+        [TestMethod]
+        // Description: Test handling of API errors
         public async Task CallGrokAsync_WithApiError_ShouldHandleGracefully()
         {
             // Arrange
@@ -132,8 +132,8 @@ namespace BusBus.Tests.AI
                 .WithMessage("*response code does not indicate success*");
         }
 
-        [Test]
-        [Description("Test Grok API timeout handling")]
+        [TestMethod]
+        // Description: Test Grok API timeout handling
         public async Task CallGrokAsync_WithTimeout_ShouldHandleGracefully()
         {
             // Arrange
@@ -154,8 +154,8 @@ namespace BusBus.Tests.AI
                 .WithMessage("*timed out*");
         }
 
-        [Test]
-        [Description("Test handling of malformed JSON responses")]
+        [TestMethod]
+        // Description: Test handling of malformed JSON responses
         public async Task CallGrokAsync_WithMalformedResponse_ShouldThrowJsonException()
         {
             // Arrange
@@ -182,8 +182,8 @@ namespace BusBus.Tests.AI
             await act.Should().ThrowAsync<JsonException>();
         }
 
-        [Test]
-        [Description("Test handling of empty response")]
+        [TestMethod]
+        // Description: Test handling of empty response
         public async Task CallGrokAsync_WithEmptyResponse_ShouldThrowException()
         {
             // Arrange
@@ -210,8 +210,8 @@ namespace BusBus.Tests.AI
                 .WithMessage("*Object reference not set to an instance of an object*");
         }
 
-        [Test]
-        [Description("Test that Grok-3 model is correctly specified in API requests")]
+        [TestMethod]
+        // Description: Test that Grok-3 model is correctly specified in API requests
         public async Task CallGrokAsync_ShouldSpecifyGrok3Model()
         {
             // Arrange
@@ -235,8 +235,8 @@ namespace BusBus.Tests.AI
                     ItExpr.IsAny<CancellationToken>());
         }
 
-        [Test]
-        [Description("Test that API configuration parameters are correctly set")]
+        [TestMethod]
+        // Description: Test that API configuration parameters are correctly set
         public async Task CallGrokAsync_ShouldSetCorrectApiParameters()
         {
             // Arrange
@@ -260,8 +260,8 @@ namespace BusBus.Tests.AI
                     ItExpr.IsAny<CancellationToken>());
         }
 
-        [Test]
-        [Description("Test that the correct X.AI API endpoint is used")]
+        [TestMethod]
+        // Description: Test that the correct X.AI API endpoint is used
         public async Task CallGrokAsync_ShouldUseCorrectApiEndpoint()
         {
             // Arrange

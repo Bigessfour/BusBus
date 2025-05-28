@@ -10,21 +10,21 @@ using BusBus.UI;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.UI
 {
-    [TestFixture]
-    [Category(TestCategories.UI)]
-    [Platform("Win")]
-    [Apartment(ApartmentState.STA)] // Required for WinForms testing
+    [TestClass]
+    [TestCategory(TestCategories.UI)]
+    // Platform attribute removed (MSTest incompatible)
+    // Apartment attribute removed (MSTest incompatible) // Required for WinForms testing
     public class DashboardTests : TestBase
     {
         private static readonly object[] EmptyObjectArray = Array.Empty<object>();
         private Mock<IStatisticsService> _mockStatisticsService;
         private Dashboard _dashboard;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
@@ -67,15 +67,15 @@ namespace BusBus.Tests.UI
             _dashboard = new Dashboard(ServiceProvider, mockRouteService, logger);
         }
 
-        [TearDown]
+        [TestCleanup]
         public override void TearDown()
         {
             _dashboard?.Dispose();
             base.TearDown();
         }
 
-        [Test]
-        [Description("Test dashboard initialization and statistics loading")]
+        [TestMethod]
+        // Description: Test dashboard initialization and statistics loading
         public async Task Dashboard_LoadStatistics_ShouldDisplayCorrectData()
         {
             // Act - Load statistics
@@ -112,8 +112,8 @@ namespace BusBus.Tests.UI
             }
         }
 
-        [Test]
-        [Description("Test dashboard refresh functionality")]
+        [TestMethod]
+        // Description: Test dashboard refresh functionality
         public async Task Dashboard_RefreshButton_ShouldReloadStatistics()
         {
             // Act - Click refresh button
@@ -136,8 +136,8 @@ namespace BusBus.Tests.UI
             _mockStatisticsService.Verify(m => m.GetDashboardStatisticsAsync(), Times.Once);
         }
 
-        [Test]
-        [Description("Test dashboard chart data loading")]
+        [TestMethod]
+        // Description: Test dashboard chart data loading
         public async Task Dashboard_LoadChartData_ShouldPopulateChart()
         {
             // Act - Load chart data

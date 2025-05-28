@@ -4,26 +4,26 @@ using BusBus.Models;
 using BusBus.Services;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Services
 {
-    [TestFixture]
-    [Category(TestCategories.Service)]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Service)]
+    [TestCategory(TestCategories.Unit)]
     public class VehicleServiceTests : TestBase
     {
         private IVehicleService _vehicleService;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
             _vehicleService = ServiceProvider.GetRequiredService<IVehicleService>();
         }
 
-        [Test]
-        [Description("Test creating, retrieving, updating, and deleting a vehicle")]
+        [TestMethod]
+        // Description: Test creating, retrieving, updating, and deleting a vehicle
         public async Task VehicleService_CompleteLifecycle_ShouldWorkCorrectly()
         {
             // Arrange
@@ -95,8 +95,8 @@ namespace BusBus.Tests.Services
             deletedVehicle.Should().BeNull();
         }
 
-        [Test]
-        [Description("Test vehicle validation for valid and invalid entities")]
+        [TestMethod]
+        // Description: Test vehicle validation for valid and invalid entities
         public void VehicleService_ValidateEntity_ShouldReturnCorrectResults()
         {
             // Arrange
@@ -155,8 +155,8 @@ namespace BusBus.Tests.Services
             negativeCapacityResult.ErrorMessage.Should().Contain("Capacity");
         }
 
-        [Test]
-        [Description("Test vehicle status changes")]
+        [TestMethod]
+        // Description: Test vehicle status changes
         public async Task VehicleService_StatusChanges_ShouldUpdateCorrectly()
         {
             // Arrange

@@ -10,7 +10,7 @@
 #pragma warning disable CA1825 // Avoid unnecessary zero-length array allocations
 #pragma warning disable SYSLIB1045 // Regex compile-time warning
 
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using BusBus.Utils;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -19,17 +19,17 @@ using FluentAssertions;
 
 namespace BusBus.Tests.Utils
 {
-    [TestFixture]
-    [Category(TestCategories.Unit)]
-    [Platform("Win")]
-    [Apartment(ApartmentState.STA)] // Required for WinForms testing
+    [TestClass]
+    [TestCategory(TestCategories.Unit)]
+    // Platform attribute removed (MSTest incompatible)
+    // Apartment attribute removed (MSTest incompatible) // Required for WinForms testing
     public class ThreadSafeUITests
     {
         private Form _testForm = null!;
         private TextBox _testTextBox = null!;
         private Button _testButton = null!;
 
-        [SetUp]
+        [TestInitialize]
         public void SetUp()
         {
             _testForm = new Form();
@@ -40,7 +40,7 @@ namespace BusBus.Tests.Utils
             _testForm.Controls.Add(_testButton);
         }
 
-        [TearDown]
+        [TestCleanup]
         public void TearDown()
         {
             _testTextBox?.Dispose();
@@ -48,8 +48,8 @@ namespace BusBus.Tests.Utils
             _testForm?.Dispose();
         }
 
-        [Test]
-        [Description("Test ThreadSafeUI Invoke method on UI thread")]
+        [TestMethod]
+        // Description: Test ThreadSafeUI Invoke method on UI thread
         public void ThreadSafeUI_InvokeOnUIThread_ShouldExecuteDirectly()
         {
             // Arrange
@@ -65,8 +65,8 @@ namespace BusBus.Tests.Utils
             _testTextBox.Text.Should().Be(testText);
         }
 
-        [Test]
-        [Description("Test ThreadSafeUI set property extension on UI thread")]
+        [TestMethod]
+        // Description: Test ThreadSafeUI set property extension on UI thread
         public void ThreadSafeUI_SetPropertyOnUIThread_ShouldExecuteDirectly()
         {
             // Arrange
@@ -79,8 +79,8 @@ namespace BusBus.Tests.Utils
             _testTextBox.Text.Should().Be(testText);
         }
 
-        [Test]
-        [Description("Test ThreadSafeUI Invoke method from background thread")]
+        [TestMethod]
+        // Description: Test ThreadSafeUI Invoke method from background thread
         public async Task ThreadSafeUI_InvokeFromBackgroundThread_ShouldUpdateUI()
         {
             // Arrange
@@ -99,8 +99,8 @@ namespace BusBus.Tests.Utils
             _testTextBox.Text.Should().Be(testText);
         }
 
-        [Test]
-        [Description("Test ThreadSafeUI UpdateUI method")]
+        [TestMethod]
+        // Description: Test ThreadSafeUI UpdateUI method
         public void ThreadSafeUI_UpdateUI_ShouldSetControlProperties()
         {
             // Arrange
@@ -122,8 +122,8 @@ namespace BusBus.Tests.Utils
             _testButton.Enabled.Should().Be(buttonEnabled);
         }
 
-        [Test]
-        [Description("Test ThreadSafeUI updating multiple controls")]
+        [TestMethod]
+        // Description: Test ThreadSafeUI updating multiple controls
         public void ThreadSafeUI_UpdateMultipleControls_ShouldUpdateAll()
         {
             // Arrange

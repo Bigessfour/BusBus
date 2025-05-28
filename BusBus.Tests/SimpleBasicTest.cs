@@ -1,24 +1,24 @@
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests
 {
-    [TestFixture]
+    [TestClass]
     public class SimpleBasicTest
     {
-        [Test]
+        [TestMethod]
         public void BasicMathTest()
         {
             // Most basic test possible
             var result = 2 + 2;
-            Assert.That(result, Is.EqualTo(4));
+            Assert.AreEqual(4, result);
         }
 
-        [Test]
+        [TestMethod]
         public void StringTest()
         {
             var text = "Hello World";
-            Assert.That(text, Is.Not.Empty);
-            Assert.That(text, Is.EqualTo("Hello World"));
+            Assert.IsTrue(!string.IsNullOrEmpty(text));
+            Assert.AreEqual("Hello World", text);
         }
     }
 }

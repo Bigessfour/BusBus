@@ -6,17 +6,19 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-  </PropertyGroup>
-  <ItemGroup>
-    <!-- Core Testing Framework - Microsoft recommended versions -->
+
+    <!-- Windows Forms Testing Configuration -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <!-- Suppress platform-specific warnings for Windows Forms tests -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup><ItemGroup>
+    <!-- Core Testing Framework - Microsoft recommended versions for .NET 8 -->
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
-    <PackageReference Include="nunit" Version="4.3.2" />
-    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageReference Include="NUnit.Analyzers" Version="4.7.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
 
     <!-- Code Coverage -->
     <PackageReference Include="coverlet.collector" Version="6.0.0" />

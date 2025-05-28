@@ -4,17 +4,17 @@ using System.IO;
 using BusBus.Models;
 using BusBus.UI.Common;
 using FluentAssertions;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.UI.Common
 {
-    [TestFixture]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Unit)]
     public class CustomFieldsManagerTests
     {
         private string _tempConfigPath;
 
-        [SetUp]
+        [TestInitialize]
         public void SetUp()
         {
             // Create a temporary test custom fields config file
@@ -65,7 +65,7 @@ namespace BusBus.Tests.UI.Common
             fieldsField?.SetValue(null, null);
         }
 
-        [TearDown]
+        [TestCleanup]
         public void TearDown()
         {
             // Clean up test file
@@ -75,8 +75,8 @@ namespace BusBus.Tests.UI.Common
             }
         }
 
-        [Test]
-        [Description("Test loading custom fields from configuration")]
+        [TestMethod]
+        // Description: Test loading custom fields from configuration
         public void LoadCustomFields_WithValidConfig_ShouldLoadCorrectly()
         {
             // Act
@@ -100,8 +100,8 @@ namespace BusBus.Tests.UI.Common
             customFields["Vehicle"]["maintenanceSchedule"].Options.Should().HaveCount(4);
         }
 
-        [Test]
-        [Description("Test getting custom fields for a specific entity type")]
+        [TestMethod]
+        // Description: Test getting custom fields for a specific entity type
         public void GetCustomFields_ForEntityType_ShouldReturnCorrectFields()
         {
             // Act
@@ -123,8 +123,8 @@ namespace BusBus.Tests.UI.Common
             nonExistentFields.Should().BeEmpty();
         }
 
-        [Test]
-        [Description("Test reloading custom fields after configuration changes")]
+        [TestMethod]
+        // Description: Test reloading custom fields after configuration changes
         public void ReloadCustomFields_AfterConfigChange_ShouldReflectChanges()
         {
             // Arrange - Initial load
@@ -172,8 +172,8 @@ namespace BusBus.Tests.UI.Common
             updatedFields["newField"].Label.Should().Be("New Test Field");
         }
 
-        [Test]
-        [Description("Test handling of missing configuration file")]
+        [TestMethod]
+        // Description: Test handling of missing configuration file
         public void LoadCustomFields_WithMissingConfig_ShouldReturnEmptyDictionary()
         {
             // Arrange - Delete config file

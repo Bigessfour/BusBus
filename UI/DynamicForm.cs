@@ -7,10 +7,11 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using BusBus.UI.Common;
 
 namespace BusBus
 {
-    public partial class DynamicForm : Form
+    public partial class DynamicForm : BaseForm
     {
         private DatabaseManager dbManager;
         private string tableName;

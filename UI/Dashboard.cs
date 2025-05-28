@@ -1,3 +1,4 @@
+#pragma warning disable CS0067 // Event is never used
 #nullable enable
 // <auto-added>
 using System;
@@ -17,10 +18,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BusBus.UI
-{
-    /// <summary>
-    /// Main application hub that manages navigation, state, and view lifecycle
-    /// </summary>
+{    /// <summary>
+     /// Main application hub that manages navigation, state, and view lifecycle.
+     /// This class serves as the primary container/shell for the entire application.
+     /// It contains the header, side panel, content panel, and status bar.
+     /// Different views (like DashboardView) are loaded into the content panel.
+     /// </summary>
     public partial class Dashboard : Form, IApplicationHub
     {
         #region Fields
@@ -33,9 +36,8 @@ namespace BusBus.UI
 
         private TableLayoutPanel _mainLayout;
         private Panel _sidePanel;
-        private Panel _contentPanel;
-        private Panel _headerPanel;
-        private Panel _footerPanel;
+        private Panel _contentPanel; private Panel _headerPanel;
+        // Note: _footerPanel removed as it's not currently used - status bar serves as footer
         private StatusStrip _statusStrip;
         private ToolStripStatusLabel _statusLabel;
         private ToolStripProgressBar _progressBar;
@@ -70,7 +72,7 @@ namespace BusBus.UI
 
             _logger.LogDebug("[DEBUG] Dashboard constructor called. serviceProvider: {ServiceProvider}, routeService: {RouteService}, logger: {Logger}", serviceProvider, routeService, logger);
 
-            InitializeComponent();
+            // InitializeComponent(); // Removed to avoid duplicate/hidden controls
             SetupLayout();
             RegisterViews();
             SubscribeToEvents();
@@ -89,21 +91,20 @@ namespace BusBus.UI
             this.Text = "BusBus - Transport Management System";
             this.WindowState = FormWindowState.Maximized;
             this.MinimumSize = new Size(1024, 768);
-            this.StartPosition = FormStartPosition.CenterScreen;
-
-            // Create main table layout
+            this.StartPosition = FormStartPosition.CenterScreen;            // Create main table layout
             _mainLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 RowCount = 3,
                 ColumnCount = 2,
-                CellBorderStyle = TableLayoutPanelCellBorderStyle.None
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
+                Padding = new Padding(0) // Remove default padding
             };
 
             // Configure layout proportions
-            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60)); // Header
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 65)); // Header - slightly increased
             _mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Content
-            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 25)); // Status
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); // Status - slightly increased
 
             _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250)); // Sidebar
             _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Main content
@@ -124,22 +125,22 @@ namespace BusBus.UI
             _mainLayout.Controls.Add(_statusStrip, 0, 2);
             _mainLayout.SetColumnSpan(_statusStrip, 2);
 
-            this.Controls.Add(_mainLayout);
-
-            // Apply theme
+            this.Controls.Add(_mainLayout);            // Apply theme
             ThemeManager.ApplyTheme(this, ThemeManager.CurrentTheme);
+
+            // Apply high-quality text rendering to the entire form
+            TextRenderingManager.RegisterForHighQualityTextRendering(this);
 
             this.ResumeLayout(false);
             this.PerformLayout();
         }
-
         private void CreateHeaderPanel()
         {
             _headerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                Tag = "HeaderPanel",
-                Height = 60
+                Tag = "MainShellHeaderPanel", // Updated tag to clearly identify this is the main shell header
+                Height = 65 // Slightly increased for better spacing
             };
 
             var titleLabel = new Label
@@ -147,43 +148,48 @@ namespace BusBus.UI
                 Text = "BusBus Transport Management",
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                Location = new Point(20, 15),
-                AutoSize = true
+                Location = new Point(25, 15), // Increased left margin
+                AutoSize = true,
+                Padding = new Padding(2) // Add padding to prevent text from touching borders
             };
 
             var userInfoLabel = new Label
             {
                 Text = $"Welcome, {Environment.UserName}",
-                Font = new Font("Segoe UI", 10F),
+                Font = new Font("Segoe UI", 10.5F), // Slightly increased for better readability
                 ForeColor = ThemeManager.CurrentTheme.SecondaryText,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(_headerPanel.Width - 200, 20),
-                AutoSize = true
-            };
-
-            var themeToggle = new Button
+                Location = new Point(_headerPanel.Width - 205, 20),
+                AutoSize = true,
+                Padding = new Padding(2) // Add padding to prevent text from touching borders
+            }; var themeToggle = new Button
             {
                 Text = "🌙",
-                Font = new Font("Segoe UI", 12F),
-                Size = new Size(40, 40),
+                Font = new Font("Segoe UI", 12.5F), // Slightly larger font
+                Size = new Size(45, 45), // Slightly larger for better touch target
                 FlatStyle = FlatStyle.Flat,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(_headerPanel.Width - 50, 10),
-                Tag = "ThemeToggle"
+                Location = new Point(_headerPanel.Width - 55, 10), // Adjusted position
+                Tag = "ThemeToggle",
+                Padding = new Padding(0, 2, 0, 0) // Add padding to center the icon vertically
             };
 
+            themeToggle.FlatAppearance.BorderSize = 0; // Remove border
             themeToggle.Click += (s, e) => ToggleTheme();
+
+            // Register controls for high-quality text rendering
+            TextRenderingManager.RegisterForHighQualityTextRendering(_headerPanel);
 
             _headerPanel.Controls.AddRange(new Control[] { titleLabel, userInfoLabel, themeToggle });
         }
-
         private void CreateSidePanel()
         {
             _sidePanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 Tag = "SidePanel",
-                AutoScroll = true
+                AutoScroll = true,
+                Padding = new Padding(0, 15, 0, 15) // Increased vertical padding for better spacing
             };
 
             var navItems = new[]
@@ -196,74 +202,89 @@ namespace BusBus.UI
                 new NavigationItem("⚙️", "Settings", "settings")
             };
 
-            int yPos = 20;
+            int yPos = 25; // Increased initial position
             foreach (var item in navItems)
             {
                 var navButton = CreateNavigationButton(item);
-                navButton.Location = new Point(10, yPos);
+                navButton.Location = new Point(15, yPos); // Increased left margin
                 _sidePanel.Controls.Add(navButton);
-                yPos += 50;
+                yPos += 55; // Increased spacing between buttons
             }
-        }
 
+            // Register for high-quality text rendering
+            TextRenderingManager.RegisterForHighQualityTextRendering(_sidePanel);
+        }
         private Button CreateNavigationButton(NavigationItem item)
         {
             var button = new Button
             {
-                Text = $"{item.Icon} {item.Text}",
-                Size = new Size(230, 40),
+                Text = $"{item.Icon} {item.Title}",
+                Size = new Size(230, 45),
                 FlatStyle = FlatStyle.Flat,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Font = new Font("Segoe UI", 10F),
+                Font = new Font("Segoe UI", 10.5F),
                 Tag = item.ViewName,
-                Padding = new Padding(10, 0, 0, 0)
+                Padding = new Padding(12, 0, 0, 0),
+                Margin = new Padding(0, 5, 0, 5)
             };
 
             button.FlatAppearance.BorderSize = 0;
             button.Click += async (s, e) => await NavigateToAsync(item.ViewName);
 
-            if (item.IsDefault)
+            // Register for high-quality text rendering
+            TextRenderingManager.RegisterForHighQualityTextRendering(button);
+
+            if (item.IsActive)
             {
                 button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
             }
 
             return button;
         }
-
         private void CreateContentPanel()
         {
             _contentPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 Tag = "ContentPanel",
-                Padding = new Padding(20)
+                Padding = new Padding(30), // Increased padding for better text spacing
+                AutoScroll = true // Ensure content can be scrolled if it's too large
             };
-        }
 
+            // Register the panel for high-quality text rendering
+            TextRenderingManager.RegisterForHighQualityTextRendering(_contentPanel);
+        }
         private void CreateStatusBar()
         {
             _statusStrip = new StatusStrip
             {
-                Tag = "StatusBar"
+                Tag = "StatusBar",
+                SizingGrip = false // Remove the sizing grip in the corner
             };
 
             _statusLabel = new ToolStripStatusLabel
             {
                 Text = "Ready",
                 Spring = true,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                Font = new Font("Segoe UI", 9F), // Ensure readable font size
+                Padding = new Padding(5, 0, 0, 0) // Add left padding for text
             };
 
             _progressBar = new ToolStripProgressBar
             {
+                Width = 120,
                 Visible = false,
-                Style = ProgressBarStyle.Marquee
+                Style = ProgressBarStyle.Marquee,
+                Margin = new Padding(5, 3, 5, 3) // Add margin around progress bar
             };
 
             var connectionLabel = new ToolStripStatusLabel
             {
                 Text = "Connected",
-                ForeColor = Color.Green
+                ForeColor = Color.Green,
+                Font = new Font("Segoe UI", 9F), // Ensure readable font size
+                Padding = new Padding(0, 0, 5, 0) // Add right padding for text
             };
 
             _statusStrip.Items.AddRange(new ToolStripItem[]
@@ -277,7 +298,7 @@ namespace BusBus.UI
         #endregion
 
         #region Navigation
-        public async Task NavigateToAsync(string viewName)
+        public async Task NavigateToAsync(string viewName, object? parameter = null)
         {
             if (viewName == null)
             {
@@ -287,8 +308,6 @@ namespace BusBus.UI
             try
             {
                 _logger.LogInformation($"Navigating to view: {viewName}");
-                // pragma disables above
-
                 ShowProgress($"Loading {viewName}...");
 
                 // Save current view state
@@ -303,35 +322,98 @@ namespace BusBus.UI
                 if (view == null)
                 {
                     _logger.LogWarning($"View not found: {viewName}");
-                    // pragma disables above
                     ShowStatus($"View '{viewName}' not found", StatusType.Warning);
                     return;
                 }
 
-                // Load view
-                _contentPanel.Controls.Clear();
-
-                if (view.Control != null)
+                // Optionally use parameter for view activation if needed (not currently used)                // Load view with proper overlap prevention
+                try
                 {
-                    view.Control.Dock = DockStyle.Fill;
-                    _contentPanel.Controls.Add(view.Control);
+                    // Ensure we're on the UI thread
+                    if (InvokeRequired)
+                    {
+                        Invoke(new Action(() =>
+                        {
+                            _contentPanel.Controls.Clear();
+                            LogControlHierarchy();
+                        }));
+                    }
+                    else
+                    {
+                        _contentPanel.Controls.Clear();
+                        LogControlHierarchy();
+                    }
+
+                    if (view.Control != null)
+                    {
+                        // Verify the control is not disposed before adding
+                        if (!view.Control.IsDisposed)
+                        {
+                            view.Control.Dock = DockStyle.Fill;
+                            if (InvokeRequired)
+                            {
+                                Invoke(new Action(() =>
+                                {
+                                    _contentPanel.Controls.Add(view.Control);
+                                    view.Control.BringToFront();
+                                }));
+                            }
+                            else
+                            {
+                                _contentPanel.Controls.Add(view.Control);
+                                view.Control.BringToFront();
+                            }
+                            _logger.LogDebug($"Successfully added view control for: {viewName}");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"View control for {viewName} is disposed, recreating view");
+                            _viewCache.Remove(viewName);
+                            // Recursive call to recreate the view
+                            await NavigateToAsync(viewName, parameter);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"View control is null for: {viewName}");
+                    }
                 }
+                catch (Exception controlEx)
+                {
+                    _logger.LogError(controlEx, $"Error managing view controls for {viewName}");
+                    throw;
+                }                // Activate view with exception handling for Win32 and InvalidOperation exceptions
+                try
+                {
+                    await view.ActivateAsync(_cancellationTokenSource.Token);
+                    _currentView = view;
 
-                // Activate view
-                await view.ActivateAsync(_cancellationTokenSource.Token);
-                _currentView = view;
+                    // Update UI with proper exception handling
+                    UpdateNavigationButtons(viewName);
+                    UpdateTitle(view.Title);
 
-                // Update UI
-                UpdateNavigationButtons(viewName);
-                UpdateTitle(view.Title);
-
-                HideProgress();
-                ShowStatus($"{view.Title} loaded", StatusType.Success);
+                    HideProgress();
+                    ShowStatus($"{view.Title} loaded", StatusType.Success);
+                }
+                catch (System.ComponentModel.Win32Exception ex)
+                {
+                    _logger.LogError(ex, $"Win32 error during view activation for {viewName}");
+                    HideProgress();
+                    ShowStatus($"System error loading {viewName}", StatusType.Error);
+                    throw;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogError(ex, $"Invalid operation during view activation for {viewName}");
+                    HideProgress();
+                    ShowStatus($"Operation error loading {viewName}", StatusType.Error);
+                    throw;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error navigating to {viewName}");
-                // pragma disables above
                 HideProgress();
                 ShowStatus($"Error loading {viewName}: {ex.Message}", StatusType.Error);
             }
@@ -345,33 +427,92 @@ namespace BusBus.UI
                 await NavigateToAsync(previousView);
             }
         }
+        private readonly object _viewLock = new();
 
         private IView? GetOrCreateView(string viewName)
         {
-            if (_viewCache.TryGetValue(viewName, out var cachedView))
+            lock (_viewLock)
             {
-                return cachedView;
+                // Log start of view creation for diagnostics
+                _logger.LogDebug($"GetOrCreateView called for: {viewName}");
+                var startTime = System.Diagnostics.Stopwatch.StartNew();
+
+                try
+                {
+                    // Check if view is already cached and not disposed
+                    if (_viewCache.TryGetValue(viewName, out var cachedView))
+                    {
+                        // Verify the view is still valid
+                        if (cachedView.Control == null || cachedView.Control.IsDisposed)
+                        {
+                            _logger.LogDebug($"Cached view {viewName} is disposed, removing from cache");
+                            _viewCache.Remove(viewName);
+                        }
+                        else
+                        {
+                            _logger.LogDebug($"Retrieved cached view: {viewName} in {startTime.ElapsedMilliseconds}ms");
+                            return cachedView;
+                        }
+                    }                    // Create view based on name
+                    IView? view = null;
+                    try
+                    {
+                        view = viewName.ToLower() switch
+                        {
+                            "dashboard" => _serviceProvider.GetService<DashboardView>() ?? new DashboardView(_serviceProvider),
+                            "routes" => new RouteListView(_routeService),
+                            "drivers" => new DriverListView(_serviceProvider),
+                            "vehicles" => new VehicleListView(_serviceProvider),
+                            "reports" => new ReportsView(_serviceProvider),
+                            "settings" => new SettingsView(_serviceProvider),
+                            _ => null
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error creating view instance for: {viewName}");
+                        return null;
+                    }
+
+                    if (view != null)
+                    {
+                        // Verify the Control property is accessible
+                        try
+                        {
+                            var control = view.Control;
+                            if (control == null)
+                            {
+                                _logger.LogError($"View control is null for: {viewName}");
+                                return null;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Error accessing view control for: {viewName}");
+                            return null;
+                        }
+
+                        // Cache the view and subscribe to events
+                        _viewCache[viewName] = view;
+                        view.NavigationRequested += OnViewNavigationRequested;
+                        view.StatusUpdated += OnViewStatusUpdated;
+
+                        _logger.LogDebug($"Created new view: {viewName} in {startTime.ElapsedMilliseconds}ms");
+                        _logger.LogDebug($"View cache count: {_viewCache.Count}");
+                    }
+                    else
+                    {
+                        _logger.LogError($"Failed to create view: {viewName}");
+                    }
+
+                    return view;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error creating view: {viewName}");
+                    throw; // Rethrow to be handled by NavigateToAsync
+                }
             }
-
-            IView? view = viewName.ToLower() switch
-            {
-                "dashboard" => new DashboardView(_serviceProvider),
-                "routes" => new RouteListView(_routeService),
-                "drivers" => new DriverListView(_serviceProvider),
-                "vehicles" => new VehicleListView(_serviceProvider),
-                "reports" => new ReportsView(_serviceProvider),
-                "settings" => new SettingsView(_serviceProvider),
-                _ => null
-            };
-
-            if (view != null)
-            {
-                _viewCache[viewName] = view;
-                view.NavigationRequested += OnViewNavigationRequested;
-                view.StatusUpdated += OnViewStatusUpdated;
-            }
-
-            return view;
         }
 
         private void UpdateNavigationButtons(string activeView)
@@ -394,11 +535,10 @@ namespace BusBus.UI
         #endregion
 
         #region View Management
-        private void RegisterViews()
+        private static void RegisterViews()
         {
-            // Pre-register critical views for faster initial load
-            _viewCache["dashboard"] = new DashboardView(_serviceProvider);
-            _viewCache["routes"] = new RouteListView(_routeService);
+            // We don't pre-register views anymore to avoid potential UI conflicts
+            // Views will be created on-demand in GetOrCreateView
         }
 
         private void OnViewNavigationRequested(object? sender, NavigationEventArgs e)
@@ -514,27 +654,110 @@ namespace BusBus.UI
             LoadState();
             await NavigateToAsync(_state.LastView ?? "dashboard");
         }
-
         private async void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
-            SaveState();
-
-            // Cleanup
-            _cancellationTokenSource.Cancel();
-
-            // Deactivate current view
-            if (_currentView != null)
+            try
             {
-                await _currentView.DeactivateAsync();
-            }
+                _logger?.LogInformation("Dashboard form closing initiated");
+                SaveState();                // Set a variable to indicate we're closing - for future use if needed
+                                            // bool isDisposing = true;
 
-            // Dispose all cached views
-            foreach (var view in _viewCache.Values)
+                // Cleanup - handle potential ObjectDisposedException
+                try
+                {
+                    if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
+                    {
+                        _cancellationTokenSource.Cancel();
+                        _logger?.LogDebug("Cancellation requested during form closing");
+                    }
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Already disposed, ignore
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error canceling token source during form closing");
+                }
+
+                // Deactivate current view with timeout protection
+                if (_currentView != null)
+                {
+                    try
+                    {
+                        // Create a task with timeout to prevent hanging
+                        var deactivateTask = _currentView.DeactivateAsync();
+                        var timeoutTask = Task.Delay(500); // 500ms timeout - reduced from 1s to speed up closing
+
+                        // Wait for either task to complete
+                        await Task.WhenAny(deactivateTask, timeoutTask);
+
+                        if (!deactivateTask.IsCompleted)
+                        {
+                            _logger?.LogWarning("View deactivation timed out after 500ms");
+                        }
+                        else
+                        {
+                            _logger?.LogDebug("View deactivated successfully");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Error deactivating view during form closing");
+                    }
+                }
+
+                // Clear current view reference
+                _currentView = null;
+
+                // Dispose all cached views quickly with timeouts
+                var disposeTasks = new List<Task>();
+                foreach (var view in _viewCache.Values)
+                {
+                    if (view is IDisposable disposableView)
+                    {
+                        try
+                        {
+                            // Run disposals in parallel with individual timeouts
+                            var disposeTask = Task.Run(() =>
+                            {
+                                try
+                                {
+                                    disposableView.Dispose();
+                                    return true;
+                                }
+                                catch (Exception)
+                                {
+                                    return false;
+                                }
+                            });
+                            disposeTasks.Add(disposeTask);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error scheduling view disposal");
+                        }
+                    }
+                }
+
+                // Wait for disposals with timeout
+                if (disposeTasks.Count > 0)
+                {
+                    var timeoutTask = Task.Delay(300); // 300ms maximum for all disposals
+                    await Task.WhenAny(Task.WhenAll(disposeTasks), timeoutTask);
+                    _logger?.LogDebug("View disposal tasks completed or timed out");
+                }
+
+                // Clear the cache to release references
+                _viewCache.Clear();
+                _navigationHistory.Clear();
+
+                _logger?.LogInformation("Dashboard form closing completed");
+            }
+            catch (Exception ex)
             {
-                view.Dispose();
+                _logger?.LogError(ex, "Unhandled exception during form closing");
             }
-
-            _cancellationTokenSource.Dispose();
         }
 
         private void LoadState()
@@ -553,23 +776,27 @@ namespace BusBus.UI
         #endregion
 
         #region IApplicationHub Implementation
+
         public IServiceProvider ServiceProvider => _serviceProvider;
 
-        public void ShowNotification(string message, NotificationType type)
+        public IView? CurrentView => _currentView;
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+
+        public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info)
         {
-            ShowStatus(message, type switch
+            // For now, show as a status message and optionally a MessageBox for certain types
+            var statusType = type switch
             {
                 NotificationType.Success => StatusType.Success,
                 NotificationType.Warning => StatusType.Warning,
                 NotificationType.Error => StatusType.Error,
                 _ => StatusType.Info
-            });
-        }
-
-        public async Task<bool> ShowConfirmationAsync(string message, string title)
-        {
-            var result = MessageBox.Show(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            return await Task.FromResult(result == DialogResult.Yes);
+            };
+            ShowStatus($"{title}: {message}", statusType);
+            if (type == NotificationType.Error || type == NotificationType.Warning)
+            {
+                MessageBox.Show(this, message, title, MessageBoxButtons.OK, type == NotificationType.Error ? MessageBoxIcon.Error : MessageBoxIcon.Warning);
+            }
         }
 
         public void ShowBusyIndicator(string message)
@@ -581,105 +808,201 @@ namespace BusBus.UI
         {
             HideProgress();
         }
-        #endregion
 
-        #region Helper Classes
-        private class NavigationItem
+        public async Task<bool> ShowConfirmationAsync(string message, string title)
         {
-            public string Icon { get; }
-            public string Text { get; }
-            public string ViewName { get; }
-            public bool IsDefault { get; }
-
-            public NavigationItem(string icon, string text, string viewName, bool isDefault = false)
+            if (InvokeRequired)
             {
-                Icon = icon;
-                Text = text;
-                ViewName = viewName;
-                IsDefault = isDefault;
+                return await Task.FromResult((bool)Invoke(new Func<bool>(() =>
+                {
+                    var result = MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    return result == DialogResult.Yes;
+                })));
+            }
+            else
+            {
+                var result = MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                return await Task.FromResult(result == DialogResult.Yes);
+            }
+        }        // ShowBusyIndicator and HideBusyIndicator implementations exist above
+
+        public void UpdateProgress(int percentage, string message = "")
+        {
+            Utils.ThreadSafeUI.Invoke(this, () =>
+            {
+                _progressBar.Style = ProgressBarStyle.Blocks;
+                _progressBar.Value = Math.Max(0, Math.Min(100, percentage));
+                if (!string.IsNullOrEmpty(message))
+                    _statusLabel.Text = message;
+            });
+        }
+
+        public void SaveState(object state)
+        {
+            if (state is DashboardState dashboardState)
+            {
+                // Save current navigation state
+                dashboardState.CurrentViewName = _currentView?.GetType().Name ?? string.Empty;
+                dashboardState.NavigationHistory.Clear();
+                dashboardState.NavigationHistory.AddRange(_navigationHistory);
+                _logger.LogInformation("Dashboard state saved with {Count} history items", dashboardState.NavigationHistory.Count);
             }
         }
 
-        private class DashboardState
+        public void RestoreState(object state)
         {
-            public string? CurrentTheme { get; set; }
-            public string? LastView { get; set; }
-            public Dictionary<string, object> ViewStates { get; } = new();
+            if (state is DashboardState dashboardState)
+            {
+                // Restore navigation history
+                _navigationHistory.Clear();
+                foreach (var item in dashboardState.NavigationHistory)
+                {
+                    _navigationHistory.Push(item);
+                }                // Navigate to the previous view if available
+                if (!string.IsNullOrEmpty(dashboardState.CurrentViewName))
+                {
+                    _ = Task.Run(async () => await NavigateToAsync(dashboardState.CurrentViewName));
+                }
+
+                _logger.LogInformation("Dashboard state restored with {Count} history items", dashboardState.NavigationHistory.Count);
+            }
+        }
+
+        // Override Dispose to clean up resources
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                try
+                {
+                    // Enhanced disposal state checks
+                    if (!IsHandleCreated || IsDisposed || Disposing)
+                    {
+                        _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
+                            IsHandleCreated, IsDisposed, Disposing);
+                        return;
+                    }
+
+                    _logger?.LogInformation("Dashboard disposing resources");
+
+                    // First try to cancel all operations
+                    var cts = _cancellationTokenSource;
+                    if (cts != null)
+                    {
+                        try
+                        {
+                            if (!cts.IsCancellationRequested)
+                            {
+                                cts.Cancel();
+                                _logger?.LogDebug("Cancellation requested during dispose");
+                            }
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            // Already disposed, ignore
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error canceling token during dispose");
+                        }
+
+                        try
+                        {
+                            cts.Dispose();
+                            _logger?.LogDebug("CancellationTokenSource disposed");
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            // Already disposed, ignore
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error disposing CancellationTokenSource");
+                        }
+                    }
+
+                    // Clear references
+                    _cancellationTokenSource = null!;
+                    _currentView = null;
+
+                    // Dispose cached views with enhanced error handling
+                    foreach (var view in _viewCache.Values.ToList())
+                    {
+                        try
+                        {
+                            if (view is IDisposable disposableView && view.Control != null && !view.Control.IsDisposed)
+                            {
+                                disposableView.Dispose();
+                                _logger?.LogDebug("Disposed view: {ViewType}", view.GetType().Name);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error disposing view {ViewType}", view.GetType().Name);
+                        }
+                    }
+
+                    // Clear collections to release references
+                    _viewCache.Clear();
+                    _navigationHistory.Clear();
+
+                    // Force immediate GC collection to help release resources
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
+                    _logger?.LogInformation("Dashboard resources disposed");
+                }
+                catch (Exception ex)
+                {
+                    // Log any unexpected exceptions but don't crash
+                    System.Diagnostics.Debug.WriteLine($"Error disposing Dashboard: {ex.Message}");
+                    _logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
+                }
+            }
+
+            try
+            {
+                base.Dispose(disposing);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error in base Dispose call");
+            }
+        }
+
+        // Helper method to check if CancellationTokenSource is disposed
+        private static bool IsCtsDisposed(CancellationTokenSource cts)
+        {
+            try
+            {
+                // If we can access the Token property without exception, it's not disposed
+                var _ = cts.Token;
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Logs the current control hierarchy for debugging UI issues
+        /// </summary>
+        private void LogControlHierarchy()
+        {
+            if (_contentPanel == null) return;
+
+            _logger.LogDebug($"Content panel control count: {_contentPanel.Controls.Count}");
+            foreach (Control control in _contentPanel.Controls)
+            {
+                _logger.LogDebug($"Control: {control.GetType().Name}, Name: {control.Name}, Visible: {control.Visible}, IsDisposed: {control.IsDisposed}");
+            }
         }
         #endregion
-
-        private void InitializeComponent()
-        {
-            // Initialize layout panels
-            this._mainLayout = new TableLayoutPanel();
-            this._sidePanel = new Panel();
-            this._contentPanel = new Panel();
-            this._headerPanel = new Panel();
-            this._footerPanel = new Panel();
-            this._statusStrip = new StatusStrip();
-            this._statusLabel = new ToolStripStatusLabel();
-            this._progressBar = new ToolStripProgressBar();
-
-            // Configure main layout
-            this._mainLayout.Dock = DockStyle.Fill;
-            this._mainLayout.ColumnCount = 2;
-            this._mainLayout.RowCount = 3;
-
-            // Add columns and rows
-            this._mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
-            this._mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-            this._mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
-            this._mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            this._mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-
-            // Configure panels
-            this._headerPanel.Dock = DockStyle.Fill;
-            this._headerPanel.BackColor = System.Drawing.Color.FromArgb(50, 100, 180);
-
-            this._sidePanel.Dock = DockStyle.Fill;
-            this._sidePanel.BackColor = System.Drawing.Color.FromArgb(40, 40, 40);
-
-            this._contentPanel.Dock = DockStyle.Fill;
-            this._contentPanel.BackColor = System.Drawing.Color.White;
-
-            this._footerPanel.Dock = DockStyle.Fill;
-            this._footerPanel.BackColor = System.Drawing.Color.FromArgb(240, 240, 240);
-
-            // Configure status strip
-            this._statusStrip.Items.Add(this._statusLabel);
-            this._statusStrip.Items.Add(this._progressBar);
-            this._progressBar.Visible = false;
-
-            // Add controls to layout
-            this._mainLayout.Controls.Add(this._headerPanel, 0, 0);
-            this._mainLayout.SetColumnSpan(this._headerPanel, 2);
-
-            this._mainLayout.Controls.Add(this._sidePanel, 0, 1);
-            this._mainLayout.Controls.Add(this._contentPanel, 1, 1);
-
-            this._mainLayout.Controls.Add(this._statusStrip, 0, 2);
-            this._mainLayout.SetColumnSpan(this._statusStrip, 2);
-
-            // Configure form
-            this.Controls.Add(this._mainLayout);
-            this.Size = new System.Drawing.Size(1024, 768);
-            this.Text = "BusBus Management System";
-        }
     }
 
-    #region Interfaces
-    public interface IApplicationHub
-    {
-        IServiceProvider ServiceProvider { get; }
-        Task NavigateToAsync(string viewName);
-        Task NavigateBackAsync();
-        void ShowNotification(string message, NotificationType type);
-        Task<bool> ShowConfirmationAsync(string message, string title);
-        void ShowBusyIndicator(string message);
-        void HideBusyIndicator();
-    }
-
+    #region Interfaces and Supporting Classes
+    // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
     public interface IView : IDisposable
     {
         string ViewName { get; }
@@ -689,6 +1012,12 @@ namespace BusBus.UI
         event EventHandler<StatusEventArgs>? StatusUpdated;
         Task ActivateAsync(CancellationToken cancellationToken);
         Task DeactivateAsync();
+    }
+
+    public interface IStatefulView
+    {
+        void SaveState(object state);
+        void RestoreState(object state);
     }
 
     public class NavigationEventArgs : EventArgs

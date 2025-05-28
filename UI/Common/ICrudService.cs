@@ -8,46 +8,18 @@ using System.Threading.Tasks;
 namespace BusBus.UI.Common
 {
     /// <summary>
-    /// Generic CRUD service interface for any entity type
+    /// Generic interface for CRUD operations
     /// </summary>
-    /// <typeparam name="T">The entity type</typeparam>
-    /// <typeparam name="TKey">The primary key type</typeparam>
-    public interface ICrudService<T, TKey> where T : class
+    /// <typeparam name="TEntity">The entity type</typeparam>
+    /// <typeparam name="TKey">The entity's key type</typeparam>
+    public interface ICrudService<TEntity, TKey> where TEntity : class
     {
-        /// <summary>
-        /// Creates a new entity
-        /// </summary>
-        Task<T> CreateAsync(T entity, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets an entity by its ID
-        /// </summary>
-        Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets a paginated list of entities
-        /// </summary>
-        Task<List<T>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the total count of entities
-        /// </summary>
+        Task<TEntity> CreateAsync(TEntity entity, CancellationToken cancellationToken = default);
+        Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<int> GetCountAsync(CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Updates an existing entity
-        /// </summary>
-        Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Deletes an entity by its ID
-        /// </summary>
+        Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
         Task DeleteAsync(TKey id, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Validates an entity before create/update operations
-        /// </summary>
-        /// <returns>Tuple of (IsValid, ErrorMessage)</returns>
-        (bool IsValid, string ErrorMessage) ValidateEntity(T entity);
+        (bool IsValid, string ErrorMessage) ValidateEntity(TEntity entity);
     }
 }

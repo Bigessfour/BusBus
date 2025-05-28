@@ -1,3 +1,4 @@
+#pragma warning disable CS8604 // Possible null reference argument for parameter
 #pragma warning disable CS8618 // Non-nullable property must contain a non-null value when exiting constructor
 #pragma warning disable CS8603 // Possible null reference return
 using System;
@@ -106,14 +107,14 @@ namespace BusBus
             return AdvancedSqlServerDatabaseManager.GetVehicleById(id);
         }
 
-        public static void AddVehicle(string vehicleNumber, int capacity, string vehicleModel, string licensePlate, int isActive)
+        public static void AddVehicle(string vehicleNumber, int capacity, string vehicleModel, string licensePlate, bool isActive)
         {
-            AdvancedSqlServerDatabaseManager.AddVehicle(vehicleNumber, capacity, vehicleModel, licensePlate, isActive);
+            AdvancedSqlServerDatabaseManager.AddVehicle(vehicleNumber, capacity, vehicleModel, licensePlate, isActive ? 1 : 0);
         }
 
-        public static void UpdateVehicle(int id, string vehicleNumber, int capacity, string vehicleModel, string licensePlate, int isActive)
+        public static void UpdateVehicle(int id, string vehicleNumber, int capacity, string vehicleModel, string licensePlate, bool isActive)
         {
-            AdvancedSqlServerDatabaseManager.UpdateVehicle(id, vehicleNumber, capacity, vehicleModel, licensePlate, isActive);
+            AdvancedSqlServerDatabaseManager.UpdateVehicle(id, vehicleNumber, capacity, vehicleModel, licensePlate, isActive ? 1 : 0);
         }
 
         public static void DeleteVehicle(int id)

@@ -8,25 +8,25 @@ using BusBus.Tests;
 using BusBus.Tests.Infrastructure;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Integration
 {
-    [TestFixture]
-    [Category(TestCategories.Integration)]
+    [TestClass]
+    [TestCategory(TestCategories.Integration)]
     public class DatabaseIntegrationTests : TestBase
     {
         private IRouteService _routeService;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
             _routeService = ServiceProvider.GetRequiredService<IRouteService>();
         }
 
-        [Test]
-        [Description("End-to-end test: Create -> Read -> Update -> Delete route with real database")]
+        [TestMethod]
+        // Description: End-to-end test: Create -> Read -> Update -> Delete route with real database
         public async Task RouteLifecycle_CompleteWorkflow_ShouldWorkEndToEnd()
         {
             // CREATE - Test route creation
@@ -90,8 +90,8 @@ namespace BusBus.Tests.Integration
             routesAfterDelete.Should().NotContain(r => r.Id == newRoute.Id);
         }
 
-        [Test]
-        [Description("Test database seeding functionality")]
+        [TestMethod]
+        // Description: Test database seeding functionality
         public async Task SeedSampleData_ShouldCreateValidTestData()
         {
             // Act
@@ -111,8 +111,8 @@ namespace BusBus.Tests.Integration
             routes.Should().OnlyContain(r => r.VehicleId.HasValue, "Routes should have vehicles assigned");
         }
 
-        [Test]
-        [Description("Test pagination functionality with real data")]
+        [TestMethod]
+        // Description: Test pagination functionality with real data
         public async Task GetRoutesWithPagination_ShouldReturnCorrectPages()
         {
             // Arrange - Create multiple test routes
@@ -161,8 +161,8 @@ namespace BusBus.Tests.Integration
             }
         }
 
-        [Test]
-        [Description("Test concurrent access to database")]
+        [TestMethod]
+        // Description: Test concurrent access to database
         public async Task ConcurrentRouteOperations_ShouldHandleMultipleUsers()
         {
             // Arrange

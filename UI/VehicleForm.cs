@@ -6,12 +6,17 @@
 #pragma warning disable CS8603 // Possible null reference return
 #nullable enable
 using System;
+using System.Drawing;
 using System.Windows.Forms;
+using BusBus.Models;
+using BusBus.UI.Common;
 
 namespace BusBus
 {
-    public partial class VehicleForm : Form
+    public partial class VehicleForm : BaseForm
     {
+        public static bool SuppressDialogsForTests { get; set; } = false;
+
         private DatabaseManager dbManager;
         private int? vehicleId;
         public event EventHandler DataSaved;
@@ -128,42 +133,50 @@ namespace BusBus
             if (Controls["txtMakeModel"] is TextBox txtMakeModel)
                 makeModel = txtMakeModel.Text;
             if (Controls["txtYear"] is TextBox txtYear)
-                yearText = txtYear.Text;
-
-            // Validation
+                yearText = txtYear.Text;            // Validation
             if (string.IsNullOrWhiteSpace(number))
             {
-                MessageBox.Show("Please enter a vehicle number.", "Validation Error");
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Please enter a vehicle number.", "Validation Error");
+                }
                 return;
             }
 
             if (!int.TryParse(capacityText, out int capacity) || capacity <= 0)
             {
-                MessageBox.Show("Please enter a valid capacity.", "Validation Error");
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Please enter a valid capacity.", "Validation Error");
+                }
                 return;
             }
-
             if (string.IsNullOrWhiteSpace(status))
             {
-                MessageBox.Show("Please select a status.", "Validation Error");
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Please select a status.", "Validation Error");
+                }
                 return;
             }
 
             int year = 0;
             if (!string.IsNullOrWhiteSpace(yearText) && !int.TryParse(yearText, out year))
             {
-                MessageBox.Show("Please enter a valid year.", "Validation Error");
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Please enter a valid year.", "Validation Error");
+                }
                 return;
-            }
-
-            // Save
+            }            // Save - match DatabaseManager method signatures
+            bool isActive = status == "Available" || status == "In Service";
             if (vehicleId.HasValue)
             {
-                DatabaseManager.UpdateVehicle(vehicleId.Value, number, capacity, status, makeModel, year);
+                DatabaseManager.UpdateVehicle(vehicleId.Value, number, capacity, makeModel ?? "", "", isActive);
             }
             else
             {
-                DatabaseManager.AddVehicle(number, capacity, status, makeModel, year);
+                DatabaseManager.AddVehicle(number, capacity, makeModel ?? "", "", isActive);
             }
 
             DataSaved?.Invoke(this, EventArgs.Empty);
@@ -171,6 +184,55 @@ namespace BusBus
             if (!IsEmbedded)
             {
                 this.Close();
+            }
+        }
+        private void SaveVehicleButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (ValidateChildren())
+                {
+                    // Get form control values
+                    var txtNumber = Controls["txtNumber"] as TextBox;
+                    var txtCapacity = Controls["txtCapacity"] as TextBox;
+                    var cmbStatus = Controls["cmbStatus"] as ComboBox;
+                    var txtMakeModel = Controls["txtMakeModel"] as TextBox;
+                    var txtYear = Controls["txtYear"] as TextBox;
+
+                    if (txtNumber == null || txtCapacity == null || cmbStatus == null || txtMakeModel == null || txtYear == null)
+                    {
+                        MessageBox.Show("Error accessing form controls.", "Form Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    var number = txtNumber.Text;
+                    var capacity = int.TryParse(txtCapacity.Text, out var cap) ? cap : 0;
+                    var status = cmbStatus.SelectedItem?.ToString() ?? "Available";
+                    var makeModel = txtMakeModel.Text;
+                    var year = int.TryParse(txtYear.Text, out var yr) ? yr : (int?)null;                    // Create or update vehicle using proper Vehicle model - match DatabaseManager signatures
+                    bool isActive = status == "Available" || status == "In Service";
+                    if (vehicleId.HasValue)
+                    {
+                        // Update existing vehicle - use proper parameters
+                        DatabaseManager.UpdateVehicle(vehicleId.Value, number, capacity, makeModel, "", isActive);
+                    }
+                    else
+                    {
+                        // Add new vehicle - use proper parameters
+                        DatabaseManager.AddVehicle(number, capacity, makeModel, "", isActive);
+                    }
+
+                    DataSaved?.Invoke(this, EventArgs.Empty);
+
+                    if (!IsEmbedded)
+                    {
+                        this.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving vehicle: {ex.Message}", "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

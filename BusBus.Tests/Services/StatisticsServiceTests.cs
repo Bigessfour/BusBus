@@ -6,20 +6,20 @@ using BusBus.Models;
 using BusBus.Services;
 using FluentAssertions;
 using Moq;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Services
 {
-    [TestFixture]
-    [Category(TestCategories.Service)]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Service)]
+    [TestCategory(TestCategories.Unit)]
     public class StatisticsServiceTests
     {
         private Mock<IRouteService> _mockRouteService;
         private StatisticsService _statisticsService;
         private List<Route> _testRoutes;
 
-        [SetUp]
+        [TestInitialize]
         public void SetUp()
         {
             _mockRouteService = new Mock<IRouteService>();
@@ -149,8 +149,8 @@ namespace BusBus.Tests.Services
             };
         }
 
-        [Test]
-        [Description("Test school year statistics calculation")]
+        [TestMethod]
+        // Description: Test school year statistics calculation
         public async Task GetSchoolYearStatisticsAsync_ShouldCalculateCorrectValues()
         {
             // Act
@@ -168,8 +168,8 @@ namespace BusBus.Tests.Services
             // So we're mostly verifying that the calculation occurs and returns reasonable values
         }
 
-        [Test]
-        [Description("Test date range statistics calculation")]
+        [TestMethod]
+        // Description: Test date range statistics calculation
         public async Task GetDateRangeStatisticsAsync_ShouldCalculateCorrectValues()
         {
             // Arrange
@@ -197,8 +197,8 @@ namespace BusBus.Tests.Services
             stats.TotalStudentsHauled.Should().Be(expectedStudents);
         }
 
-        [Test]
-        [Description("Test dashboard statistics calculation")]
+        [TestMethod]
+        // Description: Test dashboard statistics calculation
         public async Task GetDashboardStatisticsAsync_ShouldCalculateCorrectValues()
         {
             // Act

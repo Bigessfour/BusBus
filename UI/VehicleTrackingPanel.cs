@@ -52,10 +52,9 @@ namespace BusBus.UI
 
             this.Controls.AddRange(new Control[] { titleLabel, mapPanel, statusLabel });
         }
-
         private void SetupLocationTracking()
         {
-            locationUpdateTimer = new Timer
+            locationUpdateTimer = new System.Windows.Forms.Timer
             {
                 Interval = 30000 // 30 seconds
             };
@@ -85,6 +84,27 @@ namespace BusBus.UI
                     statusLabel.Text = $"GPS Error: {ex.Message}";
                 }
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Stop and dispose the timer to prevent background updates after disposal
+                if (locationUpdateTimer != null)
+                {
+                    locationUpdateTimer.Stop();
+                    locationUpdateTimer.Dispose();
+                    locationUpdateTimer = null!; // Using null-forgiving operator since we're cleaning up
+                }
+
+                // Dispose other resources
+                if (dbManager is IDisposable disposableDb)
+                {
+                    disposableDb.Dispose();
+                }
+            }
+            base.Dispose(disposing);
         }
     }
 }

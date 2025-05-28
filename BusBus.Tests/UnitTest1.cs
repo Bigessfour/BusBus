@@ -1,23 +1,23 @@
 using System;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests;
 
-[TestFixture]
+[TestClass]
 public class Tests
 {
-    [SetUp]
+    [TestInitialize]
     public void Setup()
     {
     }
 
-    [Test]
+    [TestMethod]
     public void Test1()
     {
         // Simple NUnit test
         var actual = 1 + 1;
         const int expected = 2;
-        Assert.That(actual, Is.EqualTo(expected), "Basic math should work");
+        Assert.AreEqual(expected, actual, "Basic math should work");
         Console.WriteLine("Test executed successfully");
     }
 }

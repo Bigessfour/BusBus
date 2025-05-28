@@ -5,19 +5,19 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Data
 {
-    [TestFixture]
-    [Category(TestCategories.Database)]
-    [Category(TestCategories.Integration)]
+    [TestClass]
+    [TestCategory(TestCategories.Database)]
+    [TestCategory(TestCategories.Integration)]
     public class DatabaseManagerTests : TestBase
     {
         private DatabaseManager _databaseManager;
         private ILogger<DatabaseManager> _logger;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
@@ -27,9 +27,8 @@ namespace BusBus.Tests.Data
             // Create a database manager with in-memory settings
             _databaseManager = new DatabaseManager(configuration, _logger);
         }
-
-        [Test]
-        [Description("Test getting connection string from configuration")]
+        [TestMethod]
+        // Description: Test getting connection string from configuration
         public void GetConnectionString_WithValidConfig_ShouldReturnConnectionString()
         {
             // Act
@@ -37,23 +36,23 @@ namespace BusBus.Tests.Data
 
             // Assert
             connectionString.Should().NotBeNullOrEmpty();
-            // In-memory connection string typically contains "InMemory"
-            connectionString.Should().Contain("memory", "In-memory database should be used for tests");
+            // Using real SQL Server database for tests
+            connectionString.Should().Contain("Server=", "A real SQL Server connection should be configured");
+            connectionString.Should().Contain("Database=BusBusDB", "Database name should be BusBusDB");
         }
-
-        [Test]
-        [Description("Test checking database existence")]
-        public async Task CheckDatabaseExistsAsync_WithInMemoryDb_ShouldReturnTrue()
+        [TestMethod]
+        // Description: Test checking database existence
+        public async Task CheckDatabaseExistsAsync_WithRealDb_ShouldReturnTrue()
         {
-            // Act
+            // Act - Using the real database manager with real SQL Server
             var exists = await _databaseManager.CheckDatabaseExistsAsync();
 
             // Assert
-            exists.Should().BeTrue("In-memory database should always exist");
+            exists.Should().BeTrue("SQL Server database should be accessible for integration tests");
         }
 
-        [Test]
-        [Description("Test database initialization")]
+        [TestMethod]
+        // Description: Test database initialization
         public async Task InitializeDatabaseAsync_ShouldSucceed()
         {
             // Act
@@ -62,20 +61,18 @@ namespace BusBus.Tests.Data
             // Assert
             result.Should().BeTrue("Database initialization should succeed");
         }
-
-        [Test]
-        [Description("Test migrations application")]
+        [TestMethod]
+        // Description: Test migrations application
         public async Task ApplyMigrationsAsync_ShouldSucceed()
         {
             // Act
             var result = await _databaseManager.ApplyMigrationsAsync();
 
             // Assert
-            result.Should().BeTrue("Applying migrations should succeed for in-memory database");
+            result.Should().BeTrue("Applying migrations should succeed for SQL Server database");
         }
-
-        [Test]
-        [Description("Test getting database status")]
+        [TestMethod]
+        // Description: Test getting database status
         public async Task GetDatabaseStatusAsync_ShouldReturnStatus()
         {
             // Act
@@ -83,6 +80,8 @@ namespace BusBus.Tests.Data
 
             // Assert
             status.Should().NotBeNull();
+
+            // Real SQL Server expectations
             status.IsConnected.Should().BeTrue();
             status.DatabaseExists.Should().BeTrue();
             status.HasTables.Should().BeTrue();
@@ -90,8 +89,8 @@ namespace BusBus.Tests.Data
             status.ServerVersion.Should().NotBeNull();
         }
 
-        [Test]
-        [Description("Test backup and restore operations")]
+        [TestMethod]
+        // Description: Test backup and restore operations
         public async Task BackupAndRestoreDatabase_ShouldSimulateSuccessfully()
         {
             // In-memory database can't actually be backed up/restored,

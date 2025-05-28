@@ -12,21 +12,21 @@ using BusBus.UI;
 using BusBus.Tests;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.UI
 {
-    [TestFixture]
-    [Category(TestCategories.UI)]
-    [Platform("Win")]
-    [Apartment(ApartmentState.STA)] // Required for WinForms testing
+    [TestClass]
+    [TestCategory(TestCategories.UI)]
+    // Platform attribute removed (MSTest incompatible)
+    // Apartment attribute removed (MSTest incompatible) // Required for WinForms testing
     public class RouteFormIntegrationTests : TestBase
     {
         private IRouteService _routeService;
         private RoutePanel _routePanel;
         private RouteListPanel _routeListPanel;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
@@ -40,7 +40,7 @@ namespace BusBus.Tests.UI
             _routeListPanel = new RouteListPanel(_routeService);
         }
 
-        [TearDown]
+        [TestCleanup]
         public override void TearDown()
         {
             RoutePanel.SuppressDialogsForTests = false;
@@ -49,8 +49,8 @@ namespace BusBus.Tests.UI
             base.TearDown();
         }
 
-        [Test]
-        [Description("Test complete form workflow: Load -> Edit -> Save")]
+        [TestMethod]
+        // Description: Test complete form workflow: Load -> Edit -> Save
         public async Task RoutePanel_CompleteWorkflow_ShouldPersistChanges()
         {
             // Arrange - Create test route
@@ -124,8 +124,8 @@ namespace BusBus.Tests.UI
             await _routeService.DeleteRouteAsync(createdRoute.Id);
         }
 
-        [Test]
-        [Description("Test RouteListPanel data binding and refresh")]
+        [TestMethod]
+        // Description: Test RouteListPanel data binding and refresh
         public async Task RouteListPanel_DataBinding_ShouldReflectChanges()
         {
             // Arrange - Seed some test data
@@ -187,8 +187,8 @@ namespace BusBus.Tests.UI
             await _routeService.DeleteRouteAsync(newRoute.Id);
         }
 
-        [Test]
-        [Description("Test form validation prevents invalid data entry")]
+        [TestMethod]
+        // Description: Test form validation prevents invalid data entry
         public void RoutePanel_Validation_ShouldPreventInvalidData()
         {
             // Arrange - Create new route panel
@@ -224,8 +224,8 @@ namespace BusBus.Tests.UI
             validationResult.ErrorMessage.Should().NotBeEmpty("Error message should be provided");
         }
 
-        [Test]
-        [Description("Test UI responsiveness with large datasets")]
+        [TestMethod]
+        // Description: Test UI responsiveness with large datasets
         public async Task RouteListPanel_LargeDataset_ShouldRemainResponsive()
         {
             // Arrange - Create a large number of test routes
@@ -287,8 +287,8 @@ namespace BusBus.Tests.UI
             }
         }
 
-        [Test]
-        [Description("Test error handling in UI components")]
+        [TestMethod]
+        // Description: Test error handling in UI components
         public async Task RoutePanel_ErrorScenarios_ShouldHandleGracefully()
         {
             // Arrange - Create route with data that might cause issues

@@ -1,14 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-    <RunAnalyzer Condition="'$(RunAnalyzer)' == ''">false</RunAnalyzer>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-    <EnableWindowsTargetPlatformAnalyzer>false</EnableWindowsTargetPlatformAnalyzer>
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <!-- .NET 8 Windows Forms Features -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <!-- Modern C# Features -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>    <!-- Build Configuration -->
+    <RunAnalyzer Condition="'$(RunAnalyzer)' == ''">true</RunAnalyzer>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>true</GenerateTargetFrameworkAttribute>
+    <EnableWindowsTargetPlatformAnalyzer>true</EnableWindowsTargetPlatformAnalyzer>    <!-- Debug Symbols Configuration -->
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+    <!-- Suppress platform-specific warnings where appropriate -->
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
@@ -34,6 +48,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+    <PackageReference Include="System.Management" Version="9.0.5" />
 
     <!-- JSON and System Libraries -->
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
@@ -55,8 +70,8 @@
     <Compile Remove="BusBus.Tests\**\*.cs" />
     <Compile Remove="tools\**\*.cs" />
   </ItemGroup>
-
-  <!-- Single analyzer target -->
+  <!-- Analyzer disabled to prevent missing script warnings -->
+  <!--
   <Target Name="AnalyzeCSharp" BeforeTargets="CoreCompile" Condition="'$(RunAnalyzer)' == 'true'">
     <Message Text="Running C# structure analyzer..." Importance="high" />
     <Exec Command="node &quot;$(MSBuildProjectDirectory)\analyze-csharp-fixed.js&quot; &quot;$(MSBuildProjectDirectory)\Data\AdvancedSqlServerDatabaseManager.cs&quot;"
@@ -64,6 +79,7 @@
           ContinueOnError="true">
     </Exec>
   </Target>
+  -->
 
   <!-- Comment out this analyzer call if it exists -->
   <!--

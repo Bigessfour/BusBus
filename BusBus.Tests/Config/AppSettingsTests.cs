@@ -5,18 +5,18 @@ using BusBus.Configuration;
 using BusBus.Config;
 using Microsoft.Extensions.Configuration;
 using FluentAssertions;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Config
 {
-    [TestFixture]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Unit)]
     public class AppSettingsTests
     {
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         private string _testConfigPath;
 
-        [SetUp]
+        [TestInitialize]
         public void Setup()
         {
             // Create a temporary appsettings.json for testing
@@ -36,15 +36,15 @@ namespace BusBus.Tests.Config
             File.WriteAllText(_testConfigPath, json);
         }
 
-        [TearDown]
+        [TestCleanup]
         public void Cleanup()
         {
             if (File.Exists(_testConfigPath))
                 File.Delete(_testConfigPath);
         }
 
-        [Test]
-        [Description("Test deserialization of AppSettings from JSON file")]
+        [TestMethod]
+        // Description: Test deserialization of AppSettings from JSON file
         public void AppSettings_ShouldDeserializeFromJsonFile()
         {
             // Act
@@ -63,8 +63,8 @@ namespace BusBus.Tests.Config
             settings.DatabaseSettings.ConnectionTimeout.Should().Be(20);
         }
 
-        [Test]
-        [Description("Test AppSettings.Instance loads from file and throws if missing")]
+        [TestMethod]
+        // Description: Test AppSettings.Instance loads from file and throws if missing
         public void AppSettings_Instance_ShouldLoadOrThrow()
         {
             // Backup and replace the real appsettings.json
@@ -84,8 +84,8 @@ namespace BusBus.Tests.Config
             }
         }
 
-        [Test]
-        [Description("Test SQL Information configuration loading")]
+        [TestMethod]
+        // Description: Test SQL Information configuration loading
         public void SqlInformation_ShouldLoadFromConfiguration()
         {
             // Arrange
@@ -178,8 +178,8 @@ namespace BusBus.Tests.Config
             }
         }
 
-        [Test]
-        [Description("Test SQL Information validation for seed data")]
+        [TestMethod]
+        // Description: Test SQL Information validation for seed data
         public void SqlInformation_SeedData_ShouldHaveValidGuids()
         {
             // Arrange

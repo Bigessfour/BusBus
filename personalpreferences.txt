@@ -1,0 +1,6 @@
+For all C# code edits, ensure null-safe coding to avoid nullable warnings (e.g., CS8600, CS8618):
+- Initialize all non-nullable fields and properties in constructors or at declaration.
+- Use null-coalescing operators (??) or null-conditional operators (?.) where applicable.
+- Add explicit null checks for parameters and return values in methods.
+- Verify changes with `dotnet build` to confirm no nullable warnings.
+- If warnings persist, suppress only specific cases with `#pragma warning disable` and document the reason.

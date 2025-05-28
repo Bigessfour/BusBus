@@ -5,26 +5,26 @@ using BusBus.Models;
 using BusBus.Services;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Services
 {
-    [TestFixture]
-    [Category(TestCategories.Service)]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Service)]
+    [TestCategory(TestCategories.Unit)]
     public class RouteServiceTests : TestBase
     {
         private IRouteService _routeService;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
             _routeService = ServiceProvider.GetRequiredService<IRouteService>();
         }
 
-        [Test]
-        [Description("Test pagination functionality for routes")]
+        [TestMethod]
+        // Description: Test pagination functionality for routes
         public async Task GetRoutesAsync_WithPagination_ShouldReturnCorrectPage()
         {
             // Arrange - Create multiple test routes
@@ -85,8 +85,8 @@ namespace BusBus.Tests.Services
             thirdPage.Should().NotContain(r => firstPage.Any(fp => fp.Id == r.Id) || secondPage.Any(sp => sp.Id == r.Id));
         }
 
-        [Test]
-        [Description("Test route filtering by date")]
+        [TestMethod]
+        // Description: Test route filtering by date
         public async Task GetRoutesByDateAsync_ShouldReturnCorrectRoutes()
         {
             // Arrange
@@ -193,8 +193,8 @@ namespace BusBus.Tests.Services
             tomorrowRoutes.Should().NotContain(r => r.Id == yesterdayRoute.Id);
         }
 
-        [Test]
-        [Description("Test sample data seeding")]
+        [TestMethod]
+        // Description: Test sample data seeding
         public async Task SeedSampleDataAsync_ShouldCreateSampleData()
         {
             // Arrange - Clear existing routes

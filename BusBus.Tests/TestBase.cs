@@ -1,15 +1,18 @@
 #pragma warning disable CA1848 // Use the LoggerMessage delegates
+using BusBus.UI.Common;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using BusBus.DataAccess;
 using BusBus.Services;
 using BusBus.Models;
+using BusBus.Tests.Infrastructure;
 using System.Collections.Generic;
 
 namespace BusBus.Tests
@@ -24,13 +27,10 @@ namespace BusBus.Tests
         protected IConfiguration Configuration { get; private set; }
         protected ILogger Logger { get; private set; }
 
-
-        private bool _disposed;
-
-        /// <summary>
-        /// Sets up the test environment with dependency injection, database, and logging
-        /// </summary>
-        [SetUp]
+        private bool _disposed;        /// <summary>
+                                       /// Sets up the test environment with dependency injection, database, and logging
+                                       /// </summary>
+        [TestInitialize]
         public virtual async Task SetUp()
         {
             // Configure test services
@@ -49,12 +49,10 @@ namespace BusBus.Tests
             await SeedTestDataAsync();
 
             Logger.LogInformation("Test setup completed for {TestClass}", GetType().Name);
-        }
-
-        /// <summary>
-        /// Cleans up resources after each test
-        /// </summary>
-        [TearDown]
+        }        /// <summary>
+                 /// Cleans up resources after each test
+                 /// </summary>
+        [TestCleanup]
         public virtual void TearDown()
         {
             try
@@ -90,9 +88,7 @@ namespace BusBus.Tests
                 .AddInMemoryCollection(GetTestConfigurationOverrides())
                 .Build();
 
-            services.AddSingleton(Configuration);
-
-            // Add logging with test-friendly configuration
+            services.AddSingleton(Configuration);            // Add logging with minimal test output
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
@@ -102,11 +98,15 @@ namespace BusBus.Tests
                 });
                 builder.AddSimpleConsole(options =>
                 {
-                    options.IncludeScopes = true;
-                    options.TimestampFormat = "HH:mm:ss.fff ";
+                    options.IncludeScopes = false;
+                    options.TimestampFormat = "";
                     options.UseUtcTimestamp = false;
                 });
-                builder.SetMinimumLevel(LogLevel.Debug);
+                // Only show warnings and errors during tests
+                builder.SetMinimumLevel(LogLevel.Warning);
+
+                // Allow Info level for our test classes specifically
+                builder.AddFilter("BusBus.Tests", LogLevel.Information);
             });
 
             // Add Entity Framework with test database
@@ -117,25 +117,22 @@ namespace BusBus.Tests
             services.AddScoped<IDriverService, DriverService>();
             services.AddScoped<IVehicleService, VehicleService>();
             services.AddScoped<IStatisticsService, StatisticsService>();
-        }
-
-        /// <summary>
-        /// Configures database services for testing
-        /// </summary>
+        }        /// <summary>
+                 /// Configures database services for testing
+                 /// </summary>
         protected virtual void ConfigureDatabaseServices(IServiceCollection services)
         {
-            // Use in-memory database for fast, isolated tests
-            var databaseName = $"TestDb_{Guid.NewGuid()}";
-
+            // Use real SQL Server database for integration tests
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase(databaseName)
-                    .EnableSensitiveDataLogging()
-                    .EnableDetailedErrors()
-                    .LogTo(message => Logger?.LogDebug("EF Core: {Message}", message))
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
+                    .EnableSensitiveDataLogging(false)
+                    .EnableDetailedErrors(true)
+                    .UseLoggerFactory(LoggerFactory.Create(builder =>
+                        builder.AddConsole().SetMinimumLevel(LogLevel.Warning)))
             );
-        }        /// <summary>
-                 /// Gets the path to test configuration files
-                 /// </summary>
+        }/// <summary>
+         /// Gets the path to test configuration files
+         /// </summary>
         protected virtual string GetTestConfigurationPath()
         {
             // Look for config files in the main project directory
@@ -188,15 +185,57 @@ namespace BusBus.Tests
                 Logger.LogError(ex, "Failed to ensure test database for {TestClass}", GetType().Name);
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Seeds basic test data. Override in derived classes for specific test data needs
-        /// </summary>
+        }        /// <summary>
+                 /// Seeds basic test data. Override in derived classes for specific test data needs
+                 /// </summary>
         protected virtual async Task SeedTestDataAsync()
         {
-            // Default implementation - override in derived classes for specific test data
-            await Task.CompletedTask;
+            // Create test driver with known ID if it doesn't exist
+            var testDriverId = new Guid("11111111-1111-1111-1111-111111111111");
+            if (!DbContext.Drivers.Any(d => d.Id == testDriverId))
+            {
+                var driver = new Driver
+                {
+                    Id = testDriverId,
+                    FirstName = "Test",
+                    LastName = "Driver",
+                    LicenseNumber = "TEST001",
+                    PhoneNumber = "555-0001",
+                    Email = "test.driver@example.com",
+                    HireDate = DateTime.Now.AddYears(-1),
+                    Status = "Active",
+                    CreatedDate = DateTime.UtcNow,
+                    ModifiedDate = DateTime.UtcNow,
+                    CreatedBy = "TestSystem",
+                    RowVersion = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }
+                };
+                DbContext.Drivers.Add(driver);
+            }
+
+            // Create test vehicle with known ID if it doesn't exist
+            var testVehicleId = new Guid("33333333-3333-3333-3333-333333333333");
+            if (!DbContext.Vehicles.Any(v => v.Id == testVehicleId))
+            {
+                var vehicle = new Vehicle
+                {
+                    Id = testVehicleId,
+                    Number = "TEST001",
+                    Model = "Test Model",
+                    Year = 2020,
+                    Capacity = 50,
+                    LicensePlate = "TEST001",
+                    IsActive = true,
+                    Status = "Available",
+                    MakeModel = "Test Make Test Model",
+                    CreatedDate = DateTime.UtcNow,
+                    ModifiedDate = DateTime.UtcNow,
+                    RowVersion = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }
+                };
+                DbContext.Vehicles.Add(vehicle);
+            }
+
+            await DbContext.SaveChangesAsync();
+            Logger.LogInformation("Basic test data seeded for {TestClass}", GetType().Name);
         }
 
         /// <summary>

@@ -1,3 +1,6 @@
+#pragma warning disable CS8618 // Non-nullable field/property must contain a non-null value when exiting constructor
+#pragma warning disable CS8601 // Possible null reference assignment
+#pragma warning disable CS8602 // Dereference of a possibly null reference
 using System;
 using System.Net.Http;
 using System.Text;

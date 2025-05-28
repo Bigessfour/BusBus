@@ -5,6 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable CA1848 // Use the LoggerMessage delegates for improved performance
+#pragma warning disable CA1840 // Use 'Environment.CurrentManagedThreadId' instead of 'Thread.CurrentThread.ManagedThreadId'
+
 namespace BusBus.Tests.Infrastructure
 {
     /// <summary>

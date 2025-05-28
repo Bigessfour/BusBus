@@ -2,15 +2,15 @@ using System;
 using System.IO;
 using BusBus.Utils;
 using FluentAssertions;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Utils
 {
-    [TestFixture]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Unit)]
     public class ResourceTrackerTests
     {
-        [SetUp]
+        [TestInitialize]
         public void SetUp()
         {
             // Reset static state for test isolation
@@ -19,14 +19,13 @@ namespace BusBus.Tests.Utils
             var logger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<ResourceTrackerTests>();
             ResourceTracker.Initialize(logger);
         }
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
+        [ClassInitialize]
+        public static void OneTimeSetUp(TestContext testContext)
         {
-            Assert.Ignore("ResourceTracker tests are skipped due to known hang/failure issues.");
+            Assert.Inconclusive("ResourceTracker tests are skipped due to known hang/failure issues.");
         }
-        [Test]
-        [Description("Test tracking and disposing of resources")]
+        [TestMethod]
+        // Description: Test tracking and disposing of resources
         public void ResourceTracker_TrackAndDispose_ShouldDisposeResources()
         {
             // Arrange
@@ -51,8 +50,8 @@ namespace BusBus.Tests.Utils
             anotherDisposable.IsDisposed.Should().BeTrue();
         }
 
-        [Test]
-        [Description("Test using ResourceTracker with using statement")]
+        [TestMethod]
+        // Description: Test using ResourceTracker with using statement
         public void ResourceTracker_WithTrackUsing_ShouldReturnGuid()
         {
             // Arrange
@@ -67,8 +66,8 @@ namespace BusBus.Tests.Utils
             disposableObject.IsDisposed.Should().BeTrue();
         }
 
-        [Test]
-        [Description("Test tracking multiple resources at once")]
+        [TestMethod]
+        // Description: Test tracking multiple resources at once
         public void ResourceTracker_TrackMultiple_ShouldTrackAllResources()
         {
             // Arrange
@@ -89,8 +88,8 @@ namespace BusBus.Tests.Utils
             disposable3.IsDisposed.Should().BeTrue();
         }
 
-        [Test]
-        [Description("Test handling null resources")]
+        [TestMethod]
+        // Description: Test handling null resources
         public void ResourceTracker_TrackNull_ShouldThrowArgumentNullException()
         {
             // Act & Assert - Should throw
@@ -98,12 +97,12 @@ namespace BusBus.Tests.Utils
             trackNull.Should().Throw<ArgumentNullException>();
         }
 
-        [Test]
+        [TestMethod]
         [Ignore("Skipped due to test hang or file lock issues. Remove Ignore to re-enable.")]
-        [Description("Test resource tracking with file streams")]
+        // Description: Test resource tracking with file streams
         public void ResourceTracker_TrackFileStream_ShouldDisposeCorrectly()
         {
-            Assert.Pass("Test skipped.");
+            Assert.Inconclusive("Test skipped.");
         }
 
         // Test helper class

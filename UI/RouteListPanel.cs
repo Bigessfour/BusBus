@@ -1,5 +1,6 @@
 // Enable nullable reference types for this file
 #nullable enable
+#pragma warning disable CS0169 // Field is never used
 using BusBus.Models;
 using BusBus.Services;
 using System;
@@ -47,11 +48,85 @@ namespace BusBus.UI
 
         public RouteListPanel(IRouteService routeService)
         {
+            if (_deleteRouteButton != null && _routesGrid != null && _routeService != null)
+            {
+                _deleteRouteButton.Click += async (s, e) =>
+                {
+                    if (_routesGrid.SelectedRows.Count > 0 && _routesGrid.SelectedRows[0].Index < _routes.Count)
+                    {
+                        var route = _routes[_routesGrid.SelectedRows[0].Index];
+                        var result = MessageBox.Show(
+                            $"Are you sure you want to delete the route '{route.Name}'?",
+                            "Confirm Delete",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                await _routeService.DeleteRouteAsync(route.Id);
+                                await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
+                            }
+                            catch (DbUpdateException ex)
+                            {
+                                MessageBox.Show($"Database error deleting route: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                            catch (HttpRequestException ex)
+                            {
+                                MessageBox.Show($"Network error deleting route: {ex.Message}", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                MessageBox.Show($"Error deleting route: {ex.Message}", "Operation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                };
+            }
+
+            // Previous page button
+            if (_prevPageButton != null)
+            {
+                _prevPageButton.Click += async (s, e) =>
+                {
+                    if (_currentPage > 1)
+                    {
+                        _currentPage--;
+                        await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
+                    }
+                };
+            }
+
+            // Next page button
+            if (_nextPageButton != null)
+            {
+                _nextPageButton.Click += async (s, e) =>
+                {
+                    if (_currentPage * _pageSize < _totalRoutes)
+                    {
+                        _currentPage++;
+                        await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
+                    }
+                };
+            }
+
+            // Infinite scroll event
+            if (_routesGrid != null)
+            {
+                _routesGrid.Scroll += async (s, e) => await HandleInfiniteScrollAsync();
+            }
+
+            // Initial data load
+            InitializeDataAsync();
+
             ArgumentNullException.ThrowIfNull(routeService);
             _routeService = routeService;
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
             this.Padding = new Padding(10);
             this.Dock = DockStyle.Fill;
+            // Enforce dark theme, glassmorphism, and WCAG contrast
+            ThemeManager.EnforceGlassmorphicTextColor(this);
 
             // Title label
             _titleLabel = new Label
@@ -82,13 +157,14 @@ namespace BusBus.UI
                 Text = "Add New Route",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
+                Padding = new Padding(5, 10, 5, 10),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
-                AutoSize = false,
+                AutoSize = true,
                 MinimumSize = new Size(120, 30)
             };
             _addRouteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
@@ -99,13 +175,14 @@ namespace BusBus.UI
                 Text = "Edit Selected",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
+                Padding = new Padding(5, 10, 5, 10),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
-                AutoSize = false,
+                AutoSize = true,
                 MinimumSize = new Size(100, 30)
             };
             _editRouteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
@@ -116,17 +193,19 @@ namespace BusBus.UI
                 Text = "Delete",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
+                Padding = new Padding(5, 10, 5, 10),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
-                AutoSize = false,
+                AutoSize = true,
                 MinimumSize = new Size(80, 30)
             };
             _deleteRouteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _deleteRouteButton.FlatAppearance.BorderSize = 1;            var buttonPanel = new TableLayoutPanel
+            _deleteRouteButton.FlatAppearance.BorderSize = 1;
+            var buttonPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 Height = 50,
@@ -214,7 +293,9 @@ namespace BusBus.UI
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
                 Enabled = false,
-                Margin = new Padding(3)
+                Margin = new Padding(3),
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = true
             };
             _prevPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
             _prevPageButton.FlatAppearance.BorderSize = 1;
@@ -242,8 +323,12 @@ namespace BusBus.UI
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
-                Margin = new Padding(3)
+                Margin = new Padding(3),
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = true
             };
+
+
             _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
             _nextPageButton.FlatAppearance.BorderSize = 1;
 
@@ -255,8 +340,9 @@ namespace BusBus.UI
             // Event handlers (add as needed)
             _routesGrid.CellFormatting += (s, e) =>
             {
-                if (e.RowIndex < 0 || e.ColumnIndex < 0 || e.RowIndex >= _routes.Count) return;
+                if (e == null || e.RowIndex < 0 || e.ColumnIndex < 0 || e.RowIndex >= _routes.Count) return;
                 var route = _routes[e.RowIndex];
+                if (route == null) return;
                 var colName = _routesGrid.Columns[e.ColumnIndex].Name;
 
                 if (colName == "AMTotalMiles")
@@ -276,7 +362,7 @@ namespace BusBus.UI
                 }
                 else if (colName == "Number")
                 {
-                    e.Value = route.Vehicle?.Number ?? "Unassigned";
+                    e.Value = (route.Vehicle != null && route.Vehicle.Number != null) ? route.Vehicle.Number : "Unassigned";
                     e.FormattingApplied = true;
                 }
             };
@@ -352,11 +438,13 @@ namespace BusBus.UI
 
             // Add button click handler
             _addRouteButton.Click += (s, e) =>
-            {                var newRoute = new RouteDisplayDTO
+            {
+                var newRoute = new RouteDisplayDTO
                 {
                     Id = Guid.Empty, // Mark as new route
                     Name = "New Route",
-                    RouteDate = DateTime.Today                };
+                    RouteDate = DateTime.Today
+                };
                 RouteEditRequested?.Invoke(this, new RouteEventArgs(newRoute));
             };
 
@@ -422,6 +510,13 @@ namespace BusBus.UI
             InitializeDataAsync();
         }
 
+        public override void RefreshTheme()
+        {
+            base.RefreshTheme();
+            // Re-apply glassmorphic and WCAG contrast styling
+            ThemeManager.EnforceGlassmorphicTextColor(this);
+        }
+
         private async Task HandleInfiniteScrollAsync()
         {
             if (_routes.Count >= _totalRoutes) return;
@@ -430,7 +525,7 @@ namespace BusBus.UI
             var lastVisible = firstDisplayed + visibleRows;
             if (lastVisible >= _routes.Count - 5)
             {
-                int nextPage = (_routes.Count / _pageSize) + 1;                var moreRoutes = await _routeService.GetRoutesAsync(nextPage, _pageSize, CancellationToken.None);
+                int nextPage = (_routes.Count / _pageSize) + 1; var moreRoutes = await _routeService.GetRoutesAsync(nextPage, _pageSize, CancellationToken.None);
                 if (moreRoutes != null && moreRoutes.Count > 0)
                 {
                     var moreRouteDTOs = moreRoutes.Select(RouteDisplayDTO.FromRoute).ToList();
@@ -561,7 +656,8 @@ namespace BusBus.UI
                 {
                     Console.WriteLine("LoadRoutesAsync canceled after getting count");
                     return;
-                }                cancellationToken.ThrowIfCancellationRequested();
+                }
+                cancellationToken.ThrowIfCancellationRequested();
                 var routes = await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
                 _routes.Clear();
                 foreach (var dto in routes.Select(RouteDisplayDTO.FromRoute))
@@ -596,7 +692,8 @@ namespace BusBus.UI
                             _nextPageButton.Enabled = page < totalPages;
                             _editRouteButton.Enabled = false;
                             _deleteRouteButton.Enabled = false;
-                        });                    }
+                        });
+                    }
                     catch (ObjectDisposedException)
                     {
                         Console.WriteLine("RouteListPanel disposed during UI refresh");
@@ -687,7 +784,8 @@ namespace BusBus.UI
                 _addRouteButton?.Dispose();
                 _editRouteButton?.Dispose();
                 _deleteRouteButton?.Dispose();
-                _titleLabel?.Dispose();            }
+                _titleLabel?.Dispose();
+            }
             base.Dispose(disposing);
         }
 
@@ -701,4 +799,5 @@ namespace BusBus.UI
         }
     }
 }
+#pragma warning restore CS0169 // Field is never used
 

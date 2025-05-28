@@ -1,3 +1,4 @@
+#pragma warning disable CS8618 // Non-nullable field/property must contain a non-null value when exiting constructor
 using BusBus.Services;
 using BusBus.UI;
 using System;
@@ -6,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+#pragma warning disable CS0169 // Field is never used
 namespace BusBus.UI.Common
 {
     /// <summary>
@@ -23,23 +25,23 @@ namespace BusBus.UI.Common
         private Label _thisWeekMilesLabel;
         private Label _thisWeekStudentsLabel;
         private Label _lastUpdatedLabel;
-        private CancellationTokenSource _cancellationTokenSource;        public StatisticsPanel(IStatisticsService statisticsService)
+        private CancellationTokenSource _cancellationTokenSource; public StatisticsPanel(IStatisticsService statisticsService)
         {
             _statisticsService = statisticsService ?? throw new ArgumentNullException(nameof(statisticsService));
             _cancellationTokenSource = new CancellationTokenSource();
-            
+
             Console.WriteLine("[StatisticsPanel] Constructor called");
-            
+
             // Set up refresh timer (refresh every 30 seconds)
             _refreshTimer = new System.Windows.Forms.Timer();
             _refreshTimer.Interval = 30000; // 30 seconds
             _refreshTimer.Tick += async (s, e) => await RefreshStatisticsAsync();
-            
+
             InitializeComponent();
             ApplyTheme();
-            
+
             Console.WriteLine("[StatisticsPanel] Component initialized");
-            
+
             // Start timer after handle is created (control is ready)
             this.HandleCreated += async (s, e) =>
             {
@@ -48,11 +50,11 @@ namespace BusBus.UI.Common
                 _refreshTimer.Start();
             };
         }
-
         private void InitializeComponent()
         {
             this.Dock = DockStyle.Fill;
-            this.Padding = new Padding(10, 5, 10, 5);
+            this.Padding = new Padding(20, 15, 20, 15); // Enhanced padding for better text spacing
+            this.MinimumSize = new Size(800, 100); // Minimum size to prevent truncation
 
             // Create main layout
             _statisticsLayout = new TableLayoutPanel
@@ -60,83 +62,106 @@ namespace BusBus.UI.Common
                 Dock = DockStyle.Fill,
                 RowCount = 2,
                 ColumnCount = 4,
-                AutoSize = false,
-                CellBorderStyle = TableLayoutPanelCellBorderStyle.None
+                AutoSize = true, // Enable auto-sizing for dynamic content
+                AutoSizeMode = AutoSizeMode.GrowAndShrink, // Allow shrinking and growing
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
+                Margin = new Padding(5) // Add margin for better spacing
             };
 
-            // Configure columns - equal width for each statistic
+            // Configure columns - auto size for flexible text display
             for (int i = 0; i < 4; i++)
             {
-                _statisticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+                _statisticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Changed from Percent to AutoSize
             }
-            
-            // Configure rows - top row for values, bottom row for labels
-            _statisticsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 60F)); // Values
-            _statisticsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 40F)); // Labels
+
+            // Configure rows - flexible sizing for better text display
+            _statisticsLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize, 50F)); // Values row with minimum height
+            _statisticsLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize, 30F)); // Labels row with minimum height
 
             // Create statistic display pairs
             CreateStatisticPair("0", "School Year Miles", 0, out _schoolYearMilesLabel);
             CreateStatisticPair("0", "School Year Students", 1, out _schoolYearStudentsLabel);
             CreateStatisticPair("0", "This Month Miles", 2, out _thisMonthMilesLabel);
-            CreateStatisticPair("0", "This Month Students", 3, out _thisMonthStudentsLabel);
-
-            // Create last updated label spanning all columns
+            CreateStatisticPair("0", "This Month Students", 3, out _thisMonthStudentsLabel);            // Create last updated label spanning all columns
             _lastUpdatedLabel = new Label
             {
                 Text = "Last updated: Never",
-                Font = new Font("Segoe UI", 7F, FontStyle.Italic),
+                Font = new Font("Segoe UI", 8F, FontStyle.Italic), // Increased from 7F to 8F for better readability
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Bottom,
-                Height = 15,
-                Padding = new Padding(0, 2, 0, 0)
+                Height = 20, // Increased from 15 to 20 for better text display
+                Padding = new Padding(5, 3, 5, 3), // Enhanced padding
+                AutoSize = false // Set to false to use explicit height
             };
+
+#if DEBUG
+            // Add debug truncation detection in development builds
+            this.HandleCreated += (s, e) =>
+            {
+                var truncatedControls = Utils.LayoutDebugger.DetectTextTruncation(this);
+                if (truncatedControls.Count > 0)
+                {
+                    Console.WriteLine($"[StatisticsPanel] DEBUG: Found {truncatedControls.Count} potentially truncated controls");
+                    foreach (var controlInfo in truncatedControls)
+                    {
+                        Console.WriteLine($"  - {controlInfo}");
+                    }
+                }
+            };
+#endif
 
             this.Controls.Add(_statisticsLayout);
             this.Controls.Add(_lastUpdatedLabel);
         }
-
         private void CreateStatisticPair(string value, string label, int columnIndex, out Label valueLabel)
         {
-            // Value label (top row)
+            // Value label (top row) - enhanced sizing for better text display
             valueLabel = new Label
             {
                 Text = value,
                 Font = new Font("Segoe UI", 14F, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill,
-                AutoSize = false
+                AutoSize = false, // Use fixed sizing with proper dimensions
+                MinimumSize = new Size(120, 40), // Minimum size to prevent truncation
+                Padding = new Padding(5, 2, 5, 2), // Add padding for better text display
+                AutoEllipsis = true // Enable ellipsis for very long numbers
             };
 
-            // Description label (bottom row)
+            // Description label (bottom row) - enhanced sizing for better text display
             var descLabel = new Label
             {
                 Text = label,
-                Font = new Font("Segoe UI", 8F, FontStyle.Regular),
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular), // Increased from 8F to 9F
                 TextAlign = ContentAlignment.TopCenter,
                 Dock = DockStyle.Fill,
-                AutoSize = false
+                AutoSize = false, // Use fixed sizing with proper dimensions
+                MinimumSize = new Size(120, 25), // Minimum size to prevent truncation
+                Padding = new Padding(3, 0, 3, 2), // Add padding for better text display
+                AutoEllipsis = true // Enable ellipsis for long descriptions
             };
 
             _statisticsLayout.Controls.Add(valueLabel, columnIndex, 0);
             _statisticsLayout.Controls.Add(descLabel, columnIndex, 1);
-        }        private void ApplyTheme()
+        }
+        private void ApplyTheme()
         {
-            // Temporarily use bright colors to make the panel visible for debugging
-            this.BackColor = Color.Yellow;
-            _statisticsLayout.BackColor = Color.LightGreen;
+            // Apply modern theme colors for better integration
+            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            _statisticsLayout.BackColor = ThemeManager.CurrentTheme.CardBackground;
 
             // Apply theme to all labels
             foreach (Control control in _statisticsLayout.Controls)
             {
                 if (control is Label label)
                 {
-                    label.BackColor = Color.LightGreen;
-                    label.ForeColor = Color.Black; // Dark text for visibility
+                    label.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                    label.ForeColor = ThemeManager.CurrentTheme.CardText;
                 }
             }
 
-            _lastUpdatedLabel.BackColor = Color.Yellow;
-            _lastUpdatedLabel.ForeColor = Color.Black;
+            _lastUpdatedLabel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            _lastUpdatedLabel.ForeColor = ThemeManager.CurrentTheme.SecondaryText;
         }
 
         public async Task RefreshStatisticsAsync()
@@ -160,7 +185,7 @@ namespace BusBus.UI.Common
             catch (Exception ex)
             {
                 Console.WriteLine($"[StatisticsPanel] Error refreshing statistics: {ex.Message}");
-                
+
                 // Update UI on the UI thread to show error state
                 if (this.InvokeRequired)
                 {
@@ -195,8 +220,7 @@ namespace BusBus.UI.Common
         {
             if (disposing)
             {
-                _refreshTimer?.Stop();
-                _refreshTimer?.Dispose();
+                _refreshTimer?.Stop(); _refreshTimer?.Dispose();
                 _cancellationTokenSource?.Cancel();
                 _cancellationTokenSource?.Dispose();
             }
@@ -204,3 +228,4 @@ namespace BusBus.UI.Common
         }
     }
 }
+#pragma warning restore CS0169 // Field is never used

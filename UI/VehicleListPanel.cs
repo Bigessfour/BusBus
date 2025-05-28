@@ -1,5 +1,6 @@
 // Enable nullable reference types for this file
 #nullable enable
+#pragma warning disable CS0169 // Field is never used
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -295,7 +296,8 @@ namespace BusBus.UI
         }
 
         public async Task LoadVehiclesAsync()
-        {            try
+        {
+            try
             {
                 var totalCount = await _vehicleService.GetCountAsync();
                 _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
@@ -350,7 +352,8 @@ namespace BusBus.UI
                 MessageBox.Show($"Error adding vehicle: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }        private void EditButton_Click(object? sender, EventArgs e)
+        }
+        private void EditButton_Click(object? sender, EventArgs e)
         {
             if (_vehiclesDataGridView.SelectedRows.Count > 0)
             {
@@ -384,7 +387,8 @@ namespace BusBus.UI
                     }
                 }
             }
-        }        private async void VehiclesDataGridView_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
+        }
+        private async void VehiclesDataGridView_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
         {
             try
             {
@@ -404,7 +408,7 @@ namespace BusBus.UI
             // Handle checkbox changes for IsActive column
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                var columnName = _vehiclesDataGridView.Columns[e.ColumnIndex].Name;                if (columnName == "IsActive")
+                var columnName = _vehiclesDataGridView.Columns[e.ColumnIndex].Name; if (columnName == "IsActive")
                 {
                     try
                     {
@@ -443,11 +447,14 @@ namespace BusBus.UI
             {
                 _currentPage++;
                 await LoadVehiclesAsync();
-            }        }        public override void Render(Control container)
+            }
+        }
+        public override void Render(Control container)
         {
             ArgumentNullException.ThrowIfNull(container);
             container.Controls.Add(this);
-        }        protected override void ApplyTheme()
+        }
+        protected override void ApplyTheme()
         {
             base.ApplyTheme();
 
@@ -457,3 +464,4 @@ namespace BusBus.UI
         }
     }
 }
+#pragma warning restore CS0169 // Field is never used

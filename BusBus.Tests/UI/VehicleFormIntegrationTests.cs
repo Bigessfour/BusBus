@@ -9,21 +9,21 @@ using BusBus.Services;
 using BusBus.UI;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.UI
 {
-    [TestFixture]
-    [Category(TestCategories.UI)]
-    [Platform("Win")]
-    [Apartment(ApartmentState.STA)] // Required for WinForms testing
+    [TestClass]
+    [TestCategory(TestCategories.UI)]
+    // Platform attribute removed (MSTest incompatible)
+    // Apartment attribute removed (MSTest incompatible) // Required for WinForms testing
     public class VehicleFormIntegrationTests : TestBase
     {
-        private IVehicleService _vehicleService;
-        private VehiclePanel _vehiclePanel;
-        private VehicleListPanel _vehicleListPanel;
+        private IVehicleService _vehicleService = null!;
+        private VehiclePanel _vehiclePanel = null!;
+        private VehicleListPanel _vehicleListPanel = null!;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
@@ -37,7 +37,7 @@ namespace BusBus.Tests.UI
             _vehicleListPanel = new VehicleListPanel(_vehicleService);
         }
 
-        [TearDown]
+        [TestCleanup]
         public override void TearDown()
         {
             VehiclePanel.SuppressDialogsForTests = false;
@@ -46,8 +46,8 @@ namespace BusBus.Tests.UI
             base.TearDown();
         }
 
-        [Test]
-        [Description("Test complete form workflow: Load -> Edit -> Save for vehicle")]
+        [TestMethod]
+        // Description: Test complete form workflow: Load -> Edit -> Save for vehicle
         public async Task VehiclePanel_CompleteWorkflow_ShouldPersistChanges()
         {
             // Arrange - Create test vehicle

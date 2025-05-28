@@ -3,10 +3,11 @@
 #nullable enable
 using System;
 using System.Windows.Forms;
+using BusBus.UI.Common;
 
 namespace BusBus
 {
-    public partial class RouteForm : Form
+    public partial class RouteForm : BaseForm
     {
         private DatabaseManager dbManager;
         private int? routeId;

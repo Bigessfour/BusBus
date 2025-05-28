@@ -16,7 +16,7 @@ using BusBus.UI.Common;
 
 namespace BusBus.UI
 {
-    public partial class DriverListPanel : ThemeableControl, IDisplayable
+    public partial class DriverListPanel : ThemeableControl, IDisplayable, IStatefulView
     {
         private readonly IDriverService _driverService;
         private DataGridView _driversDataGridView = null!;
@@ -34,6 +34,7 @@ namespace BusBus.UI
         private int _totalPages = 1; private List<Driver> _currentDrivers = new List<Driver>();
 
         public event EventHandler<EntityEventArgs<Driver>>? DriverEditRequested;
+        public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         public static string Title => "Drivers";
 
@@ -45,6 +46,11 @@ namespace BusBus.UI
             SetupButtons();
             SetupPagination();
             _ = LoadDriversAsync();
+        }
+
+        public void SaveState(object state)
+        {
+            // Optionally implement saving state here
         }
 
         private void InitializeComponent()
@@ -314,6 +320,55 @@ namespace BusBus.UI
             _paginationPanel.Controls.Add(paginationLayout);
         }
 
+        #region IStatefulView Implementation
+        public object? GetState()
+        {
+            return new DriverListState
+            {
+                CurrentPage = _currentPage,
+                PageSize = _pageSize,
+                SelectedDriverId = _driversDataGridView.SelectedRows.Count > 0
+                    ? ((Driver)_driversDataGridView.SelectedRows[0].DataBoundItem).Id
+                    : null
+            };
+        }
+
+        public void RestoreState(object state)
+        {
+            if (state is DriverListState driverState)
+            {
+                _currentPage = driverState.CurrentPage;
+                _pageSize = driverState.PageSize;
+
+                // Load data with restored state
+                _ = LoadDriversAsync().ContinueWith(t =>
+                {
+                    if (driverState.SelectedDriverId.HasValue)
+                    {
+                        // Restore selection
+                        for (int i = 0; i < _driversDataGridView.Rows.Count; i++)
+                        {
+                            var driver = (Driver)_driversDataGridView.Rows[i].DataBoundItem;
+                            if (driver.Id == driverState.SelectedDriverId.Value)
+                            {
+                                _driversDataGridView.ClearSelection();
+                                _driversDataGridView.Rows[i].Selected = true;
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        private class DriverListState
+        {
+            public int CurrentPage { get; set; }
+            public int PageSize { get; set; }
+            public Guid? SelectedDriverId { get; set; }
+        }
+        #endregion
+
         public async Task LoadDriversAsync()
         {
             try
@@ -328,8 +383,8 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading drivers: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                StatusUpdated?.Invoke(this, new StatusEventArgs(
+                    $"Error loading drivers: {ex.Message}", StatusType.Error));
             }
         }
 
@@ -342,41 +397,22 @@ namespace BusBus.UI
 
         private async void AddButton_Click(object? sender, EventArgs e)
         {
-            try
+            var newDriver = new Driver
             {
-                var newDriver = new Driver
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "New",
-                    LastName = "Driver",
-                    LicenseNumber = "DL000000"
-                };
+                FirstName = "New",
+                LastName = "Driver",
+                LicenseNumber = "LICENSE-" + DateTime.Now.Ticks
+            };
 
-                await _driverService.CreateAsync(newDriver);
-                await LoadDriversAsync();
-
-                // Select the new row
-                var newRowIndex = _currentDrivers.FindIndex(d => d.Id == newDriver.Id);
-                if (newRowIndex >= 0)
-                {
-                    _driversDataGridView.ClearSelection();
-                    _driversDataGridView.Rows[newRowIndex].Selected = true;
-                    _driversDataGridView.CurrentCell = _driversDataGridView.Rows[newRowIndex].Cells[0];
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error adding driver: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            DriverEditRequested?.Invoke(this, new EntityEventArgs<Driver>(newDriver));
         }
 
         private void EditButton_Click(object? sender, EventArgs e)
         {
             if (_driversDataGridView.SelectedRows.Count > 0)
             {
-                var selectedDriver = (Driver)_driversDataGridView.SelectedRows[0].DataBoundItem;
-                DriverEditRequested?.Invoke(this, new EntityEventArgs<Driver>(selectedDriver));
+                var driver = (Driver)_driversDataGridView.SelectedRows[0].DataBoundItem;
+                DriverEditRequested?.Invoke(this, new EntityEventArgs<Driver>(driver));
             }
         }
 
@@ -384,24 +420,21 @@ namespace BusBus.UI
         {
             if (_driversDataGridView.SelectedRows.Count > 0)
             {
-                var selectedDriver = (Driver)_driversDataGridView.SelectedRows[0].DataBoundItem;
-                var result = MessageBox.Show(
-                    $"Are you sure you want to delete driver {selectedDriver.FirstName} {selectedDriver.LastName}?",
-                    "Confirm Delete",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                var driver = (Driver)_driversDataGridView.SelectedRows[0].DataBoundItem;
+                var result = MessageBox.Show($"Delete driver {driver.FirstName} {driver.LastName}?",
+                    "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == DialogResult.Yes)
                 {
                     try
                     {
-                        await _driverService.DeleteAsync(selectedDriver.Id);
+                        await _driverService.DeleteAsync(driver.Id);
                         await LoadDriversAsync();
+                        StatusUpdated?.Invoke(this, new StatusEventArgs("Driver deleted successfully"));
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error deleting driver: {ex.Message}", "Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting driver: {ex.Message}"));
                     }
                 }
             }
@@ -409,16 +442,33 @@ namespace BusBus.UI
 
         private async void DriversDataGridView_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex < 0 || e.RowIndex >= _currentDrivers.Count) return;
+
             try
             {
-                var driver = (Driver)_driversDataGridView.Rows[e.RowIndex].DataBoundItem;
+                var driver = _currentDrivers[e.RowIndex];
+                var columnName = _driversDataGridView.Columns[e.ColumnIndex].Name;
+                var newValue = _driversDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString() ?? "";
+
+                switch (columnName)
+                {
+                    case "FirstName":
+                        driver.FirstName = newValue;
+                        break;
+                    case "LastName":
+                        driver.LastName = newValue;
+                        break;
+                    case "LicenseNumber":
+                        driver.LicenseNumber = newValue;
+                        break;
+                }
+
                 await _driverService.UpdateAsync(driver);
+                StatusUpdated?.Invoke(this, new StatusEventArgs("Driver updated successfully"));
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error updating driver: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                await LoadDriversAsync(); // Refresh to revert changes
+                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating driver: {ex.Message}"));
             }
         }
 
@@ -520,5 +570,22 @@ namespace BusBus.UI
                 _paginationPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
             }
         }
+
+        public async Task RefreshAsync()
+        {
+            await LoadDriversAsync();
+        }
+    }    // Add missing event args classes
+    public class EntityEventArgs<T> : EventArgs
+    {
+        public T Entity { get; }
+        public EntityEventArgs(T entity) => Entity = entity;
+    }
+
+    public class DriverListState
+    {
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+        public int? SelectedDriverId { get; set; }
     }
 }

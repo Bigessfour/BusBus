@@ -16,7 +16,7 @@ namespace BusBus.Data
 {
     public partial class AdvancedSqlServerDatabaseManager : IDisposable
     {
-        private readonly string _connectionString;        private readonly ILogger<AdvancedSqlServerDatabaseManager>? _logger;
+        private readonly string _connectionString; private readonly ILogger<AdvancedSqlServerDatabaseManager>? _logger;
 
         public AdvancedSqlServerDatabaseManager()
         {
@@ -59,7 +59,7 @@ namespace BusBus.Data
         public static void UpdateDriverPersonalDetails(int driverId, Dictionary<string, object> personalDetails) { throw new NotImplementedException("UpdateDriverPersonalDetails(int, ...) needs implementation."); }
         public static List<Vehicle> GetAllVehicles() { throw new NotImplementedException("GetAllVehicles() needs implementation."); }
         public static Vehicle GetVehicleById(int id) { throw new NotImplementedException("GetVehicleById(int) needs implementation."); }
-        public static void AddVehicle(string vehicleNumber, int capacity, string status, string makeModel, int year) { throw new NotImplementedException("AddVehicle(string, ...) needs implementation."); }
+        public static void AddVehicle(string vehicleNumber, int capacity, string vehicleModel, string licensePlate, int isActive) { throw new NotImplementedException("AddVehicle(string, int, string, string, int) needs implementation."); }
         public static void UpdateVehicle(int id, string vehicleNumber, int capacity, string status, string makeModel, int year) { throw new NotImplementedException("UpdateVehicle(int, ...) needs implementation."); }
         public static void DeleteVehicle(int id) { throw new NotImplementedException("DeleteVehicle(int) needs implementation."); }
         public static List<Vehicle> GetVehiclesNearLocation(double latitude, double longitude, double radiusKm) { throw new NotImplementedException("GetVehiclesNearLocation(double, double, double) needs implementation."); }
@@ -462,30 +462,66 @@ namespace BusBus.Data
 
             var result = await command.ExecuteScalarAsync();
             return Convert.ToInt32(result);
-        }
-
-        // Database Management
+        }        // Database Management
         public async Task<bool> TestConnectionAsync()
         {
             try
-            {
+            {                // Ensure _logger is initialized to prevent NullReferenceException
+                if (_logger == null)
+                {
+                    // Can't modify readonly field, so just use local logger
+                    using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                    var logger = loggerFactory.CreateLogger<AdvancedSqlServerDatabaseManager>();
+
+                    try
+                    {
+                        using var conn = new SqlConnection(_connectionString);
+                        await conn.OpenAsync();
+                        return conn.State == System.Data.ConnectionState.Open;
+                    }
+                    catch (Exception e)
+                    {
+                        s_databaseConnectionTestFailed(logger, e);
+                        return false;
+                    }
+                }
+
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
                 return connection.State == System.Data.ConnectionState.Open;
-            }            catch (Exception ex)
+            }
+            catch (Exception ex)
             {
-                s_databaseConnectionTestFailed(_logger!, ex);
+                if (_logger != null)
+                {
+                    s_databaseConnectionTestFailed(_logger, ex);
+                }
                 return false;
             }
-        }        public async Task InitializeDatabaseAsync()
+        }
+        public async Task InitializeDatabaseAsync()
         {
-            s_databaseSchemaInitializing(_logger!, null);
+            // Get or create a logger
+            ILogger localLogger;
+            if (_logger != null)
+            {
+                localLogger = _logger;
+            }
+            else
+            {
+                var factory = LoggerFactory.Create(builder => builder.AddConsole());
+                localLogger = factory.CreateLogger<AdvancedSqlServerDatabaseManager>();
+            }
 
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
+            try
+            {
+                s_databaseSchemaInitializing(localLogger, null);
 
-            // Create tables if they don't exist
-            var createTablesScript = @"
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // Create tables if they don't exist
+                var createTablesScript = @"
                 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Drivers' AND xtype='U')
                 CREATE TABLE Drivers (
                     Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -533,16 +569,26 @@ namespace BusBus.Data
                     ScheduleDate DATE NOT NULL,
                     FOREIGN KEY (RouteId) REFERENCES Routes(Id),
                     FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
-                    FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
-                );";            using var command = new SqlCommand(createTablesScript, connection);
-            await command.ExecuteNonQueryAsync();
+                    FOREIGN KEY (DriverId) REFERENCES Drivers(Id)                );";
 
-            s_databaseSchemaInitialized(_logger!, null);
-        }public static Task InitializeAdvancedDatabase()
+                using var command = new SqlCommand(createTablesScript, connection);
+                await command.ExecuteNonQueryAsync();
+
+                s_databaseSchemaInitialized(localLogger, null);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                s_databaseConnectionTestFailed(localLogger, ex);
+            }
+        }
+
+        public static Task InitializeAdvancedDatabase()
         {
             // Add implementation for database initialization
             return Task.CompletedTask;
-        }public static Task<MigrationStatus> CheckMigrationStatusAsync()
+        }
+        public static Task<MigrationStatus> CheckMigrationStatusAsync()
         {
             // For testing purposes, return a dummy migration status
             return Task.FromResult(new MigrationStatus
@@ -551,7 +597,8 @@ namespace BusBus.Data
                 AppliedMigrations = new List<string> { "20250523002503_InitialSetup", "20250524104940_AddRouteLocationsAndScheduledTime" },
                 LastMigrationDate = DateTime.UtcNow.AddDays(-1)
             });
-        }        public static Task<DatabaseSizeInfo> GetDatabaseSizeInfoAsync()
+        }
+        public static Task<DatabaseSizeInfo> GetDatabaseSizeInfoAsync()
         {
             // For testing purposes, return dummy size information
             return Task.FromResult(new DatabaseSizeInfo
@@ -561,7 +608,8 @@ namespace BusBus.Data
                 LogFileSize = 2.1m,
                 TotalSize = 12.6m
             });
-        }        public static Task<Dictionary<string, TableStatistics>> GetTableStatisticsAsync()
+        }
+        public static Task<Dictionary<string, TableStatistics>> GetTableStatisticsAsync()
         {
             // For testing purposes, return dummy table statistics
             return Task.FromResult(new Dictionary<string, TableStatistics>
@@ -607,7 +655,8 @@ namespace BusBus.Data
                 }
             }
             return components;
-        }        public static Task<List<DatabaseIndex>> GetDatabaseIndexesAsync()
+        }
+        public static Task<List<DatabaseIndex>> GetDatabaseIndexesAsync()
         {
             // For testing purposes, return dummy index information
             return Task.FromResult(new List<DatabaseIndex>
@@ -616,7 +665,8 @@ namespace BusBus.Data
                 new DatabaseIndex { IndexName = "PK_Drivers", TableName = "Drivers", IndexType = "PRIMARY KEY" },
                 new DatabaseIndex { IndexName = "PK_Vehicles", TableName = "Vehicles", IndexType = "PRIMARY KEY" }
             });
-        }public static Task<DatabaseHealth> CheckDatabaseHealthAsync()
+        }
+        public static Task<DatabaseHealth> CheckDatabaseHealthAsync()
         {
             // For testing purposes, return dummy health status
             return Task.FromResult(new DatabaseHealth

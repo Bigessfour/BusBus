@@ -77,12 +77,12 @@ namespace BusBus.Services
                 Id = Guid.NewGuid(),
                 Number = "BUS002",
                 Capacity = 40
-            };
-
-            var route1 = new Route
+            }; var route1 = new Route
             {
                 Id = Guid.NewGuid(),
                 Name = "Route 1",
+                RouteName = "Downtown to Airport",
+                RouteCode = "RT0001",
                 RouteDate = DateTime.Today,
                 StartLocation = "Downtown",
                 EndLocation = "Airport",
@@ -94,13 +94,22 @@ namespace BusBus.Services
                 AMRiders = 25,
                 PMRiders = 30,
                 DriverId = driver1.Id,
-                VehicleId = vehicle1.Id
+                VehicleId = vehicle1.Id,
+                CreatedBy = "System",
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                IsActive = true,
+                RowVersion = new byte[8],
+                StopsJson = "[]",
+                ScheduleJson = "{\"EstimatedTripTime\":\"00:30:00\"}"
             };
 
             var route2 = new Route
             {
                 Id = Guid.NewGuid(),
                 Name = "Route 2",
+                RouteName = "Mall to University",
+                RouteCode = "RT0002",
                 RouteDate = DateTime.Today,
                 StartLocation = "Mall",
                 EndLocation = "University",
@@ -112,7 +121,14 @@ namespace BusBus.Services
                 AMRiders = 20,
                 PMRiders = 25,
                 DriverId = driver2.Id,
-                VehicleId = vehicle2.Id
+                VehicleId = vehicle2.Id,
+                CreatedBy = "System",
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                IsActive = true,
+                RowVersion = new byte[8],
+                StopsJson = "[]",
+                ScheduleJson = "{\"EstimatedTripTime\":\"00:45:00\"}"
             };
 
             dbContext.Drivers.AddRange(driver1, driver2);
@@ -120,12 +136,38 @@ namespace BusBus.Services
             dbContext.Routes.AddRange(route1, route2);
 
             await dbContext.SaveChangesAsync(cancellationToken);
-        }        public async Task<Route> CreateRouteAsync(Route route, CancellationToken cancellationToken = default)
+        }
+        public async Task<Route> CreateRouteAsync(Route route, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(route);
 
             if (route.Id == Guid.Empty)
                 route.Id = Guid.NewGuid();
+
+            // Ensure required fields are set
+            if (string.IsNullOrEmpty(route.CreatedBy))
+                route.CreatedBy = "System";
+
+            if (string.IsNullOrEmpty(route.RouteName))
+                route.RouteName = route.Name;
+
+            if (string.IsNullOrEmpty(route.RouteCode))
+                route.RouteCode = $"RT{route.RouteID:D4}";
+
+            if (string.IsNullOrEmpty(route.StopsJson))
+                route.StopsJson = "[]";
+
+            if (string.IsNullOrEmpty(route.ScheduleJson))
+                route.ScheduleJson = "{\"EstimatedTripTime\":\"00:30:00\"}";
+
+            if (route.RowVersion == null || route.RowVersion.Length == 0)
+                route.RowVersion = new byte[8];
+
+            if (route.CreatedDate == default)
+                route.CreatedDate = DateTime.UtcNow;
+
+            if (route.ModifiedDate == default)
+                route.ModifiedDate = DateTime.UtcNow;
 
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -142,7 +184,8 @@ namespace BusBus.Services
                 .Include(r => r.Driver)
                 .Include(r => r.Vehicle)
                 .ToListAsync(cancellationToken);
-        }        public async Task<List<Route>> GetRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        }
+        public async Task<List<Route>> GetRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -191,7 +234,8 @@ namespace BusBus.Services
                 dbContext.Routes.Remove(route);
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
-        }        public async Task<List<Driver>> GetDriversAsync(CancellationToken cancellationToken = default)
+        }
+        public async Task<List<Driver>> GetDriversAsync(CancellationToken cancellationToken = default)
         {
             try
             {

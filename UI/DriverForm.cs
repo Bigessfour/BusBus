@@ -4,10 +4,11 @@
 using System;
 using System.Drawing; // Add this for Size
 using System.Windows.Forms;
+using BusBus.UI.Common;
 
 namespace BusBus
 {
-    public partial class DriverForm : Form
+    public partial class DriverForm : BaseForm
     {
         private DatabaseManager dbManager;
         private int? driverId;

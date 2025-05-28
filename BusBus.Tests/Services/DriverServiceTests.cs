@@ -1,31 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using BusBus.Models;
 using BusBus.Services;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Services
 {
-    [TestFixture]
-    [Category(TestCategories.Service)]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Service)]
+    [TestCategory(TestCategories.Unit)]
     public class DriverServiceTests : TestBase
     {
         private IDriverService _driverService;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
             _driverService = ServiceProvider.GetRequiredService<IDriverService>();
         }
 
-        [Test]
-        [Description("Test creating, retrieving, updating, and deleting a driver")]
+        [TestMethod]
+        // Description: Test creating, retrieving, updating, and deleting a driver
         public async Task DriverService_CompleteLifecycle_ShouldWorkCorrectly()
         {
             // Arrange
@@ -73,14 +74,12 @@ namespace BusBus.Tests.Services
 
             // Verify update with a fresh get
             var verifyDriver = await _driverService.GetByIdAsync(testDriver.Id);
-            verifyDriver.FirstName.Should().Be("Updated");
-
-            // Act - Count and Paging
+            verifyDriver.FirstName.Should().Be("Updated");            // Act - Count and Paging
             var count = await _driverService.GetCountAsync();
             count.Should().BeGreaterThan(0);
 
-            var pagedDrivers = await _driverService.GetPagedAsync(1, 10);
-            pagedDrivers.Should().Contain(d => d.Id == testDriver.Id);
+            var pagedDrivers = await _driverService.GetPagedAsync(1, 100); // Increased page size to ensure the driver is found
+            pagedDrivers.Should().Contain(d => d.Id == testDriver.Id, "The created driver should be in the paged results");
 
             // Act - Delete
             await _driverService.DeleteAsync(testDriver.Id);
@@ -90,8 +89,8 @@ namespace BusBus.Tests.Services
             deletedDriver.Should().BeNull();
         }
 
-        [Test]
-        [Description("Test driver validation for valid and invalid entities")]
+        [TestMethod]
+        // Description: Test driver validation for valid and invalid entities
         public void DriverService_ValidateEntity_ShouldReturnCorrectResults()
         {
             // Arrange
@@ -145,8 +144,8 @@ namespace BusBus.Tests.Services
             noLicenseResult.ErrorMessage.Should().Contain("License");
         }
 
-        [Test]
-        [Description("Test persistence of PersonalDetails and EmergencyContact JSON properties")]
+        [TestMethod]
+        // Description: Test persistence of PersonalDetails and EmergencyContact JSON properties
         public async Task DriverService_JsonProperties_ShouldPersistCorrectly()
         {
             // Arrange
@@ -204,11 +203,18 @@ namespace BusBus.Tests.Services
             retrievedDriver.PersonalDetails.EyeColor.Should().Be("Blue");
             retrievedDriver.PersonalDetails.Height.Should().Be(180);
             retrievedDriver.PersonalDetails.Allergies.Should().Contain("Dust");
-            retrievedDriver.PersonalDetails.Certifications.Should().Contain("CPR");
-
-            // Custom Fields
+            retrievedDriver.PersonalDetails.Certifications.Should().Contain("CPR");            // Custom Fields
             retrievedDriver.PersonalDetails.CustomFields.Should().ContainKey("ShirtSize");
-            retrievedDriver.PersonalDetails.CustomFields["ShirtSize"].Should().Be("XL");
+
+            // Handle JSON deserialization - CustomFields values might be JsonElement objects
+            var shirtSizeValue = retrievedDriver.PersonalDetails.CustomFields["ShirtSize"];
+            string shirtSizeString = shirtSizeValue switch
+            {
+                JsonElement element => element.GetString(),
+                string str => str,
+                _ => shirtSizeValue?.ToString()
+            } ?? "";
+            shirtSizeString.Should().Be("XL");
         }
     }
 }

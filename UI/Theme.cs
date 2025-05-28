@@ -13,7 +13,7 @@ namespace BusBus.UI
     /// </summary>
     public static class ThemeColors
     {
-        // Light theme colors
+        // Light theme colors - Enhanced for better contrast
         public static readonly Color LightMainBackground = Color.FromArgb(240, 240, 240);
         public static readonly Color LightSidePanelBackground = Color.FromArgb(210, 210, 220);
         public static readonly Color LightHeadlineBackground = Color.FromArgb(200, 200, 220);
@@ -23,27 +23,29 @@ namespace BusBus.UI
         public static readonly Color LightButtonHoverBackground = Color.FromArgb(160, 160, 180);
         public static readonly Color LightButtonPressedBackground = Color.FromArgb(140, 140, 160);
         public static readonly Color LightButtonDisabledBackground = Color.FromArgb(200, 200, 210);
-        public static readonly Color LightCardText = Color.DarkGray;
+        public static readonly Color LightCardText = Color.FromArgb(50, 50, 50);        // Darker for better contrast
+        public static readonly Color LightSecondaryText = Color.FromArgb(80, 80, 80);   // Darker for better contrast
         public static readonly Color LightHeadlineText = Color.Black;
         public static readonly Color LightTextBoxBackground = Color.White;
         public static readonly Color LightButtonText = Color.Black;
-        public static readonly Color LightButtonDisabledText = Color.Gray;
+        public static readonly Color LightButtonDisabledText = Color.FromArgb(120, 120, 120); // Darker disabled text
 
-        // Dark theme colors
-        public static readonly Color DarkMainBackground = Color.FromArgb(30, 30, 30);
-        public static readonly Color DarkSidePanelBackground = Color.FromArgb(36, 36, 46);
-        public static readonly Color DarkHeadlineBackground = Color.FromArgb(44, 51, 73);
-        public static readonly Color DarkCardBackground = Color.FromArgb(40, 40, 50);
-        public static readonly Color DarkGridBackground = Color.FromArgb(35, 35, 45);
-        public static readonly Color DarkButtonBackground = Color.FromArgb(44, 51, 73);
-        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(60, 70, 100);
-        public static readonly Color DarkButtonPressedBackground = Color.FromArgb(80, 90, 120);
-        public static readonly Color DarkButtonDisabledBackground = Color.FromArgb(25, 25, 35);
-        public static readonly Color DarkCardText = Color.Gainsboro;
-        public static readonly Color DarkHeadlineText = Color.White;
-        public static readonly Color DarkTextBoxBackground = Color.FromArgb(50, 50, 60);
-        public static readonly Color DarkButtonText = Color.White;
-        public static readonly Color DarkButtonDisabledText = Color.DarkGray;
+        // Dark theme colors - Enhanced Modern palette with WCAG 2.1 AA compliance and glassmorphism support
+        public static readonly Color DarkMainBackground = Color.FromArgb(16, 16, 20);      // #101014 - Enhanced deep background
+        public static readonly Color DarkSidePanelBackground = Color.FromArgb(28, 30, 42); // #1C1E2A - Blue-tinted navigation
+        public static readonly Color DarkHeadlineBackground = Color.FromArgb(35, 40, 48);  // #232830 - Enhanced header with subtle blue
+        public static readonly Color DarkCardBackground = Color.FromArgb(26, 28, 32);      // #1A1C20 - Elevated card surface
+        public static readonly Color DarkGridBackground = Color.FromArgb(20, 22, 26);      // #14161A - Enhanced data table background
+        public static readonly Color DarkButtonBackground = Color.FromArgb(45, 50, 65);    // #2D3241 - Modern interactive surface
+        public static readonly Color DarkButtonHoverBackground = Color.FromArgb(60, 70, 90); // #3C465A - Enhanced hover state
+        public static readonly Color DarkButtonPressedBackground = Color.FromArgb(75, 85, 105); // Responsive pressed state
+        public static readonly Color DarkButtonDisabledBackground = Color.FromArgb(22, 24, 28); // Subtle disabled state
+        public static readonly Color DarkCardText = Color.FromArgb(248, 250, 255);         // #F8FAFF - Brighter for better contrast
+        public static readonly Color DarkSecondaryText = Color.FromArgb(200, 205, 210);    // #C8CDD2 - Brighter for better contrast
+        public static readonly Color DarkHeadlineText = Color.FromArgb(255, 255, 255);     // #FFFFFF - Pure white for maximum contrast
+        public static readonly Color DarkTextBoxBackground = Color.FromArgb(38, 42, 50);   // #262A32 - Enhanced input background
+        public static readonly Color DarkButtonText = Color.FromArgb(255, 255, 255);       // #FFFFFF - Pure white for maximum contrast
+        public static readonly Color DarkButtonDisabledText = Color.FromArgb(150, 155, 160); // #969B9F - Brighter disabled text
     }
 
     public class ColorScheme
@@ -138,12 +140,15 @@ namespace BusBus.UI
         /// <summary>
         /// Card text color
         /// </summary>
-        public abstract Color CardText { get; }
+        public abstract Color CardText { get; }        /// <summary>
+                                                       /// Headline text color
+                                                       /// </summary>
+        public abstract Color HeadlineText { get; }
 
         /// <summary>
-        /// Headline text color
+        /// Secondary text color for less important information
         /// </summary>
-        public abstract Color HeadlineText { get; }
+        public abstract Color SecondaryText { get; }
 
         /// <summary>
         /// Text box background color
@@ -169,13 +174,159 @@ namespace BusBus.UI
         /// Gets disabled text color (derived from CardText if not overridden)
         /// </summary>
         public virtual Color DisabledText =>
-            Color.FromArgb(128, CardText.R, CardText.G, CardText.B);
+            Color.FromArgb(128, CardText.R, CardText.G, CardText.B);        /// <summary>
+                                                                            /// Gets shadow text color for creating text depth effects in dark UI
+                                                                            /// </summary>
+        public virtual Color ShadowTextColor =>
+            Name == "Dark"
+                ? Color.FromArgb(40, 255, 255, 255) // Light shadow for dark backgrounds
+                : Color.FromArgb(80, 0, 0, 0);       // Dark shadow for light backgrounds
 
         /// <summary>
-        /// Gets secondary text color (lighter than CardText for less prominent text)
+        /// Gets glass effect background color for "floating on glass" appearance
         /// </summary>
-        public virtual Color SecondaryText =>
-            Color.FromArgb(180, CardText.R, CardText.G, CardText.B);
+        public virtual Color GlassEffectBackground => Color.Transparent;
+
+        /// <summary>
+        /// Gets glass effect opacity level (0.0 to 1.0) for glassmorphism effects
+        /// </summary>
+        public virtual double GlassEffectOpacity => Name == "Dark" ? 0.15 : 0.1;
+
+        /// <summary>
+        /// Gets enhanced glass effect opacity level following NN/g guidelines for better accessibility
+        /// Increased blur for better content separation and readability
+        /// </summary>
+        public virtual double EnhancedGlassEffectOpacity => 0.35;
+
+        /// <summary>
+        /// Gets accessibility-compliant background blur intensity following NN/g "more blur is better" principle
+        /// Higher values ensure text readability over complex backgrounds
+        /// </summary>
+        public virtual int AccessibilityBlurIntensity => Name == "Dark" ? 15 : 12;        /// <summary>
+                                                                                          /// Gets WCAG AA compliant text color for glassmorphic surfaces
+                                                                                          /// Ensures 4.5:1 contrast ratio minimum as per NN/g guidelines
+                                                                                          /// </summary>
+        public virtual Color GlassmorphicTextColor =>
+        // Inspired by NN/g and Netguru: Use pure white for dark glass, pure black for light glass for maximum readability and accessibility
+        Name == "Dark"
+            ? Color.White // #FFFFFF for maximum contrast
+            : Color.Black; // #000000 for maximum contrast
+
+        /// <summary>
+        /// Gets the button hover text color
+        /// </summary>
+        public Color ButtonHoverText => this.GetButtonHoverText();
+
+        /// <summary>
+        /// Gets the glassmorphic secondary text color
+        /// </summary>
+        public Color GlassmorphicSecondaryTextColor => this.GetGlassmorphicSecondaryTextColor();
+
+        /// <summary>
+        /// Applies glassmorphic text color to a control and its children
+        /// </summary>
+        public virtual void ApplyGlassmorphicTextColor(Control control)
+        {
+            if (control == null) return;
+
+            // Apply to this control if it's a text-displaying control
+            if (control is Label label)
+            {
+                label.ForeColor = GlassmorphicTextColor;
+            }
+            else if (control is Button button)
+            {
+                button.ForeColor = GlassmorphicTextColor;
+            }
+            else if (control is LinkLabel linkLabel)
+            {
+                linkLabel.LinkColor = GlassmorphicTextColor;
+                linkLabel.ActiveLinkColor = this.EnsureAccessibleTextColor(GlassmorphicTextColor, CardBackground);
+            }
+
+            // Apply to children recursively
+            foreach (Control child in control.Controls)
+            {
+                ApplyGlassmorphicTextColor(child);
+            }
+        }
+
+        /// <summary>
+        /// Ensures that the contrast between two colors meets accessibility standards
+        /// </summary>
+        public bool EnsureAccessibleContrast(Color foreground, Color background)
+        {
+            double contrast = this.CalculateContrastRatio(foreground, background);
+            return contrast >= 4.5;
+        }        /// <summary>
+                 /// Gets high-contrast background for glassmorphic elements when accessibility mode is enabled
+                 /// Provides fallback solid colors as per NN/g accessibility recommendations
+                 /// </summary>
+        public virtual Color AccessibilityGlassBackground =>
+            Name == "Dark"
+                ? Color.FromArgb(240, CardBackground.R, CardBackground.G, CardBackground.B)  // Near-opaque dark
+                : Color.FromArgb(240, CardBackground.R, CardBackground.G, CardBackground.B); // Near-opaque light
+
+        /// <summary>
+        /// Determines if reduced transparency mode should be used for better accessibility
+        /// Can be overridden by user settings or system accessibility preferences
+        /// </summary>
+        public virtual bool UseReducedTransparency { get; set; } = false;
+
+        /// <summary>
+        /// Gets glow color for glassmorphism edge effects and highlights
+        /// </summary>
+        public virtual Color GlowColor =>
+            Name == "Dark"
+                ? Color.FromArgb(80, 100, 150, 255)  // Soft blue glow for dark theme
+                : Color.FromArgb(60, 120, 120, 120); // Soft gray glow for light theme
+
+        /// <summary>
+        /// Gets blur background color for frosted glass effect
+        /// </summary>
+        public virtual Color BlurBackgroundColor =>
+            Name == "Dark"
+                ? Color.FromArgb(25, 30, 30, 35)     // Dark translucent backdrop
+                : Color.FromArgb(25, 240, 240, 250); // Light translucent backdrop
+
+        /// <summary>
+        /// Gets accent gradient colors for glassmorphism effects
+        /// </summary>
+        public virtual (Color Start, Color End) AccentGradient =>
+            Name == "Dark"
+                ? (Color.FromArgb(60, 80, 120, 200), Color.FromArgb(30, 50, 80, 150))  // Blue accent gradient
+                : (Color.FromArgb(40, 100, 100, 140), Color.FromArgb(20, 80, 80, 120)); // Subtle gray gradient
+
+        /// <summary>
+        /// Gets enhanced button minimum size for better text display
+        /// </summary>
+        public virtual Size EnhancedButtonMinSize => new Size(200, 60);
+
+        /// <summary>
+        /// Gets enhanced button padding for better text spacing
+        /// </summary>
+        public virtual Padding EnhancedButtonPadding => new Padding(16, 12, 16, 12);
+
+        /// <summary>
+        /// Gets enhanced button margins for better spacing
+        /// </summary>
+        public virtual Padding EnhancedButtonMargin => new Padding(2, 6, 2, 6);
+
+        /// <summary>
+        /// Gets the border color for subtle UI element separation
+        /// </summary>
+        public virtual Color SubtleBorderColor =>
+            Name == "Dark"
+                ? Color.FromArgb(60, Color.Black)   // Subtle dark border for dark theme
+                : Color.FromArgb(60, Color.Gray);   // Subtle gray border for light theme
+
+        /// <summary>
+        /// Gets gradient overlay color for button effects
+        /// </summary>
+        public virtual Color GradientOverlayColor =>
+            Name == "Dark"
+                ? Color.FromArgb(15, Color.White)   // Light overlay for dark theme
+                : Color.FromArgb(15, Color.Black);  // Dark overlay for light theme
 
         /// <summary>
         /// Fonts used in the theme
@@ -233,6 +384,94 @@ namespace BusBus.UI
                 Debug.WriteLine($"Font creation failed: {ex.Message}");
                 return SystemFonts.DefaultFont;
             }
+        }
+
+        /// <summary>
+        /// Calculates contrast ratio between two colors (WCAG 2.1 formula)
+        /// </summary>
+        /// <param name="color1">First color</param>
+        /// <param name="color2">Second color</param>
+        /// <returns>Contrast ratio (1:1 to 21:1)</returns>
+        public static double CalculateContrastRatio(Color color1, Color color2)
+        {
+            double luminance1 = CalculateRelativeLuminance(color1);
+            double luminance2 = CalculateRelativeLuminance(color2);
+
+            // Ensure the lighter color is always in the numerator
+            if (luminance1 <= luminance2)
+            {
+                (luminance1, luminance2) = (luminance2, luminance1);
+            }
+
+            return (luminance1 + 0.05) / (luminance2 + 0.05);
+        }
+
+        /// <summary>
+        /// Calculates relative luminance of a color (WCAG 2.1 formula)
+        /// </summary>
+        /// <param name="color">Color to calculate</param>
+        /// <returns>Relative luminance (0 to 1)</returns>
+        private static double CalculateRelativeLuminance(Color color)
+        {
+            double r = ConvertColorChannel(color.R / 255.0);
+            double g = ConvertColorChannel(color.G / 255.0);
+            double b = ConvertColorChannel(color.B / 255.0);
+
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+
+        /// <summary>
+        /// Converts color channel value according to WCAG 2.1 formula
+        /// </summary>
+        private static double ConvertColorChannel(double colorChannel)
+        {
+            return colorChannel <= 0.03928
+                ? colorChannel / 12.92
+                : Math.Pow((colorChannel + 0.055) / 1.055, 2.4);
+        }
+        /// <summary>
+        /// Ensures WCAG 2.1 AA compliant contrast by adjusting colors if needed
+        /// </summary>
+        /// <param name="textColor">Text color</param>
+        /// <param name="backgroundColor">Background color</param>
+        /// <param name="minRatio">Minimum required contrast ratio (4.5:1 for normal text, 3:1 for large text)</param>
+        /// <returns>Adjusted text color to meet contrast requirements</returns>
+        public static Color EnsureAccessibleContrast(Color textColor, Color backgroundColor, double minRatio = 4.5)
+        {
+            // Calculate current contrast ratio
+            double ratio = CalculateContrastRatio(textColor, backgroundColor);
+
+            // If already compliant, return original color
+            if (ratio >= minRatio)
+            {
+                return textColor;
+            }
+
+            // Determine if we're dealing with light or dark background
+            bool isDarkBackground = CalculateRelativeLuminance(backgroundColor) < 0.5;
+
+            // Adjust the text color to meet contrast requirements
+            Color adjustedColor = textColor;
+            int step = isDarkBackground ? 5 : -5; // Lighten for dark backgrounds, darken for light
+
+            while (ratio < minRatio)
+            {
+                int r = Math.Clamp(adjustedColor.R + step, 0, 255);
+                int g = Math.Clamp(adjustedColor.G + step, 0, 255);
+                int b = Math.Clamp(adjustedColor.B + step, 0, 255);
+
+                adjustedColor = Color.FromArgb(adjustedColor.A, r, g, b);
+                ratio = CalculateContrastRatio(adjustedColor, backgroundColor);
+
+                // Break if we've gone as far as possible but still can't meet requirements
+                if ((isDarkBackground && r == 255 && g == 255 && b == 255) ||
+                    (!isDarkBackground && r == 0 && g == 0 && b == 0))
+                {
+                    break;
+                }
+            }
+
+            return adjustedColor;
         }
 
         /// <summary>
@@ -404,6 +643,24 @@ namespace BusBus.UI
         }
 
         /// <summary>
+        /// Styles a button with enhanced modern appearance following dark UI principles
+        /// </summary>
+        /// <param name="button">The Button to style</param>
+        public virtual void StyleEnhancedButton(Button button)
+        {
+            ArgumentNullException.ThrowIfNull(button);
+            button.BackColor = ButtonBackground;
+            button.ForeColor = ButtonText;
+            button.Font = ButtonFont;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 0;
+            button.MinimumSize = EnhancedButtonMinSize;
+            button.Padding = EnhancedButtonPadding;
+            button.Margin = EnhancedButtonMargin;
+            button.Cursor = Cursors.Hand;
+        }
+
+        /// <summary>
         /// Styles a side panel button with specific styling
         /// </summary>
         /// <param name="button">The Button to style as a side panel button</param>
@@ -416,6 +673,126 @@ namespace BusBus.UI
             button.TextAlign = ContentAlignment.MiddleLeft;
             button.Padding = new Padding(10, 0, 0, 0);
             button.Height = 40;
+        }        /// <summary>
+                 /// Styles a panel with enhanced glassmorphism appearance for modern UI
+                 /// </summary>
+                 /// <param name="panel">The Panel to style</param>
+        public virtual void StyleGlassPanel(Panel panel)
+        {
+            ArgumentNullException.ThrowIfNull(panel);
+            panel.BackColor = Color.Transparent;
+
+            // Add glassmorphism paint effects
+            panel.Paint += (s, e) =>
+            {
+                if (s is Panel p)
+                {
+                    e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                    // Create frosted glass effect background
+                    using (var glassBrush = new SolidBrush(BlurBackgroundColor))
+                    {
+                        var rect = new Rectangle(0, 0, p.Width, p.Height);
+                        e.Graphics.FillRectangle(glassBrush, rect);
+                    }
+
+                    // Add subtle glow effect around edges
+                    var glowRect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
+                    using (var glowPen = new Pen(GlowColor, 1))
+                    {
+                        e.Graphics.DrawRectangle(glowPen, glowRect);
+                    }
+
+                    // Add inner highlight for glass effect
+                    var highlightRect = new Rectangle(1, 1, p.Width - 3, p.Height - 3);
+                    var highlightColor = Name == "Dark"
+                        ? Color.FromArgb(20, 255, 255, 255)
+                        : Color.FromArgb(15, 0, 0, 0);
+                    using (var highlightPen = new Pen(highlightColor, 1))
+                    {
+                        e.Graphics.DrawRectangle(highlightPen, highlightRect);
+                    }
+
+                    // Add diagonal shimmer effect for glassmorphism
+                    var shimmerGradient = AccentGradient;
+                    using (var shimmerBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                        new Point(0, 0),
+                        new Point(p.Width, p.Height),
+                        shimmerGradient.Start,
+                        shimmerGradient.End))
+                    {
+                        e.Graphics.FillRectangle(shimmerBrush, 2, 2, p.Width - 4, p.Height - 4);
+                    }
+                }
+            };
+        }
+
+        /// <summary>
+        /// Creates a shadow label for text depth effects
+        /// </summary>
+        /// <param name="originalLabel">The original label to create shadow for</param>
+        /// <param name="offsetX">Shadow offset X (default: 1)</param>
+        /// <param name="offsetY">Shadow offset Y (default: 1)</param>
+        /// <returns>A shadow label positioned behind the original</returns>
+        public virtual Label CreateShadowLabel(Label originalLabel, int offsetX = 1, int offsetY = 1)
+        {
+            ArgumentNullException.ThrowIfNull(originalLabel);
+
+            return new Label
+            {
+                Text = originalLabel.Text,
+                Font = originalLabel.Font,
+                ForeColor = ShadowTextColor,
+                Location = new Point(originalLabel.Location.X + offsetX, originalLabel.Location.Y + offsetY),
+                Size = originalLabel.Size,
+                BackColor = Color.Transparent
+            };
+        }        /// <summary>
+                 /// Applies dark UI design principles to a card panel with glassmorphism effects
+                 /// </summary>
+                 /// <param name="card">The card panel to enhance</param>
+        public virtual void StyleModernCard(Panel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            card.BackColor = CardBackground;
+
+            // Add paint event for glassmorphism effects
+            card.Paint += (s, e) =>
+            {
+                if (s is Panel p)
+                {
+                    e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                    // Draw glassmorphism backdrop with blur effect simulation
+                    using (var backdropBrush = new SolidBrush(BlurBackgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backdropBrush, 0, 0, p.Width, p.Height);
+                    }
+
+                    // Draw subtle glow border for glassmorphism
+                    using (var glowPen = new Pen(GlowColor, 2))
+                    {
+                        e.Graphics.DrawRectangle(glowPen, 1, 1, p.Width - 3, p.Height - 3);
+                    }
+
+                    // Draw inner subtle border
+                    using (var borderPen = new Pen(SubtleBorderColor, 1))
+                    {
+                        e.Graphics.DrawRectangle(borderPen, 0, 0, p.Width - 1, p.Height - 1);
+                    }
+
+                    // Add glassmorphism gradient overlay
+                    var gradient = AccentGradient;
+                    using (var gradientBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                        new Rectangle(0, 0, p.Width, p.Height),
+                        gradient.Start,
+                        gradient.End,
+                        System.Drawing.Drawing2D.LinearGradientMode.Vertical))
+                    {
+                        e.Graphics.FillRectangle(gradientBrush, 2, 2, p.Width - 4, p.Height - 4);
+                    }
+                }
+            };
         }
 
         /// <summary>
@@ -566,13 +943,12 @@ namespace BusBus.UI
         public override Color ButtonText => ThemeColors.LightButtonText;
         public override Color ButtonDisabledText => ThemeColors.LightButtonDisabledText;
         public override Color CardText => ThemeColors.LightCardText;
+        public override Color SecondaryText => ThemeColors.LightSecondaryText;
         public override Color HeadlineText => ThemeColors.LightHeadlineText;
         public override Color TextBoxBackground => ThemeColors.LightTextBoxBackground;
-    }
-
-    /// <summary>
-    /// Dark theme implementation using centralized color definitions
-    /// </summary>
+    }    /// <summary>
+         /// Dark theme implementation using centralized color definitions
+         /// </summary>
     public class DarkTheme : Theme
     {
         public override string Name => "Dark";
@@ -588,8 +964,8 @@ namespace BusBus.UI
         public override Color ButtonText => ThemeColors.DarkButtonText;
         public override Color ButtonDisabledText => ThemeColors.DarkButtonDisabledText;
         public override Color CardText => ThemeColors.DarkCardText;
-        public override Color HeadlineText => ThemeColors.DarkHeadlineText;
-        public override Color TextBoxBackground => ThemeColors.DarkTextBoxBackground;
+        public override Color SecondaryText => ThemeColors.DarkSecondaryText;
+        public override Color HeadlineText => ThemeColors.DarkHeadlineText; public override Color TextBoxBackground => ThemeColors.DarkTextBoxBackground;
     }
 }
 // NOTE: ThemeManager implementation has been moved to ThemeManager.cs to avoid duplication.

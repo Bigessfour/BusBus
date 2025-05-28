@@ -5,19 +5,19 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.Data
 {
-    [TestFixture]
-    [Category(TestCategories.Database)]
-    [Category(TestCategories.Integration)]
+    [TestClass]
+    [TestCategory(TestCategories.Database)]
+    [TestCategory(TestCategories.Integration)]
     public class AdvancedSqlServerDatabaseManagerTests : TestBase
     {
         private AdvancedSqlServerDatabaseManager _databaseManager;
         private ILogger<AdvancedSqlServerDatabaseManager> _logger;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
@@ -26,8 +26,8 @@ namespace BusBus.Tests.Data
 
             // Create a database manager with in-memory settings
             _databaseManager = new AdvancedSqlServerDatabaseManager(configuration, _logger);
-        }        [Test]
-        [Description("Test database migration status check")]
+        }        [TestMethod]
+        // Description: Test database migration status check
         public async Task CheckMigrationStatus_ShouldReturnMigrationInfo()
         {
             // Act
@@ -37,8 +37,8 @@ namespace BusBus.Tests.Data
             status.Should().NotBeNull();
             status.PendingMigrations.Should().NotBeNull();
             status.AppliedMigrations.Should().NotBeNull();
-        }        [Test]
-        [Description("Test getting database size and growth information")]
+        }        [TestMethod]
+        // Description: Test getting database size and growth information
         public async Task GetDatabaseSizeInfo_ShouldReturnSizeInformation()
         {
             // Act
@@ -49,8 +49,8 @@ namespace BusBus.Tests.Data
             sizeInfo.DatabaseName.Should().NotBeNullOrEmpty();
             sizeInfo.DataFileSize.Should().BeGreaterOrEqualTo(0);
             sizeInfo.LogFileSize.Should().BeGreaterOrEqualTo(0);
-        }        [Test]
-        [Description("Test getting table statistics")]
+        }        [TestMethod]
+        // Description: Test getting table statistics
         public async Task GetTableStatistics_ShouldReturnTableInfo()
         {
             // Act
@@ -61,8 +61,8 @@ namespace BusBus.Tests.Data
             tableStats.Should().ContainKey("Routes");
             tableStats.Should().ContainKey("Drivers");
             tableStats.Should().ContainKey("Vehicles");
-        }        [Test]
-        [Description("Test database connection string parsing")]
+        }        [TestMethod]
+        // Description: Test database connection string parsing
         public void ParseConnectionString_ShouldExtractDatabaseComponents()
         {
             // Arrange
@@ -78,8 +78,8 @@ namespace BusBus.Tests.Data
             components.IntegratedSecurity.Should().BeTrue();
         }
 
-        [Test]
-        [Description("Test getting database indexes")]
+        [TestMethod]
+        // Description: Test getting database indexes
         public async Task GetDatabaseIndexes_ShouldReturnIndexInformation()
         {
             // Act
@@ -91,8 +91,8 @@ namespace BusBus.Tests.Data
             indexes.Should().Contain(i => i.IndexType.Contains("PRIMARY"));
         }
 
-        [Test]
-        [Description("Test checking database health")]
+        [TestMethod]
+        // Description: Test checking database health
         public async Task CheckDatabaseHealth_ShouldReturnHealthStatus()
         {
             // Act

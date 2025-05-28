@@ -1,3 +1,4 @@
+#pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
 // Enable nullable reference types for this file
 #nullable enable
 using Microsoft.Extensions.Configuration;
@@ -6,7 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using BusBus.DataAccess;
 using BusBus.Services;
 using BusBus.UI;
+using BusBus.Utils;
 using System;
+using System.Diagnostics;
+using System.Drawing;
 using System.Windows.Forms;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +19,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using BusBus.Analytics;
+using BusBus.UI.Diagnostics;
 
 namespace BusBus
 {
@@ -28,6 +33,23 @@ namespace BusBus
         public static void AddBackgroundTask(Task task)
         {
             Console.WriteLine($"[Program] Adding background task: {task.Id}");
+
+            // Debug information for task monitoring
+            if (Environment.GetEnvironmentVariable("BUSBUS_MONITOR_BACKGROUND_TASKS") == "true")
+            {
+                // Get stack trace to help identify where task was created
+                var stackTrace = new System.Diagnostics.StackTrace(true);
+                var caller = stackTrace.GetFrame(1)?.GetMethod()?.DeclaringType?.Name;
+                var method = stackTrace.GetFrame(1)?.GetMethod()?.Name;
+                Console.WriteLine($"TASK_LEAK: Task {task.Id} created by {caller}.{method}");
+
+                // Add continuation to track task completion
+                task.ContinueWith(t =>
+                {
+                    Console.WriteLine($"TASK_COMPLETED: Task {t.Id} {(t.IsFaulted ? "faulted" : "completed")}");
+                });
+            }
+
             lock (_backgroundTasks)
             {
                 _backgroundTasks.Add(task);
@@ -47,28 +69,46 @@ namespace BusBus
                 e.Cancel = true; // Cancel the immediate termination
                 ShutdownApplication();
                 Environment.Exit(0);
-            };
+            };            // .NET 8 Windows Forms modern initialization
+            ApplicationConfiguration.Initialize();
 
-            Application.SetHighDpiMode(HighDpiMode.SystemAware);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);            // Setup dependency injection
+            // Additional modern configuration
+            ModernApplicationBootstrap.Configure();
+
+            // Setup dependency injection
             var services = new ServiceCollection();
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();            // Initialize logging and debug utilities
             var logger = _serviceProvider.GetRequiredService<ILogger<object>>();
             Utils.LoggingManager.Initialize(_serviceProvider.GetRequiredService<ILoggerFactory>());
-            Utils.ServiceScopeExtensions.SetLogger(logger);
-
-            // Initialize thread safety monitoring
+            Utils.ServiceScopeExtensions.SetLogger(logger);            // Initialize thread safety monitoring
             Utils.ThreadSafetyMonitor.Initialize(logger);
             Utils.ThreadSafeUI.Initialize(logger);
             Utils.ResourceTracker.Initialize(logger);
+
+            // Initialize process monitoring
+            try
+            {
+                var processMonitor = Utils.ProcessMonitor.Instance;
+                processMonitor.Initialize(_serviceProvider.GetRequiredService<ILogger<Utils.ProcessMonitor>>());
+                processMonitor.RegisterExitHandlers();
+                logger.LogInformation("ProcessMonitor initialized");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to initialize ProcessMonitor");
+            }
 
             // Parse command line arguments for debug options
             bool debugDatabase = Array.Exists(args, arg => arg == "--debug-db");
             bool debugThreads = Array.Exists(args, arg => arg == "--debug-threads");
             bool debugResources = Array.Exists(args, arg => arg == "--debug-resources");
             bool verboseLogging = Array.Exists(args, arg => arg == "--verbose");
+            bool debugLayout = Array.Exists(args, arg => arg == "--debug-layout");
+
+            // Parse dashboard diagnostics flag
+            var cmdLineArgs = Environment.GetCommandLineArgs();
+            bool runDashboardDiagnostics = cmdLineArgs.Any(arg => arg.Equals("--diagnose-dashboard", StringComparison.OrdinalIgnoreCase));
 
             if (verboseLogging)
             {
@@ -81,16 +121,10 @@ namespace BusBus
             // Check command line arguments
             var cmdArgs = Environment.GetCommandLineArgs();
             if (cmdArgs.Length > 1)
-            {
-                // Handle debug commands
+            {                // Handle debug commands
                 if (cmdArgs[1] == "--test-db-connection" || debugDatabase)
                 {
                     await TestDatabaseConnectionAsync();
-                    return;
-                }
-                else if (cmdArgs[1] == "--debug-console")
-                {
-                    LaunchDebugConsoleWindow();
                     return;
                 }
                 else if (debugThreads)
@@ -105,11 +139,10 @@ namespace BusBus
                 }
             }
 
-            // Initialize theme system with dark theme for testing                Console.WriteLine("[Program] Initializing theme system...");
+            // Initialize theme system with dark theme for testing
+            Console.WriteLine("[Program] Initializing theme system...");
             try
             {
-                var cmdLineArgs = Environment.GetCommandLineArgs();
-
                 // Default to dark theme unless explicitly requested otherwise
                 bool startWithLightTheme = cmdLineArgs.Length > 1 && cmdLineArgs[1].Equals("--light", StringComparison.OrdinalIgnoreCase);
 
@@ -129,15 +162,81 @@ namespace BusBus
             catch (Exception ex)
             {
                 Console.WriteLine($"[Program] Error initializing theme: {ex.Message}");
-            }// Setup application exit handler (nullable EventHandler)
+            }            // Setup application exit handler (nullable EventHandler)
             EventHandler? applicationExitHandler = null;
             applicationExitHandler = (sender, e) =>
             {
                 Console.WriteLine("[Program] Application exit handler started");
                 ShutdownApplication();
+
+                // Force process exit after a short delay if still running
+                Task.Run(() =>
+                {
+                    Thread.Sleep(500); // Give time for clean shutdown
+                    Console.WriteLine("[Program] Forcing process exit");
+                    try
+                    {
+                        // Kill any child processes first
+                        foreach (var process in System.Diagnostics.Process.GetProcessesByName("dotnet"))
+                        {
+                            try
+                            {
+                                // Only kill child processes, not the main process
+                                if (process.Id != Environment.ProcessId &&
+                                    process.MainWindowTitle.Contains("BusBus"))
+                                {
+                                    process.Kill();
+                                    Console.WriteLine($"[Program] Killed child process: {process.Id}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[Program] Error killing process {process.Id}: {ex.Message}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Program] Error in process cleanup: {ex.Message}");
+                    }
+
+                    // Final force exit with no further wait
+                    Environment.Exit(0);
+                });
             };
 
-            Application.ApplicationExit += applicationExitHandler; try
+            Application.ApplicationExit += applicationExitHandler;
+            // Add additional handler for process exit
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+            {
+                Console.WriteLine("[Program] Process exit event triggered");
+                try
+                {
+                    ShutdownApplication();
+
+                    // Final attempt to clean up any lingering resources
+                    // This is our last chance before the process terminates
+                    foreach (var process in System.Diagnostics.Process.GetProcessesByName("dotnet"))
+                    {
+                        try
+                        {
+                            if (process.Id != Environment.ProcessId &&
+                                process.MainWindowTitle.Contains("BusBus"))
+                            {
+                                process.Kill();
+                                Console.WriteLine($"[Program] Killed child process during ProcessExit: {process.Id}");
+                            }
+                        }
+                        catch (Exception) { /* Ignore exceptions during final cleanup */ }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Error in ProcessExit handler: {ex.Message}");
+                }
+            };
+
+            try
             {
                 // Seed sample data using a scoped service
                 using (var scope = _serviceProvider.CreateScope())
@@ -147,8 +246,68 @@ namespace BusBus
                     await routeService.SeedSampleDataAsync();
                     Console.WriteLine("[Program] Sample data seeded successfully");
                 }
-
                 var mainForm = _serviceProvider.GetRequiredService<Dashboard>();
+
+                // Apply layout debugging if enabled
+                if (debugLayout)
+                {
+                    mainForm.Shown += (s, e) =>
+                    {
+                        Utils.LayoutDebugger.EnableDebugMode();
+                        Utils.LayoutDebugger.LogControlHierarchy(mainForm); // Log the control hierarchy instead
+                    };
+                }
+
+                // Enable visual debugging indicators (safe, non-intrusive)
+                // This helps visualize the UI structure without changing functionality
+                bool visualDebug = Array.Exists(args, arg => arg == "--visual-debug") || debugLayout;
+                if (visualDebug)
+                {
+                    try
+                    {
+                        UI.VisualDebugHelper.SetEnabled(true);
+                        mainForm.Shown += (s, e) =>
+                        {
+                            UI.VisualDebugHelper.HighlightDashboardComponents(mainForm);
+                            Console.WriteLine("[Program] Visual debugging enabled - UI components highlighted");
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        // Silently continue if visual debugging fails - it's just a helper
+                        Console.WriteLine($"[Program] Visual debugging helper could not be initialized: {ex.Message}");
+                    }
+                }
+
+                // Run dashboard diagnostics if requested
+                if (runDashboardDiagnostics)
+                {
+                    mainForm.Shown += async (s, e) =>
+                    {
+                        Console.WriteLine("[Program] Running dashboard diagnostics...");
+                        try
+                        {
+                            var report = await DashboardDiagnosticRunner.RunDashboardDiagnosticsAsync(_serviceProvider);
+                            Console.WriteLine($"[Program] Dashboard diagnostics completed: {(report.Success ? "SUCCESS" : "FAILED")} in {report.TotalElapsedMs}ms");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Program] Error running dashboard diagnostics: {ex.Message}");
+                        }
+                    };
+                }
+
+                // Add keyboard shortcut to toggle debug mode
+                mainForm.KeyDown += (s, e) =>
+                {
+                    if (e.Control && e.Shift && e.KeyCode == Keys.D)
+                    {
+                        Utils.LayoutDebugger.ToggleDebugMode();
+                        mainForm.Invalidate(true); // Force redraw
+                    }
+                };
+                mainForm.KeyPreview = true; // Enable form to receive key events
+
                 Console.WriteLine("[Program] Running main form...");
                 Application.Run(mainForm);
             }
@@ -180,47 +339,102 @@ namespace BusBus
         {
             Console.WriteLine("[Program] Starting application shutdown");
 
-            // Signal cancellation first
-            _appCancellationTokenSource.Cancel();
-            Console.WriteLine("[Program] Cancellation token signaled");
-
-            // Wait for background tasks to complete with timeout
-            Task[] tasksToWait;
-            lock (_backgroundTasks)
-            {
-                tasksToWait = _backgroundTasks.ToArray();
-            }
-
-            Console.WriteLine($"[Program] Waiting for {tasksToWait.Length} background tasks to complete...");
             try
             {
-                // Wait for tasks with 2 second timeout (reduced to prevent hanging)
-                var waitTask = Task.WhenAll(tasksToWait);
-                if (!waitTask.Wait(TimeSpan.FromSeconds(2)))
+                // Signal cancellation first
+                if (_appCancellationTokenSource != null && !_appCancellationTokenSource.IsCancellationRequested)
                 {
-                    Console.WriteLine("[Program] Timeout waiting for background tasks - continuing shutdown");
+                    _appCancellationTokenSource.Cancel();
+                    Console.WriteLine("[Program] Cancellation token signaled");
+                }
+
+                // Wait for background tasks to complete with timeout
+                Task[] tasksToWait;
+                lock (_backgroundTasks)
+                {
+                    tasksToWait = _backgroundTasks.ToArray();
+                    // Clear the list to prevent further access
+                    _backgroundTasks.Clear();
+                }
+
+                Console.WriteLine($"[Program] Waiting for {tasksToWait.Length} background tasks to complete...");
+
+                // Wait for tasks with a shorter timeout (1 second) to prevent hanging
+                var waitTask = Task.WhenAll(tasksToWait);
+                if (!waitTask.Wait(TimeSpan.FromSeconds(1)))
+                {
+                    Console.WriteLine("[Program] Timeout waiting for background tasks - force terminating");
+
+                    // Force terminate any remaining tasks by setting a static flag that tasks can check
+                    Console.WriteLine("[Program] Application shutdown forced - tasks may be terminated abruptly");
                 }
                 else
                 {
                     Console.WriteLine("[Program] All background tasks completed");
                 }
             }
-            catch (AggregateException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine($"[Program] Error waiting for tasks: {ex.Message}");
+                Console.WriteLine($"[Program] Error during task shutdown: {ex.Message}");
+                // Continue with shutdown despite errors
             }
 
-            // Give a brief moment for UI cleanup before disposing services
-            Thread.Sleep(100);
-
-            // Dispose service provider
-            if (_serviceProvider is IDisposable disposable)
+            try
             {
-                disposable.Dispose();
-                Console.WriteLine("[Program] Service provider disposed");
-            }
+                // Give a brief moment for UI cleanup before disposing services
+                Thread.Sleep(100);                // Use ProcessMonitor to clean up any lingering processes or timers
+                try
+                {
+                    Utils.ProcessMonitor.Instance.Cleanup();
+                    Console.WriteLine("[Program] ProcessMonitor cleanup completed");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] ProcessMonitor cleanup error: {ex.Message}");
+                }
 
-            Console.WriteLine("[Program] Application shutdown complete");
+                // Dispose service provider
+                if (_serviceProvider is IDisposable disposable)
+                {
+                    try
+                    {
+                        disposable.Dispose();
+                        Console.WriteLine("[Program] Service provider disposed");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Program] Error disposing service provider: {ex.Message}");
+                    }
+                }
+
+                // Dispose the cancellation token source
+                try
+                {
+                    if (_appCancellationTokenSource != null)
+                    {
+                        _appCancellationTokenSource.Dispose();
+                        Console.WriteLine("[Program] CancellationTokenSource disposed");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Error disposing CancellationTokenSource: {ex.Message}");
+                }
+
+                // Force GC collection to help clean up resources
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                // Second GC collection pass to ensure finalizers that released resources are collected
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                Console.WriteLine("[Program] Application shutdown complete");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Program] Error during final cleanup: {ex.Message}");
+            }
         }
         private static void ConfigureServices(IServiceCollection services)
         {
@@ -246,16 +460,15 @@ namespace BusBus
                     options.TimestampFormat = "HH:mm:ss.fff ";
                     options.UseUtcTimestamp = false;
                 });
-                builder.AddDebug();
-
-                // Set minimum level based on environment
+                builder.AddDebug();                // Set minimum level based on environment
                 var isDevelopment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Development";
+                var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+                Console.WriteLine($"Environment: {env}");
                 builder.SetMinimumLevel(isDevelopment ? LogLevel.Debug : LogLevel.Information);
-            });
-
-            // Add DbContext with SQL Server and retry on transient failures
+            });            // Add DbContext with SQL Server and retry on transient failures
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(
+            {
+                var dbOptions = options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection"),
                     sqlOptions => sqlOptions.EnableRetryOnFailure(
                         maxRetryCount: 10,
@@ -263,24 +476,35 @@ namespace BusBus
                         errorNumbersToAdd: SqlRetryErrorNumbers
                     )
                 )
-                .EnableSensitiveDataLogging()
-                .EnableDetailedErrors()
-
-            );
+                .EnableDetailedErrors();                // Only enable sensitive data logging in development
+                var isDevelopment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Development";
+                var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+                Console.WriteLine($"Database Environment: {env}");
+                if (isDevelopment)
+                {
+                    Console.WriteLine("Enabling sensitive data logging for development");
+                    dbOptions.EnableSensitiveDataLogging();
+                }
+                else
+                {
+                    Console.WriteLine("Sensitive data logging disabled for production");
+                }
+            });
 
             // Register services with proper scoping to avoid DbContext threading issues
             services.AddScoped<IRouteService, RouteService>();
             services.AddScoped<IDriverService, DriverService>();
             services.AddScoped<IVehicleService, VehicleService>();
-            services.AddScoped<IStatisticsService, StatisticsService>();
-
-            // Register UI components
+            services.AddScoped<IStatisticsService, StatisticsService>();            // Register UI components
             services.AddTransient<Dashboard>((provider) =>
             {
                 var routeService = provider.GetRequiredService<IRouteService>();
                 var logger = provider.GetRequiredService<ILogger<Dashboard>>();
                 return new Dashboard(provider, routeService, logger);
             });
+
+            // Register views as transient to avoid UI conflicts
+            services.AddTransient<DashboardView>();
         }        /// <summary>
                  /// Tests database connection and reports status
                  /// </summary>
@@ -349,34 +573,17 @@ namespace BusBus
                     Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
                 }
             }
-        }
-
-        /// <summary>
-        /// Launch the debug console window
-        /// </summary>
+        }        /// <summary>
+                 /// Shows a message that debug console functionality has been removed
+                 /// </summary>
         private static void LaunchDebugConsoleWindow()
         {
-            Console.WriteLine("[Program] Launching Debug Console...");
-
-            try
-            {
-                if (_serviceProvider == null)
-                {
-                    Console.WriteLine("ERROR: Service provider is null");
-                    return;
-                }
-
-                Console.WriteLine("Debug console functionality has been removed.");
-                Console.WriteLine("Use the main Dashboard application for debugging.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error launching debug console: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
-                }
-            }
+            Console.WriteLine("[Program] Debug console functionality has been removed");
+            MessageBox.Show(
+                "Debug console functionality has been removed.\nPlease use the built-in diagnostics tools in the main application.",
+                "Feature Removed",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         /// <summary>

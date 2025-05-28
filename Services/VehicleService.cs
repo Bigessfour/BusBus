@@ -1,89 +1,30 @@
-// Enable nullable reference types for this file
-#nullable enable
-using BusBus.DataAccess;
-using BusBus.Models;
-using BusBus.UI.Common;
-using Microsoft.EntityFrameworkCore;
+#pragma warning disable CS8613 // Nullability of reference types in return type doesn't match implicitly implemented member
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using BusBus.Models;
+using BusBus.UI.Common;
 
 namespace BusBus.Services
 {
+    /// <summary>
+    /// Service for managing vehicles in the BusBus system
+    /// </summary>
     public class VehicleService : IVehicleService
     {
-        private readonly IServiceProvider _serviceProvider;
-        public VehicleService(IServiceProvider serviceProvider)
+        public Task<Vehicle> CreateAsync(Vehicle entity, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<Vehicle> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<List<Vehicle>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int> GetCountAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<Vehicle> UpdateAsync(Vehicle entity, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public (bool IsValid, string ErrorMessage) ValidateEntity(Vehicle entity) => throw new NotImplementedException();
+        public void Dispose()
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        }
-
-        public async Task<BusBus.Models.Vehicle> CreateAsync(BusBus.Models.Vehicle entity, CancellationToken cancellationToken = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            dbContext.Vehicles.Add(entity);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return entity;
-        }
-
-        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var vehicle = await dbContext.Vehicles.FindAsync(new object[] { id }, cancellationToken);
-            if (vehicle != null)
-            {
-                dbContext.Vehicles.Remove(vehicle);
-                await dbContext.SaveChangesAsync(cancellationToken);
-            }
-        }
-
-        public async Task<int> GetCountAsync(CancellationToken cancellationToken = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            return await dbContext.Vehicles.CountAsync(cancellationToken);
-        }
-
-        public async Task<BusBus.Models.Vehicle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            return await dbContext.Vehicles.FindAsync(new object[] { id }, cancellationToken);
-        }
-
-        public async Task<List<BusBus.Models.Vehicle>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            return await dbContext.Vehicles
-                .OrderBy(v => v.Number)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(cancellationToken);
-        }
-
-        public async Task<BusBus.Models.Vehicle> UpdateAsync(BusBus.Models.Vehicle entity, CancellationToken cancellationToken = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            dbContext.Vehicles.Update(entity);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return entity;
-        }
-
-        public (bool IsValid, string ErrorMessage) ValidateEntity(BusBus.Models.Vehicle entity)        {
-            ArgumentNullException.ThrowIfNull(entity);
-
-            if (string.IsNullOrWhiteSpace(entity.Number))
-                return (false, "Vehicle number is required.");
-            if (entity.Capacity < 0)
-                return (false, "Capacity cannot be negative.");
-            return (true, string.Empty);
+            // No managed resources to dispose in this implementation
+            GC.SuppressFinalize(this);
         }
     }
 }

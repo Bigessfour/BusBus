@@ -9,6 +9,6 @@ namespace BusBus.Services
     /// </summary>
     public interface IDriverService : ICrudService<Driver, Guid>
     {
-        // Additional driver-specific methods can be added here
+        // Additional driver-specific methods can be added here if needed
     }
 }

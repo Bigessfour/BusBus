@@ -1,4 +1,5 @@
 #nullable enable
+#pragma warning disable CS0169 // Field is never used
 using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI.Common;
@@ -9,11 +10,11 @@ using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public partial class DriverPanel : Form
+    public partial class DriverPanel : BaseForm
     {
         private readonly IDriverService _driverService;
         private Driver? _driver;
-        private bool _isNewDriver;        private TextBox _firstNameTextBox = null!;
+        private bool _isNewDriver; private TextBox _firstNameTextBox = null!;
         private TextBox _lastNameTextBox = null!;
         private TextBox _licenseNumberTextBox = null!;
         private Button _saveButton = null!;
@@ -68,7 +69,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(firstNameLabel, 0, 0);            _firstNameTextBox = new TextBox
+            mainPanel.Controls.Add(firstNameLabel, 0, 0); _firstNameTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -87,7 +88,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(lastNameLabel, 0, 1);            _lastNameTextBox = new TextBox
+            mainPanel.Controls.Add(lastNameLabel, 0, 1); _lastNameTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -106,7 +107,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(licenseLabel, 0, 2);            _licenseNumberTextBox = new TextBox
+            mainPanel.Controls.Add(licenseLabel, 0, 2); _licenseNumberTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -122,7 +123,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.RightToLeft,
                 Padding = new Padding(0, 10, 0, 0)
-            };            _cancelButton = new Button
+            }; _cancelButton = new Button
             {
                 Text = "Cancel",
                 Size = new Size(80, 30),
@@ -134,7 +135,7 @@ namespace BusBus.UI
                 Margin = new Padding(5, 0, 0, 0)
             };
             _cancelButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _cancelButton.Click += (s, e) => this.Close();            _saveButton = new Button
+            _cancelButton.Click += (s, e) => this.Close(); _saveButton = new Button
             {
                 Text = "Save",
                 Size = new Size(80, 30),
@@ -214,8 +215,11 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving driver: {ex.Message}", "Save Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show($"Error saving driver: {ex.Message}", "Save Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             finally
             {
@@ -223,30 +227,36 @@ namespace BusBus.UI
                 _saveButton.Text = "Save";
             }
         }
-
         private bool ValidateInput()
         {
             if (string.IsNullOrWhiteSpace(_firstNameTextBox.Text))
             {
-                MessageBox.Show("First name is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                _firstNameTextBox.Focus();
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("First name is required.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _firstNameTextBox.Focus();
+                }
                 return false;
             }
-
             if (string.IsNullOrWhiteSpace(_lastNameTextBox.Text))
             {
-                MessageBox.Show("Last name is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                _lastNameTextBox.Focus();
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Last name is required.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _lastNameTextBox.Focus();
+                }
                 return false;
             }
-
             if (string.IsNullOrWhiteSpace(_licenseNumberTextBox.Text))
             {
-                MessageBox.Show("License number is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                _licenseNumberTextBox.Focus();
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("License number is required.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _licenseNumberTextBox.Focus();
+                }
                 return false;
             }
 
@@ -254,3 +264,4 @@ namespace BusBus.UI
         }
     }
 }
+#pragma warning restore CS0169 // Field is never used

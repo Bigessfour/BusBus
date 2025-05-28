@@ -9,26 +9,26 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusBus.Tests.DataAccess
 {
-    [TestFixture]
-    [Category(TestCategories.Database)]
-    [Category(TestCategories.Unit)]
+    [TestClass]
+    [TestCategory(TestCategories.Database)]
+    [TestCategory(TestCategories.Unit)]
     public class AppDbContextTests : TestBase
     {
         private AppDbContext _dbContext;
 
-        [SetUp]
+        [TestInitialize]
         public override async Task SetUp()
         {
             await base.SetUp();
             _dbContext = ServiceProvider.GetRequiredService<AppDbContext>();
         }
 
-        [Test]
-        [Description("Test that AppDbContext correctly configures the model")]
+        [TestMethod]
+        // Description: Test that AppDbContext correctly configures the model
         public void AppDbContext_ModelConfiguration_ShouldBeCorrect()
         {
             // Act
@@ -78,8 +78,8 @@ namespace BusBus.Tests.DataAccess
             driverProperties.Should().Contain(p => p.Name == "EmergencyContactJson");
         }
 
-        [Test]
-        [Description("Test that seeded data is properly loaded")]
+        [TestMethod]
+        // Description: Test that seeded data is properly loaded
         public async Task AppDbContext_SeedData_ShouldBeLoaded()
         {
             // Arrange
@@ -105,8 +105,8 @@ namespace BusBus.Tests.DataAccess
             vehicle101.IsActive.Should().BeTrue();
         }
 
-        [Test]
-        [Description("Test JSON serialization and deserialization for Driver properties")]
+        [TestMethod]
+        // Description: Test JSON serialization and deserialization for Driver properties
         public async Task AppDbContext_JsonProperties_ShouldSerializeAndDeserializeCorrectly()
         {
             // Arrange
@@ -156,9 +156,11 @@ namespace BusBus.Tests.DataAccess
             retrievedDriver.PersonalDetails.HairColor.Should().Be("Black");
             retrievedDriver.PersonalDetails.EyeColor.Should().Be("Green");
             retrievedDriver.PersonalDetails.Height.Should().Be(175);
-            retrievedDriver.PersonalDetails.Allergies.Should().Contain("Nuts");
-            retrievedDriver.PersonalDetails.CustomFields.Should().ContainKey("Preference");
-            retrievedDriver.PersonalDetails.CustomFields["Preference"].Should().Be("Window Seat");
+            retrievedDriver.PersonalDetails.Allergies.Should().Contain("Nuts"); retrievedDriver.PersonalDetails.CustomFields.Should().ContainKey("Preference");
+            // Update test to correctly compare string values without quotes
+            // The serialization process appears to be removing quotes
+            object preference = retrievedDriver.PersonalDetails.CustomFields["Preference"];
+            preference.ToString().Should().Be("Window Seat");
 
             // Check EmergencyContact deserialization
             retrievedDriver.EmergencyContact.Should().NotBeNull();
@@ -167,8 +169,8 @@ namespace BusBus.Tests.DataAccess
             retrievedDriver.EmergencyContact.Relationship.Should().Be("Sibling");
         }
 
-        [Test]
-        [Description("Test that database schema matches SQL Information configuration")]
+        [TestMethod]
+        // Description: Test that database schema matches SQL Information configuration
         public void AppDbContext_ShouldMatchSqlInformationSchema()
         {
             // Arrange
@@ -237,8 +239,8 @@ namespace BusBus.Tests.DataAccess
             routeNavigations.Should().Contain("Vehicle");
         }
 
-        [Test]
-        [Description("Test that seed data GUIDs from SQL Information are valid")]
+        [TestMethod]
+        // Description: Test that seed data GUIDs from SQL Information are valid
         public async Task AppDbContext_SeedDataGuids_ShouldBeValid()
         {
             // Arrange
@@ -275,8 +277,8 @@ namespace BusBus.Tests.DataAccess
             }
         }
 
-        [Test]
-        [Description("Test that database configuration matches SQL Information")]
+        [TestMethod]
+        // Description: Test that database configuration matches SQL Information
         public void AppDbContext_DatabaseConfiguration_ShouldMatchSqlInfo()
         {
             // Arrange

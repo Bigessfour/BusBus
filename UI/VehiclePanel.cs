@@ -1,5 +1,6 @@
 // Enable nullable reference types for this file
 #nullable enable
+#pragma warning disable CS0169 // Field is never used
 using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI.Common;
@@ -11,7 +12,7 @@ using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public partial class VehiclePanel : Form
+    public partial class VehiclePanel : BaseForm
     {
         private readonly IVehicleService _vehicleService;
         private Vehicle? _vehicle;
@@ -76,7 +77,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(numberLabel, 0, 0);            _numberTextBox = new TextBox
+            mainPanel.Controls.Add(numberLabel, 0, 0); _numberTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -95,7 +96,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(capacityLabel, 0, 1);            _capacityNumericUpDown = new NumericUpDown
+            mainPanel.Controls.Add(capacityLabel, 0, 1); _capacityNumericUpDown = new NumericUpDown
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -117,7 +118,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(modelLabel, 0, 2);            _modelTextBox = new TextBox
+            mainPanel.Controls.Add(modelLabel, 0, 2); _modelTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -136,7 +137,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont
             };
-            mainPanel.Controls.Add(licensePlateLabel, 0, 3);            _licensePlateTextBox = new TextBox
+            mainPanel.Controls.Add(licensePlateLabel, 0, 3); _licensePlateTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
@@ -275,8 +276,11 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving vehicle: {ex.Message}", "Save Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show($"Error saving vehicle: {ex.Message}", "Save Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             finally
             {
@@ -289,25 +293,33 @@ namespace BusBus.UI
         {
             if (string.IsNullOrWhiteSpace(_numberTextBox.Text))
             {
-                MessageBox.Show("Vehicle number is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                _numberTextBox.Focus();
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Vehicle number is required.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _numberTextBox.Focus();
+                }
                 return false;
             }
-
             if (string.IsNullOrWhiteSpace(_modelTextBox.Text))
             {
-                MessageBox.Show("Vehicle model is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                _modelTextBox.Focus();
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Vehicle model is required.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _modelTextBox.Focus();
+                }
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(_licensePlateTextBox.Text))
             {
-                MessageBox.Show("License plate is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                _licensePlateTextBox.Focus();
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("License plate is required.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _licensePlateTextBox.Focus();
+                }
                 return false;
             }
 
@@ -315,3 +327,4 @@ namespace BusBus.UI
         }
     }
 }
+#pragma warning restore CS0169 // Field is never used

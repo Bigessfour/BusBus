@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public partial class RouteModalPanel : Form
+    public partial class RouteModalPanel : BaseForm
     {
         private readonly IRouteService _routeService;
         private readonly RouteDisplayDTO? _routeDto;
@@ -58,7 +58,8 @@ namespace BusBus.UI
 
             var cancelButton = new Button
             {
-                Text = "Cancel",                Size = new Size(80, 30),
+                Text = "Cancel",
+                Size = new Size(80, 30),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 Font = ThemeManager.CurrentTheme.SmallButtonFont,
@@ -67,7 +68,7 @@ namespace BusBus.UI
                 Margin = new Padding(5, 0, 0, 0)
             };
             cancelButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            cancelButton.Click += (s, e) => this.Close();            var saveButton = new Button
+            cancelButton.Click += (s, e) => this.Close(); var saveButton = new Button
             {
                 Text = "Save",
                 Size = new Size(80, 30),
@@ -113,7 +114,8 @@ namespace BusBus.UI
                     // Convert RouteDisplayDTO to Route for the panel
                     var route = new Route
                     {
-                        Id = _routeDto.Id,                        Name = _routeDto.Name,
+                        Id = _routeDto.Id,
+                        Name = _routeDto.Name,
                         StartLocation = _routeDto.StartLocation,
                         EndLocation = _routeDto.EndLocation,
                         ScheduledTime = _routeDto.ScheduledTime,
@@ -128,7 +130,8 @@ namespace BusBus.UI
                         VehicleId = _routeDto.VehicleId
                     };
 
-                    _routePanel.LoadRoute(route);                }
+                    _routePanel.LoadRoute(route);
+                }
 
                 if (_routePanel.Parent != null)
                 {

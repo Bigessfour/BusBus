@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BusBus.UI
 {
@@ -14,13 +16,32 @@ namespace BusBus.UI
     {
         Light,
         Dark
-    }
-
-    /// <summary>
-    /// Manages application themes and provides centralized theme switching functionality
-    /// </summary>
+    }    /// <summary>
+         /// Manages application themes and provides centralized theme switching functionality
+         /// </summary>
     public static class ThemeManager
     {
+        /// <summary>
+        /// Applies glassmorphic text color to all controls within a glassmorphic panel/card.
+        /// Ensures consistent, high-contrast text across all forms (Netguru, NN/g, DesignStudioUIUX).
+        /// </summary>
+        public static void EnforceGlassmorphicTextColor(Control control)
+        {
+            if (control == null) return;
+            // If this is a glassmorphic panel (by Tag or Name convention)
+            if ((control.Tag?.ToString()?.Contains("Glass", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (control.Name?.Contains("Glass", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (control.Tag?.ToString()?.Contains("ModernCard", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                CurrentTheme.ApplyGlassmorphicTextColor(control);
+            }
+            // Recursively apply to children
+            foreach (Control child in control.Controls)
+            {
+                EnforceGlassmorphicTextColor(child);
+            }
+        }
+
         private static readonly Dictionary<string, Func<Theme>> _themeRegistry = new()
         {
             ["Light"] = () => new LightTheme(),
@@ -297,6 +318,220 @@ namespace BusBus.UI
                                      comboBox.ForeColor == CurrentTheme.CardText,
                 _ => false
             };
+        }
+
+        /// <summary>
+        /// Applies modern dark UI enhancements to a form and all its controls
+        /// </summary>
+        /// <param name="form">The form to enhance</param>
+        public static void ApplyModernTheme(Form form)
+        {
+            ArgumentNullException.ThrowIfNull(form);
+
+            // Apply base theme first
+            RefreshTheme(form);
+
+            // Apply modern enhancements
+            ApplyModernEnhancements(form);
+        }
+
+        /// <summary>
+        /// Recursively applies modern UI enhancements to controls
+        /// </summary>
+        /// <param name="control">The control to enhance</param>
+        private static void ApplyModernEnhancements(Control control)
+        {
+            if (control == null) return;
+
+            try
+            {
+                switch (control)
+                {
+                    case Panel panel when panel.Tag?.ToString() == "ModernCard":
+                        CurrentTheme.StyleModernCard(panel);
+                        // Enforce glassmorphic text color for all children
+                        EnforceGlassmorphicTextColor(panel);
+                        break;
+
+                    case Panel panel when panel.Tag?.ToString() == "GlassPanel":
+                        CurrentTheme.StyleGlassPanel(panel);
+                        EnforceGlassmorphicTextColor(panel);
+                        break;
+
+                    case Button button when button.Tag?.ToString() == "EnhancedButton":
+                        CurrentTheme.StyleEnhancedButton(button);
+                        break;
+                }
+
+                // Recursively apply to child controls
+                foreach (Control child in control.Controls)
+                {
+                    ApplyModernEnhancements(child);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Control was disposed while applying enhancements
+            }
+        }
+
+        /// <summary>
+        /// Creates a themed action button with modern styling
+        /// </summary>
+        /// <param name="text">Button text</param>
+        /// <param name="description">Button description</param>
+        /// <param name="action">Action identifier</param>
+        /// <returns>A styled action button panel</returns>
+        public static Panel CreateThemedActionButton(string text, string description, string action)
+        {
+            var panel = new Panel
+            {
+                BackColor = CurrentTheme.ButtonBackground,
+                Margin = CurrentTheme.EnhancedButtonMargin,
+                Padding = CurrentTheme.EnhancedButtonPadding,
+                MinimumSize = CurrentTheme.EnhancedButtonMinSize,
+                Cursor = Cursors.Hand,
+                Tag = "ModernCard" // Mark for theme enhancement
+            };
+
+            // Apply modern card styling
+            CurrentTheme.StyleModernCard(panel);
+
+            var textLabel = new Label
+            {
+                Text = text,
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                ForeColor = CurrentTheme.ButtonText,
+                Location = new Point(12, 8),
+                AutoSize = true,
+                MaximumSize = new Size(160, 20),
+                BackColor = Color.Transparent
+            };
+
+            var descLabel = new Label
+            {
+                Text = description,
+                Font = new Font("Segoe UI", 9F),
+                ForeColor = CurrentTheme.SecondaryText,
+                Location = new Point(12, 30),
+                MaximumSize = new Size(160, 20),
+                AutoEllipsis = true,
+                AutoSize = true,
+                BackColor = Color.Transparent
+            };
+
+            var arrowLabel = new Label
+            {
+                Text = "→",
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                ForeColor = CurrentTheme.ButtonText,
+                Location = new Point(175, 20),
+                AutoSize = true,
+                BackColor = Color.Transparent
+            };
+
+            panel.Controls.AddRange(new Control[] { textLabel, descLabel, arrowLabel });
+            // Add hover effects
+            panel.MouseEnter += (s, e) =>
+            {
+                panel.BackColor = CurrentTheme.ButtonHoverBackground;
+                textLabel.ForeColor = Color.White;
+                arrowLabel.ForeColor = Color.White;
+            };
+
+            panel.MouseLeave += (s, e) =>
+            {
+                panel.BackColor = CurrentTheme.ButtonBackground;
+                textLabel.ForeColor = CurrentTheme.ButtonText;
+                arrowLabel.ForeColor = CurrentTheme.ButtonText;
+            };
+
+            return panel;
+        }
+
+        /// <summary>
+        /// Applies high-quality text rendering settings to all controls in a form
+        /// </summary>
+        /// <param name="form">The form to enhance</param>
+        public static void ApplyHighQualityTextRendering(Form form)
+        {
+            if (form == null) return;
+
+            // Apply to all controls
+            TextRenderingManager.RegisterForHighQualityTextRendering(form);
+
+            // Set application-wide settings
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            form.AutoScaleMode = AutoScaleMode.Dpi;
+
+            // Add form load handler to ensure settings are applied on resize
+            form.Load += (s, e) =>
+            {
+                if (s is Form loadedForm)
+                {
+                    loadedForm.AutoScaleDimensions = new SizeF(96F, 96F);
+                    loadedForm.AutoScaleMode = AutoScaleMode.Dpi;
+
+                    // Force immediate redraw of all controls
+                    foreach (Control control in loadedForm.Controls)
+                    {
+                        control.Invalidate(true);
+                    }
+                }
+            };
+        }        /// <summary>
+                 /// Registers default and accessible themes
+                 /// </summary>
+                 /// <param name="serviceProvider">Service provider for dependency injection</param>
+        public static void RegisterAccessibleThemes(IServiceProvider serviceProvider)
+        {
+            ArgumentNullException.ThrowIfNull(serviceProvider);
+
+            // Get logger if available
+            var logger = serviceProvider.GetService(typeof(ILogger)) as ILogger;
+
+            // Register accessible themes
+            RegisterTheme("LightAccessible", () => new AccessibleLightTheme(logger));
+            RegisterTheme("DarkAccessible", () => new AccessibleDarkTheme(logger));
+        }
+
+        /// <summary>
+        /// Switches to accessible theme mode
+        /// </summary>
+        public static void EnableAccessibleTheme(bool isDarkTheme = false)
+        {
+            SwitchTheme(isDarkTheme ? "DarkAccessible" : "LightAccessible");
+        }
+
+        /// <summary>
+        /// Switches to standard theme mode
+        /// </summary>
+        public static void EnableStandardTheme(bool isDarkTheme = false)
+        {
+            SwitchTheme(isDarkTheme ? "Dark" : "Light");
+        }
+
+        /// <summary>
+        /// Sets high contrast mode on the current theme if it supports it
+        /// </summary>
+        public static void SetHighContrastMode(bool enabled)
+        {
+            if (CurrentTheme is IAccessibleTheme accessibleTheme)
+            {
+                accessibleTheme.SetHighContrastMode(enabled);
+                // Refresh all open forms
+                foreach (Form form in Application.OpenForms)
+                {
+                    RefreshTheme(form);
+                }
+            }
+            else
+            {
+                // Switch to an accessible theme if needed
+                bool isDarkTheme = currentTheme == ThemeType.Dark;
+                EnableAccessibleTheme(isDarkTheme);
+                SetHighContrastMode(enabled);
+            }
         }
     }
 }

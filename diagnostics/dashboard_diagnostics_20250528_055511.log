@@ -1,0 +1,465 @@
+[Program] Application starting...
+Warning: Logging system not initialized, returning console logger
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] ====================================================
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] Application Starting: BusBus
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] OS Version: Microsoft Windows NT 10.0.26100.0
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] .NET Version: 8.0.16
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] Directory: C:\Users\steve.mckitrick\Desktop\BusBus\bin\Debug\net8.0-windows\
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] Environment: Production
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] Processors: 12
+[2025-05-28 05:55:15] [Information] [BusBus.Startup] ====================================================
+05:55:15.644 dbug: object[1]
+      [THREAD-MONITOR] Thread registered: 1 | Purpose: UI Thread | IsUI: True
+05:55:15.652 info: object[0]
+      [THREAD-MONITOR] Initialized with UI thread ID: 1
+05:55:15.654 info: object[1]
+      [RESOURCE-TRACKER] Initialized
+[Program] Initializing theme system...
+[Program] Starting with dark theme (default)...
+05:55:15.655 info: object[1]
+      Application startup initialized
+[Program] Current theme: Dark
+[Program] Available themes: Light, Dark
+[Program] Seeding sample data...
+05:55:15.728 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10401]
+      An 'IServiceProvider' was created for internal use by Entity Framework.
+05:55:16.102 warn: Microsoft.EntityFrameworkCore.Model.Validation[10400]
+      Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+05:55:16.244 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 8.0.11 initialized 'AppDbContext' using provider 'Microsoft.EntityFrameworkCore.SqlServer:8.0.11' with options: SensitiveDataLoggingEnabled DetailedErrorsEnabled 
+05:55:16.277 dbug: Microsoft.EntityFrameworkCore.Query[10111]
+      Compiling query expression: 
+      'DbSet<Route>()
+          .Any()'
+05:55:16.347 dbug: Microsoft.EntityFrameworkCore.Query[10107]
+      Generated query execution expression: 
+      'queryContext => ShapedQueryCompilingExpressionVisitor.SingleAsync<bool>(
+          asyncEnumerable: new SingleQueryingEnumerable<bool>(
+              (RelationalQueryContext)queryContext, 
+              RelationalCommandCache.QueryExpression(
+                  Projection Mapping:
+                      EmptyProjectionMember -> 0
+                  SELECT EXISTS (
+                      SELECT 1
+                      FROM Routes AS r)), 
+              ReaderColumn[] { ReaderColumn<bool> }, 
+              Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, bool>, 
+              BusBus.DataAccess.AppDbContext, 
+              False, 
+              True, 
+              True
+          ), 
+          cancellationToken: queryContext.CancellationToken)'
+05:55:16.377 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20005]
+      Creating DbConnection.
+05:55:16.394 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20006]
+      Created DbConnection. (17ms).
+05:55:16.397 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20000]
+      Opening connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:16.584 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20001]
+      Opened connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:16.587 dbug: Microsoft.EntityFrameworkCore.Database.Command[20103]
+      Creating DbCommand for 'ExecuteReader'.
+05:55:16.592 dbug: Microsoft.EntityFrameworkCore.Database.Command[20104]
+      Created DbCommand for 'ExecuteReader' (3ms).
+05:55:16.593 dbug: Microsoft.EntityFrameworkCore.Database.Command[20106]
+      Initialized DbCommand for 'ExecuteReader' (7ms).
+05:55:16.601 dbug: Microsoft.EntityFrameworkCore.Database.Command[20100]
+      Executing DbCommand [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT CASE
+          WHEN EXISTS (
+              SELECT 1
+              FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+          ELSE CAST(0 AS bit)
+      END
+05:55:16.639 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (41ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT CASE
+          WHEN EXISTS (
+              SELECT 1
+              FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+          ELSE CAST(0 AS bit)
+      END
+05:55:16.666 dbug: Microsoft.EntityFrameworkCore.Database.Command[20301]
+      Closing data reader to 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:16.670 dbug: Microsoft.EntityFrameworkCore.Database.Command[20300]
+      A data reader for 'BusBusDB' on server 'localhost\SQLEXPRESS' is being disposed after spending 5ms reading results.
+05:55:16.672 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20002]
+      Closing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:16.677 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20003]
+      Closed connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS' (5ms).
+05:55:16.679 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10407]
+      'AppDbContext' disposed.
+05:55:16.680 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20007]
+      Disposing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:16.681 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20008]
+      Disposed connection to database '' on server '' (0ms).
+[Program] Sample data seeded successfully
+05:55:16.700 dbug: BusBus.UI.Dashboard[0]
+      [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+05:55:16.768 dbug: BusBus.UI.DashboardView[1]
+      DashboardView constructor called
+05:55:16.769 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Starting initialization
+05:55:16.769 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Base initialization complete
+05:55:16.770 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Theme applied
+05:55:16.779 fail: BusBus.UI.DashboardView[5]
+      No suitable route fetch method found on IRouteService
+[StatisticsPanel] Constructor called
+[StatisticsPanel] Component initialized
+05:55:16.807 info: BusBus.UI.DashboardView[2]
+      Initialization completed in 36ms with 0 components
+05:55:16.808 info: BusBus.UI.Dashboard[0]
+      Dashboard initialized successfully
+[Program] Running main form...
+05:55:16.926 info: BusBus.UI.Dashboard[0]
+      Navigating to view: dashboard
+[StatisticsPanel] Handle created, refreshing statistics
+05:55:17.010 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 8.0.11 initialized 'AppDbContext' using provider 'Microsoft.EntityFrameworkCore.SqlServer:8.0.11' with options: SensitiveDataLoggingEnabled DetailedErrorsEnabled 
+05:55:17.017 dbug: Microsoft.EntityFrameworkCore.Query[10111]
+      Compiling query expression: 
+      'DbSet<Route>()
+          .Include(r => r.Driver)
+          .Include(r => r.Vehicle)'
+05:55:17.031 dbug: Microsoft.EntityFrameworkCore.Query[10112]
+      Including navigation: 'Route.Driver'.
+05:55:17.032 dbug: Microsoft.EntityFrameworkCore.Query[10112]
+      Including navigation: 'Route.Vehicle'.
+05:55:17.118 dbug: Microsoft.EntityFrameworkCore.Query[10107]
+      Generated query execution expression: 
+      'queryContext => new SingleQueryingEnumerable<Route>(
+          (RelationalQueryContext)queryContext, 
+          RelationalCommandCache.QueryExpression(
+              Client Projections:
+                  0 -> Dictionary<IProperty, int> { [Property: Route.Id (Guid) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: Route.AMEndingMileage (int) Required, 1], [Property: Route.AMRiders (int) Required, 2], [Property: Route.AMStartingMileage (int) Required, 3], [Property: Route.CreatedBy (string) Required, 4], [Property: Route.CreatedDate (DateTime) Required, 5], [Property: Route.Distance (int) Required, 6], [Property: Route.DriverId (Guid?) FK Index, 7], [Property: Route.EndLocation (string) Required, 8], [Property: Route.IsActive (bool) Required, 9], [Property: Route.ModifiedDate (DateTime) Required, 10], [Property: Route.Name (string) Required MaxLength(100), 11], [Property: Route.PMEndingMileage (int) Required, 12], [Property: Route.PMRiders (int) Required, 13], [Property: Route.PMStartMileage (int) Required, 14], [Property: Route.RouteCode (string) Required, 15], [Property: Route.RouteDate (DateTime) Required, 16], [Property: Route.RouteID (int) Required, 17], [Property: Route.RouteName (string) Required, 18], [Property: Route.RowVersion (byte[]) Required Concurrency BeforeSave:Ignore AfterSave:Ignore ValueGenerated.OnAddOrUpdate, 19], [Property: Route.ScheduleJson (_scheduleJson, string) Required, 20], [Property: Route.ScheduledTime (DateTime) Required, 21], [Property: Route.StartLocation (string) Required, 22], [Property: Route.StopsJson (_stopsJson, string) Required, 23], [Property: Route.VehicleId (Guid?) FK Index, 24] }
+                  1 -> Dictionary<IProperty, int> { [Property: Driver.Id (Guid) Required PK AfterSave:Throw ValueGenerated.OnAdd, 25], [Property: Driver.ContactInfo (string) Required, 26], [Property: Driver.CreatedBy (string) Required, 27], [Property: Driver.CreatedDate (DateTime) Required, 28], [Property: Driver.DriverID (int) Required, 29], [Property: Driver.DriverName (string) Required, 30], [Property: Driver.Email (string), 31], [Property: Driver.EmergencyContactJson (no field, string) Required, 32], [Property: Driver.FirstName (string) Required, 33], [Property: Driver.HireDate (DateTime) Required, 34], [Property: Driver.LastName (string) Required, 35], [Property: Driver.LastPerformanceReview (DateTime?), 36], [Property: Driver.LicenseNumber (string) Required, 37], [Property: Driver.ModifiedDate (DateTime) Required, 38], [Property: Driver.Name (no field, string) Required, 39], [Property: Driver.PerformanceScore (decimal) Required, 40], [Property: Driver.PersonalDetailsJson (no field, string) Required, 41], [Property: Driver.PhoneNumber (string), 42], [Property: Driver.RowVersion (byte[]) Required, 43], [Property: Driver.SalaryGrade (int) Required, 44], [Property: Driver.Status (string) Required, 45] }
+                  2 -> Dictionary<IProperty, int> { [Property: Vehicle.Id (no field, Guid) Required PK AfterSave:Throw ValueGenerated.OnAdd, 46], [Property: Vehicle.BusNumber (no field, string) Required, 47], [Property: Vehicle.Capacity (int) Required, 48], [Property: Vehicle.CreatedDate (DateTime) Required, 49], [Property: Vehicle.FuelType (string) Required, 50], [Property: Vehicle.IsActive (bool) Required, 51], [Property: Vehicle.IsMaintenanceRequired (bool) Required, 52], [Property: Vehicle.LastLocationUpdate (DateTime?), 53], [Property: Vehicle.LastMaintenanceDate (DateTime?), 54], [Property: Vehicle.Latitude (double?), 55], [Property: Vehicle.LicensePlate (string), 56], [Property: Vehicle.Longitude (double?), 57], [Property: Vehicle.MaintenanceDue (bool) Required, 58], [Property: Vehicle.MaintenanceHistoryJson (no field, string) Required, 59], [Property: Vehicle.MakeModel (string) Required, 60], [Property: Vehicle.Mileage (decimal) Required, 61], [Property: Vehicle.Model (string), 62], [Property: Vehicle.ModifiedDate (DateTime) Required, 63], [Property: Vehicle.Name (string), 64], [Property: Vehicle.NextMaintenanceDate (DateTime?), 65], [Property: Vehicle.Number (string) Required, 66], [Property: Vehicle.RowVersion (byte[]), 67], [Property: Vehicle.SpecificationsJson (no field, string) Required, 68], [Property: Vehicle.Status (string) Required, 69], [Property: Vehicle.VehicleCode (string), 70], [Property: Vehicle.VehicleGuid (Guid) Required, 71], [Property: Vehicle.VehicleId (int) Required, 72], [Property: Vehicle.Year (int?), 73] }
+              SELECT r.Id, r.AMEndingMileage, r.AMRiders, r.AMStartingMileage, r.CreatedBy, r.CreatedDate, r.Distance, r.DriverId, r.EndLocation, r.IsActive, r.ModifiedDate, r.Name, r.PMEndingMileage, r.PMRiders, r.PMStartMileage, r.RouteCode, r.RouteDate, r.RouteID, r.RouteName, r.RowVersion, r.ScheduleJson, r.ScheduledTime, r.StartLocation, r.StopsJson, r.VehicleId, d.Id, d.ContactInfo, d.CreatedBy, d.CreatedDate, d.DriverID, d.DriverName, d.Email, d.EmergencyContactJson, d.FirstName, d.HireDate, d.LastName, d.LastPerformanceReview, d.LicenseNumber, d.ModifiedDate, d.Name, d.PerformanceScore, d.PersonalDetails, d.PhoneNumber, d.RowVersion, d.SalaryGrade, d.Status, v.Id, v.BusNumber, v.Capacity, v.CreatedDate, v.FuelType, v.IsActive, v.IsMaintenanceRequired, v.LastLocationUpdate, v.LastMaintenanceDate, v.Latitude, v.LicensePlate, v.Longitude, v.MaintenanceDue, v.MaintenanceHistoryJson, v.MakeModel, v.Mileage, v.Model, v.ModifiedDate, v.Name, v.NextMaintenanceDate, v.Number, v.RowVersion, v.SpecificationsJson, v.Status, v.VehicleCode, v.VehicleGuid, v.VehicleId, v.Year
+              FROM Routes AS r
+              LEFT JOIN Drivers AS d ON r.DriverId == d.Id
+              LEFT JOIN Vehicles AS v ON r.VehicleId == v.Id), 
+          ReaderColumn[] { ReaderColumn<Guid>, ReaderColumn<int>, ReaderColumn<int>, ReaderColumn<int>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<int>, ReaderColumn<Guid>, ReaderColumn<object>, ReaderColumn<bool>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<int>, ReaderColumn<int>, ReaderColumn<int>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<int>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<Guid>, ReaderColumn<Guid>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<int>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<decimal>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<int>, ReaderColumn<object>, ReaderColumn<Guid>, ReaderColumn<object>, ReaderColumn<int>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<bool>, ReaderColumn<bool>, ReaderColumn<DateTime>, ReaderColumn<DateTime>, ReaderColumn<double>, ReaderColumn<object>, ReaderColumn<double>, ReaderColumn<bool>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<decimal>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<DateTime>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<object>, ReaderColumn<Guid>, ReaderColumn<int>, ReaderColumn<int> }, 
+          Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, Route>, 
+          BusBus.DataAccess.AppDbContext, 
+          False, 
+          True, 
+          True
+      )'
+05:55:17.124 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20005]
+      Creating DbConnection.
+05:55:17.125 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20006]
+      Created DbConnection. (0ms).
+05:55:17.125 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20000]
+      Opening connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.125 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20001]
+      Opened connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.125 dbug: Microsoft.EntityFrameworkCore.Database.Command[20103]
+      Creating DbCommand for 'ExecuteReader'.
+05:55:17.125 dbug: Microsoft.EntityFrameworkCore.Database.Command[20104]
+      Created DbCommand for 'ExecuteReader' (0ms).
+05:55:17.125 dbug: Microsoft.EntityFrameworkCore.Database.Command[20106]
+      Initialized DbCommand for 'ExecuteReader' (0ms).
+05:55:17.126 dbug: Microsoft.EntityFrameworkCore.Database.Command[20100]
+      Executing DbCommand [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[ModifiedDate], [d].[Name], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+      FROM [Routes] AS [r]
+      LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+      LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+05:55:17.133 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[ModifiedDate], [d].[Name], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+      FROM [Routes] AS [r]
+      LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+      LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+05:55:17.667 dbug: BusBus.UI.DashboardView[1]
+      OnActivateAsync: Dashboard view activation started
+05:55:17.667 dbug: BusBus.UI.DashboardView[1]
+      OnActivateAsync: Starting data refresh
+05:55:17.668 dbug: BusBus.UI.DashboardView[1]
+      RefreshDashboardDataAsync: Starting data refresh
+05:55:17.669 dbug: BusBus.UI.DashboardView[1]
+      Starting routes data refresh
+05:55:17.670 fail: BusBus.UI.DashboardView[5]
+      No suitable route fetch method found on IRouteService
+05:55:17.671 dbug: BusBus.UI.DashboardView[1]
+      Starting statistics data refresh
+05:55:17.671 warn: BusBus.UI.DashboardView[4]
+      Stats service not available
+05:55:17.672 dbug: BusBus.UI.DashboardView[1]
+      Starting actions data refresh
+05:55:17.672 warn: BusBus.UI.DashboardView[4]
+      Action item service not available
+05:55:17.672 dbug: BusBus.UI.DashboardView[1]
+      RefreshDashboardDataAsync: All data refreshed in 5ms
+05:55:17.672 dbug: BusBus.UI.DashboardView[1]
+      OnActivateAsync: Data refresh completed in 5ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: OnActivateAsync_Start = 0ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: BeforeDataRefresh = 0ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: RefreshData_Start = 0ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: RefreshRoutes_Start = 2ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: RefreshStats_Start = 3ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: RefreshActions_Start = 5ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: RefreshData_Complete = 5ms
+05:55:17.675 dbug: BusBus.UI.DashboardView[3]
+      Timing: AfterDataRefresh = 5ms
+05:55:17.675 info: BusBus.UI.DashboardView[2]
+      Dashboard Activation completed in 8ms with 1 components
+05:55:17.679 info: BusBus.UI.Dashboard[0]
+      Status: What's Happening Today loaded [Success]
+[Program] Running dashboard diagnostics...
+05:55:17.685 info: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[5]
+      Starting dashboard loading diagnostics
+05:55:17.685 info: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[4]
+      Starting test: Service Resolution
+05:55:17.685 dbug: BusBus.UI.Dashboard[0]
+      [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+05:55:17.690 dbug: BusBus.UI.DashboardView[1]
+      DashboardView constructor called
+05:55:17.690 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Starting initialization
+05:55:17.691 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Base initialization complete
+05:55:17.691 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Theme applied
+05:55:17.692 fail: BusBus.UI.DashboardView[5]
+      No suitable route fetch method found on IRouteService
+[StatisticsPanel] Constructor called
+[StatisticsPanel] Component initialized
+05:55:17.702 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10806]
+      Context 'AppDbContext' started tracking 'Route' entity with key '{Id: 71be5ba5-446e-4932-bd26-5c653572a211}'.
+05:55:17.707 info: BusBus.UI.DashboardView[2]
+      Initialization completed in 16ms with 0 components
+05:55:17.708 info: BusBus.UI.Dashboard[0]
+      Dashboard initialized successfully
+05:55:17.709 dbug: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[3]
+      Test completed: Service Resolution in 23ms
+05:55:17.709 info: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[4]
+      Starting test: Database Connectivity
+05:55:17.745 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 8.0.11 initialized 'AppDbContext' using provider 'Microsoft.EntityFrameworkCore.SqlServer:8.0.11' with options: SensitiveDataLoggingEnabled DetailedErrorsEnabled 
+05:55:17.747 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10805]
+      The navigation 'Route.Driver' for entity with key '{Id: 71be5ba5-446e-4932-bd26-5c653572a211}' was detected as changed.
+05:55:17.749 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10806]
+      Context 'AppDbContext' started tracking 'Driver' entity with key '{Id: 4388a265-cfe0-4bc4-834f-c624c910ee1a}'.
+05:55:17.754 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20005]
+      Creating DbConnection.
+05:55:17.754 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20006]
+      Created DbConnection. (0ms).
+05:55:17.754 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20000]
+      Opening connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.758 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20001]
+      Opened connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.760 dbug: Microsoft.EntityFrameworkCore.Database.Command[20103]
+      Creating DbCommand for 'ExecuteNonQuery'.
+05:55:17.760 dbug: Microsoft.EntityFrameworkCore.Database.Command[20104]
+      Created DbCommand for 'ExecuteNonQuery' (0ms).
+05:55:17.760 dbug: Microsoft.EntityFrameworkCore.Database.Command[20106]
+      Initialized DbCommand for 'ExecuteNonQuery' (0ms).
+05:55:17.760 dbug: Microsoft.EntityFrameworkCore.Database.Command[20100]
+      Executing DbCommand [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+05:55:17.786 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (26ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+05:55:17.787 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20002]
+      Closing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.788 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20003]
+      Closed connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS' (0ms).
+05:55:17.793 dbug: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[3]
+      Test completed: Database Connectivity in 83ms
+05:55:17.793 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10407]
+      'AppDbContext' disposed.
+05:55:17.793 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20007]
+      Disposing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.793 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20008]
+      Disposed connection to database '' on server '' (0ms).
+05:55:17.794 info: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[4]
+      Starting test: UI Component Creation
+05:55:17.794 dbug: BusBus.UI.Dashboard[0]
+      [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+05:55:17.796 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10805]
+      The navigation 'Route.Vehicle' for entity with key '{Id: 71be5ba5-446e-4932-bd26-5c653572a211}' was detected as changed.
+05:55:17.797 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10806]
+      Context 'AppDbContext' started tracking 'Vehicle' entity with key '{Id: 4ac28369-e918-4d05-b793-eba586234945}'.
+05:55:17.800 dbug: BusBus.UI.DashboardView[1]
+      DashboardView constructor called
+05:55:17.800 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Starting initialization
+05:55:17.800 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Base initialization complete
+05:55:17.800 dbug: BusBus.UI.DashboardView[1]
+      InitializeView: Theme applied
+05:55:17.801 fail: BusBus.UI.DashboardView[5]
+      No suitable route fetch method found on IRouteService
+[StatisticsPanel] Constructor called
+[StatisticsPanel] Component initialized
+05:55:17.819 info: BusBus.UI.DashboardView[2]
+      Initialization completed in 19ms with 0 components
+05:55:17.819 info: BusBus.UI.Dashboard[0]
+      Dashboard initialized successfully
+05:55:17.820 dbug: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[3]
+      Test completed: UI Component Creation in 25ms
+05:55:17.821 info: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[4]
+      Starting test: Data Loading Performance
+05:55:17.822 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 8.0.11 initialized 'AppDbContext' using provider 'Microsoft.EntityFrameworkCore.SqlServer:8.0.11' with options: SensitiveDataLoggingEnabled DetailedErrorsEnabled 
+05:55:17.822 dbug: Microsoft.EntityFrameworkCore.Query[10111]
+      Compiling query expression: 
+      'DbSet<Route>()
+          .Count()'
+05:55:17.837 dbug: Microsoft.EntityFrameworkCore.Query[10107]
+      Generated query execution expression: 
+      'queryContext => ShapedQueryCompilingExpressionVisitor.SingleAsync<int>(
+          asyncEnumerable: new SingleQueryingEnumerable<int>(
+              (RelationalQueryContext)queryContext, 
+              RelationalCommandCache.QueryExpression(
+                  Projection Mapping:
+                      EmptyProjectionMember -> 0
+                  SELECT COUNT(*)
+                  FROM Routes AS r), 
+              ReaderColumn[] { ReaderColumn<int> }, 
+              Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, int>, 
+              BusBus.DataAccess.AppDbContext, 
+              False, 
+              True, 
+              True
+          ), 
+          cancellationToken: queryContext.CancellationToken)'
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20005]
+      Creating DbConnection.
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20006]
+      Created DbConnection. (0ms).
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20000]
+      Opening connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20001]
+      Opened connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Command[20103]
+      Creating DbCommand for 'ExecuteReader'.
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Command[20104]
+      Created DbCommand for 'ExecuteReader' (0ms).
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Command[20106]
+      Initialized DbCommand for 'ExecuteReader' (0ms).
+05:55:17.841 dbug: Microsoft.EntityFrameworkCore.Database.Command[20100]
+      Executing DbCommand [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Routes] AS [r]
+05:55:17.843 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Routes] AS [r]
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10806]
+      Context 'AppDbContext' started tracking 'Route' entity with key '{Id: 703280e3-0ee8-40cf-b744-c5c267bc2c67}'.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10805]
+      The navigation 'Route.Driver' for entity with key '{Id: 703280e3-0ee8-40cf-b744-c5c267bc2c67}' was detected as changed.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10806]
+      Context 'AppDbContext' started tracking 'Driver' entity with key '{Id: 2950f82c-e559-4d46-a778-b25fdf9be30f}'.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10805]
+      The navigation 'Route.Vehicle' for entity with key '{Id: 703280e3-0ee8-40cf-b744-c5c267bc2c67}' was detected as changed.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.ChangeTracking[10806]
+      Context 'AppDbContext' started tracking 'Vehicle' entity with key '{Id: 038616b7-b79f-4272-b130-21a9d834c229}'.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.Database.Command[20301]
+      Closing data reader to 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.Database.Command[20300]
+      A data reader for 'BusBusDB' on server 'localhost\SQLEXPRESS' is being disposed after spending 706ms reading results.
+05:55:17.845 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20002]
+      Closing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.846 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20003]
+      Closed connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS' (0ms).
+05:55:17.846 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10407]
+      'AppDbContext' disposed.
+05:55:17.846 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20007]
+      Disposing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.846 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20008]
+      Disposed connection to database '' on server '' (0ms).
+05:55:17.854 dbug: Microsoft.EntityFrameworkCore.Database.Command[20301]
+      Closing data reader to 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.855 dbug: Microsoft.EntityFrameworkCore.Database.Command[20300]
+      A data reader for 'BusBusDB' on server 'localhost\SQLEXPRESS' is being disposed after spending 11ms reading results.
+05:55:17.855 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20002]
+      Closing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.855 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20003]
+      Closed connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS' (0ms).
+05:55:17.857 dbug: Microsoft.EntityFrameworkCore.Query[10111]
+      Compiling query expression: 
+      'DbSet<Driver>()
+          .Count()'
+05:55:17.858 dbug: Microsoft.EntityFrameworkCore.Query[10107]
+      Generated query execution expression: 
+      'queryContext => ShapedQueryCompilingExpressionVisitor.SingleAsync<int>(
+          asyncEnumerable: new SingleQueryingEnumerable<int>(
+              (RelationalQueryContext)queryContext, 
+              RelationalCommandCache.QueryExpression(
+                  Projection Mapping:
+                      EmptyProjectionMember -> 0
+                  SELECT COUNT(*)
+                  FROM Drivers AS d), 
+              ReaderColumn[] { ReaderColumn<int> }, 
+              Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, int>, 
+              BusBus.DataAccess.AppDbContext, 
+              False, 
+              True, 
+              True
+          ), 
+          cancellationToken: queryContext.CancellationToken)'
+05:55:17.859 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20000]
+      Opening connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.859 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20001]
+      Opened connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.859 dbug: Microsoft.EntityFrameworkCore.Database.Command[20103]
+      Creating DbCommand for 'ExecuteReader'.
+05:55:17.859 dbug: Microsoft.EntityFrameworkCore.Database.Command[20104]
+      Created DbCommand for 'ExecuteReader' (0ms).
+05:55:17.859 dbug: Microsoft.EntityFrameworkCore.Database.Command[20106]
+      Initialized DbCommand for 'ExecuteReader' (0ms).
+05:55:17.859 dbug: Microsoft.EntityFrameworkCore.Database.Command[20100]
+      Executing DbCommand [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Drivers] AS [d]
+05:55:17.860 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Drivers] AS [d]
+05:55:17.862 dbug: Microsoft.EntityFrameworkCore.Database.Command[20301]
+      Closing data reader to 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.862 dbug: Microsoft.EntityFrameworkCore.Database.Command[20300]
+      A data reader for 'BusBusDB' on server 'localhost\SQLEXPRESS' is being disposed after spending 1ms reading results.
+05:55:17.862 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20002]
+      Closing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.862 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20003]
+      Closed connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS' (0ms).
+05:55:17.864 dbug: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[3]
+      Test completed: Data Loading Performance in 42ms
+05:55:17.864 dbug: Microsoft.EntityFrameworkCore.Infrastructure[10407]
+      'AppDbContext' disposed.
+05:55:17.864 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20007]
+      Disposing connection to database 'BusBusDB' on server 'localhost\SQLEXPRESS'.
+05:55:17.864 dbug: Microsoft.EntityFrameworkCore.Database.Connection[20008]
+      Disposed connection to database '' on server '' (0ms).
+05:55:17.867 info: BusBus.UI.Diagnostics.DashboardLoadingDiagnostics[6]
+      Dashboard diagnostics completed in 179ms
+[DashboardDiagnosticRunner] Report saved to C:\Users\steve.mckitrick\Desktop\BusBus\diagnostics\dashboard_diag_20250528_055517.log
+[Program] Dashboard diagnostics completed: SUCCESS in 179ms
+[Program] Application exit handler started
+[Program] Starting application shutdown
+[Program] Cancellation token signaled
+[Program] Waiting for 0 background tasks to complete...
+[Program] All background tasks completed
+[Program] Service provider disposed
+[Program] Application shutdown complete
+[Program] Application.Run completed - ensuring shutdown
+[Program] Starting application shutdown
+[Program] Cancellation token signaled
+[Program] Waiting for 0 background tasks to complete...
+[Program] All background tasks completed
+[Program] Service provider disposed
+[Program] Application shutdown complete

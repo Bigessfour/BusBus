@@ -411,25 +411,39 @@ namespace BusBus.UI
                 {
                     await _routeService.UpdateRouteAsync(_currentRoute);
                 }
-
                 SaveButtonClicked?.Invoke(this, EventArgs.Empty);
-                MessageBox.Show("Route saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("Route saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show($"Invalid data: {ex.Message}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show($"Invalid data: {ex.Message}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
-                MessageBox.Show("The route was modified or deleted by another user. Please reload and try again.", "Concurrency Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show("The route was modified or deleted by another user. Please reload and try again.", "Concurrency Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             catch (DbUpdateException ex)
             {
-                MessageBox.Show($"Database error: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show($"Database error: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving route: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!SuppressDialogsForTests)
+                {
+                    MessageBox.Show($"Error saving route: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -711,8 +725,11 @@ namespace BusBus.UI
             _vehicleComboBox!.Enabled = editable;
         }
     }
-
-
     // Restore unused event warning
 #pragma warning restore CS0067
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor
+#pragma warning restore CS0169 // The field is never used
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value null
+#pragma warning restore CA1416 // Platform compatibility (Windows-only)
+#pragma warning restore CS1998 // Async method lacks 'await' operators
 }

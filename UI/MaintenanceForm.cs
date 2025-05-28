@@ -1,3 +1,4 @@
+#pragma warning disable CS8604 // Possible null reference argument for parameter
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor
 #pragma warning disable CS0169 // The field is never used
 #pragma warning disable CA1416 // Platform compatibility (Windows-only)
@@ -7,10 +8,11 @@
 #nullable enable
 using System;
 using System.Windows.Forms;
+using BusBus.UI.Common;
 
 namespace BusBus
 {
-    public partial class MaintenanceForm : Form
+    public partial class MaintenanceForm : BaseForm
     {
         private int? maintenanceId;
         public event EventHandler DataSaved;

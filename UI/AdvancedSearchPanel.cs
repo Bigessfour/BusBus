@@ -1,3 +1,6 @@
+#pragma warning disable CS8618 // Non-nullable field/property/event must contain a non-null value when exiting constructor
+#pragma warning disable CS8601 // Possible null reference assignment
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate
 // Static readonly arrays moved inside the class below
 using System;
 using System.Drawing;

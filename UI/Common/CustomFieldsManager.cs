@@ -7,14 +7,22 @@ using System.Text.Json;
 using BusBus.Models;
 
 namespace BusBus.UI.Common
-{
-    /// <summary>
-    /// Utility class for managing custom fields configuration
-    /// </summary>
+{    /// <summary>
+     /// Utility class for managing custom fields configuration
+     /// </summary>
     public static class CustomFieldsManager
     {
         private static Dictionary<string, Dictionary<string, CustomField>>? _customFields;
-        private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CustomFields.json");
+        private static string _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CustomFields.json");
+
+        /// <summary>
+        /// Gets or sets the configuration file path (mainly for testing)
+        /// </summary>
+        public static string ConfigPath
+        {
+            get => _configPath;
+            set => _configPath = value;
+        }
 
         /// <summary>
         /// Loads custom fields configuration from JSON file

@@ -45,13 +45,15 @@ namespace BusBus.DataAccess
                 // Ignore the JSON-deserialized properties that are not database columns
                 entity.Ignore(e => e.Stops);
                 entity.Ignore(e => e.Schedule);
-            });
-            modelBuilder.Entity<Driver>(entity =>
+            }); modelBuilder.Entity<Driver>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.FirstName).IsRequired();
                 entity.Property(e => e.LastName).IsRequired();
                 entity.Property(e => e.PersonalDetailsJson).HasColumnName("PersonalDetails");
+
+                // Fix the decimal precision warning
+                entity.Property(e => e.PerformanceScore).HasColumnType("decimal(5,2)");
 
                 // Ignore the non-column properties that are JSON deserialized
                 entity.Ignore(e => e.EmergencyContact);
@@ -65,10 +67,13 @@ namespace BusBus.DataAccess
                 entity.Property(e => e.Capacity);
                 entity.Property(e => e.IsActive);
 
+                // Fix the decimal precision warning
+                entity.Property(e => e.Mileage).HasColumnType("decimal(10,1)");
+
                 // Ignore the non-column properties that are JSON deserialized
                 entity.Ignore(e => e.MaintenanceHistory);
                 entity.Ignore(e => e.Specifications);
-            });            // Configure the CustomField as a separate entity type
+            });// Configure the CustomField as a separate entity type
             modelBuilder.Entity<CustomField>(entity =>
             {
                 entity.HasKey(e => e.Name);
