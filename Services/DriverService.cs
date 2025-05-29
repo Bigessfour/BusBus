@@ -49,6 +49,37 @@ namespace BusBus.Services
             return await dbContext.Drivers.CountAsync(cancellationToken);
         }
 
+        public async Task<List<Driver>> GetAllDriversAsync(CancellationToken cancellationToken = default)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Drivers
+                .AsNoTracking()
+                .OrderBy(d => d.LastName)
+                .ThenBy(d => d.FirstName)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<Driver>> GetDriversAsync(int skip, int take, CancellationToken cancellationToken = default)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Drivers
+                .AsNoTracking()
+                .OrderBy(d => d.LastName)
+                .ThenBy(d => d.FirstName)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> GetDriversCountAsync(CancellationToken cancellationToken = default)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return await dbContext.Drivers.CountAsync(cancellationToken);
+        }
+
         public async Task<Driver?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();

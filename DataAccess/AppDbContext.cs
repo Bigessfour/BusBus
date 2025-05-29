@@ -40,25 +40,31 @@ namespace BusBus.DataAccess
                 entity.Property(e => e.PMEndingMileage).HasColumnType("int");
                 entity.Property(e => e.PMRiders).HasColumnType("int");
                 entity.HasOne(e => e.Driver).WithMany().OnDelete(DeleteBehavior.SetNull);
-                entity.HasOne(e => e.Vehicle).WithMany().OnDelete(DeleteBehavior.SetNull);
-
-                // Ignore the JSON-deserialized properties that are not database columns
+                entity.HasOne(e => e.Vehicle).WithMany().OnDelete(DeleteBehavior.SetNull);                // Ignore the JSON-deserialized properties that are not database columns
                 entity.Ignore(e => e.Stops);
                 entity.Ignore(e => e.Schedule);
-            }); modelBuilder.Entity<Driver>(entity =>
+            });
+
+            modelBuilder.Entity<Driver>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.FirstName).IsRequired();
                 entity.Property(e => e.LastName).IsRequired();
                 entity.Property(e => e.PersonalDetailsJson).HasColumnName("PersonalDetails");
 
-                // Fix the decimal precision warning
-                entity.Property(e => e.PerformanceScore).HasColumnType("decimal(5,2)");
+                // Ignore calculated/computed properties that are not stored in database
+                entity.Ignore(e => e.PerformanceScore); // This is a calculated property
+                entity.Ignore(e => e.Name); // This is a calculated property (FirstName + LastName)
+                entity.Ignore(e => e.YearsOfService); // This is a calculated property
+                entity.Ignore(e => e.NeedsPerformanceReview); // This is a calculated property
 
                 // Ignore the non-column properties that are JSON deserialized
                 entity.Ignore(e => e.EmergencyContact);
                 entity.Ignore(e => e.PersonalDetails);
-            }); modelBuilder.Entity<BusBus.Models.Vehicle>(entity =>
+                entity.Ignore(e => e.PerformanceMetrics); // JSON-backed property
+            });
+
+            modelBuilder.Entity<BusBus.Models.Vehicle>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Number).IsRequired();
@@ -69,6 +75,13 @@ namespace BusBus.DataAccess
 
                 // Fix the decimal precision warning
                 entity.Property(e => e.Mileage).HasColumnType("decimal(10,1)");
+
+                // Ignore calculated/computed properties
+                entity.Ignore(e => e.DisplayName); // This is a calculated property
+                entity.Ignore(e => e.VehicleAge); // This is a calculated property
+                entity.Ignore(e => e.IsOld); // This is a calculated property
+                entity.Ignore(e => e.LocationDescription); // This is a calculated property
+                entity.Ignore(e => e.BusNumber); // This is an alias property
 
                 // Ignore the non-column properties that are JSON deserialized
                 entity.Ignore(e => e.MaintenanceHistory);
@@ -86,6 +99,7 @@ namespace BusBus.DataAccess
             modelBuilder.Ignore<VehicleSpecifications>();
             modelBuilder.Ignore<EmergencyContact>();
             modelBuilder.Ignore<PersonalDetails>();
+            modelBuilder.Ignore<PerformanceMetrics>();
 
             // Seed initial data for drivers
             modelBuilder.Entity<Driver>().HasData(

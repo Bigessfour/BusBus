@@ -16,7 +16,7 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>true</GenerateTargetFrameworkAttribute>
     <EnableWindowsTargetPlatformAnalyzer>true</EnableWindowsTargetPlatformAnalyzer>    <!-- Debug Symbols Configuration -->
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -39,6 +39,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+
+    <!-- Resilience and Retry Policies -->
+    <PackageReference Include="Polly" Version="8.2.1" />
+    <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
 
     <!-- Dependency Injection and Configuration -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />

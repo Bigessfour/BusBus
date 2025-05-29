@@ -10,38 +10,204 @@ using Microsoft.Data.SqlClient;
 using BusBus.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-
+using System.Diagnostics;
+using System.Threading;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace BusBus.Data
 {
+    /// <summary>
+    /// Advanced SQL Server database manager with optimizations for SQL Server Express
+    /// including connection pooling, retry logic, and pagination
+    /// </summary>
     public partial class AdvancedSqlServerDatabaseManager : IDisposable
     {
-        private readonly string _connectionString; private readonly ILogger<AdvancedSqlServerDatabaseManager>? _logger;
+        private readonly string _connectionString;
+        private readonly ILogger<AdvancedSqlServerDatabaseManager>? _logger;
+        private readonly SemaphoreSlim _connectionSemaphore;
+        private readonly IAsyncPolicy _retryPolicy;
+        private static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(30);
+        private static readonly int MaxConcurrentConnections = 10;
+
+        // Performance tracking
+        private readonly Dictionary<string, long> _queryPerformanceMetrics = new();
+        private readonly object _metricsLock = new object();
+
+        // Logger message definitions for performance
+        private static readonly Action<ILogger, string, long, Exception?> _logQueryPerformance =
+            LoggerMessage.Define<string, long>(
+                LogLevel.Debug,
+                new EventId(1, "QueryPerformance"),
+                "Query '{QueryName}' completed in {ElapsedMs}ms");
+
+        private static readonly Action<ILogger, string, int, Exception?> _logRetryAttempt =
+            LoggerMessage.Define<string, int>(
+                LogLevel.Warning,
+                new EventId(2, "RetryAttempt"),
+                "Retrying operation '{OperationName}' - Attempt {AttemptNumber}");
+
+        private static readonly Action<ILogger, string, Exception?> _logConnectionPooling =
+            LoggerMessage.Define<string>(
+                LogLevel.Debug,
+                new EventId(3, "ConnectionPooling"),
+                "Connection pool status: {Status}");
 
         public AdvancedSqlServerDatabaseManager()
         {
-            _connectionString = @"Server=.\SQLEXPRESS;Database=BusBusDb;Trusted_Connection=true;TrustServerCertificate=true;";
+            _connectionString = @"Server=.\SQLEXPRESS;Database=BusBusDb;Trusted_Connection=true;TrustServerCertificate=true;Connection Timeout=30;Command Timeout=30;";
             _logger = null; // Will use console logging if logger is not available
+            _connectionSemaphore = new SemaphoreSlim(MaxConcurrentConnections, MaxConcurrentConnections);
+            _retryPolicy = CreateRetryPolicy();
         }
 
         public AdvancedSqlServerDatabaseManager(string connectionString)
         {
-            _connectionString = connectionString;
+            _connectionString = EnhanceConnectionString(connectionString);
+            _connectionSemaphore = new SemaphoreSlim(MaxConcurrentConnections, MaxConcurrentConnections);
+            _retryPolicy = CreateRetryPolicy();
         }
 
         public AdvancedSqlServerDatabaseManager(IConfiguration configuration, ILogger<AdvancedSqlServerDatabaseManager> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")
+            var baseConnectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? @"Server=.\SQLEXPRESS;Database=BusBusDb;Trusted_Connection=true;TrustServerCertificate=true;";
+            _connectionString = EnhanceConnectionString(baseConnectionString);
             _logger = logger;
+            _connectionSemaphore = new SemaphoreSlim(MaxConcurrentConnections, MaxConcurrentConnections);
+            _retryPolicy = CreateRetryPolicy();
         }
 
         public AdvancedSqlServerDatabaseManager(string connectionString, ILogger<AdvancedSqlServerDatabaseManager> logger)
         {
-            _connectionString = connectionString;
+            _connectionString = EnhanceConnectionString(connectionString);
             _logger = logger;
+            _connectionSemaphore = new SemaphoreSlim(MaxConcurrentConnections, MaxConcurrentConnections);
+            _retryPolicy = CreateRetryPolicy();
         }
 
+        /// <summary>
+        /// Enhances connection string with SQL Server Express optimizations
+        /// </summary>
+        private static string EnhanceConnectionString(string baseConnectionString)
+        {
+            var builder = new SqlConnectionStringBuilder(baseConnectionString)            {
+                ConnectTimeout = 30,
+                CommandTimeout = 30,
+                Pooling = true,
+                MinPoolSize = 5,
+                MaxPoolSize = 100,
+                LoadBalanceTimeout = 5,
+                ApplicationName = "BusBus-Application"
+            };
+            return builder.ConnectionString;
+        }        /// <summary>
+        /// Creates a retry policy for database operations
+        /// </summary>
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance - IAsyncPolicy provides flexibility
+        private IAsyncPolicy CreateRetryPolicy()
+#pragma warning restore CA1859
+        {
+            return Policy
+                .Handle<SqlException>(ex => IsTransientError(ex))
+                .Or<TimeoutException>()
+                .WaitAndRetryAsync(
+                    retryCount: 3,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),                    onRetry: (outcome, timespan, retryCount, context) =>
+                    {
+                        var operationName = context.GetValueOrDefault("OperationName", "Unknown");
+                        if (_logger != null)
+                            _logRetryAttempt(_logger, operationName?.ToString() ?? "Unknown", retryCount, null);
+                    });
+        }
+
+        /// <summary>
+        /// Determines if a SQL exception is transient and should be retried
+        /// </summary>
+        private static bool IsTransientError(SqlException ex)
+        {
+            // Common transient error numbers for SQL Server Express
+            var transientErrors = new[]
+            {
+                2,      // Timeout
+                20,     // Instance failure
+                64,     // Connection failed
+                233,    // Connection init error
+                10053,  // Connection broken
+                10054,  // Connection reset
+                10060,  // Network unreachable
+                40197,  // Service busy
+                40501,  // Service busy
+                40613   // Database unavailable
+            };
+
+            return transientErrors.Contains(ex.Number);
+        }
+
+        /// <summary>
+        /// Executes a database operation with connection pooling and retry logic
+        /// </summary>
+        private async Task<T> ExecuteWithOptimizationsAsync<T>(
+            string operationName,
+            Func<SqlConnection, Task<T>> operation,
+            CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();            await _connectionSemaphore.WaitAsync(cancellationToken);
+            if (_logger != null)
+                _logConnectionPooling(_logger, $"Acquired connection for {operationName}", null);
+
+            try
+            {
+                var context = new Context(operationName) { ["OperationName"] = operationName };
+
+                return await _retryPolicy.ExecuteAsync(async (ctx) =>
+                {
+                    using var connection = new SqlConnection(_connectionString);
+                    await connection.OpenAsync(cancellationToken);
+                    return await operation(connection);
+                }, context);
+            }
+            finally
+            {                _connectionSemaphore.Release();
+                stopwatch.Stop();
+
+                if (_logger != null)
+                {
+                    _logQueryPerformance(_logger, operationName, stopwatch.ElapsedMilliseconds, null);
+                }                lock (_metricsLock)
+                {
+                    _queryPerformanceMetrics[operationName] = stopwatch.ElapsedMilliseconds;
+                }
+
+                if (_logger != null)
+                    _logConnectionPooling(_logger, $"Released connection for {operationName}", null);
+            }
+        }
+
+        /// <summary>
+        /// Gets performance metrics for monitoring
+        /// </summary>
+        public Dictionary<string, long> GetPerformanceMetrics()
+        {
+            lock (_metricsLock)
+            {
+                return new Dictionary<string, long>(_queryPerformanceMetrics);
+            }
+        }
+
+        /// <summary>
+        /// Pagination helper for large result sets
+        /// </summary>
+        public class PagedResult<T>
+        {
+            public List<T> Items { get; set; } = new();
+            public int TotalCount { get; set; }
+            public int PageNumber { get; set; }
+            public int PageSize { get; set; }
+            public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+            public bool HasPreviousPage => PageNumber > 1;
+            public bool HasNextPage => PageNumber < TotalPages;
+        }
 
         // --- Synchronous wrappers and legacy signatures for DatabaseManager compatibility ---
         #region DatabaseManager Compatibility
@@ -74,30 +240,76 @@ namespace BusBus.Data
         public void SaveDynamicRecord(string tableName, Dictionary<string, object> values) { throw new NotImplementedException("SaveDynamicRecord(string, ...) needs implementation."); }
         public void UpdateDynamicRecord(string tableName, int id, Dictionary<string, object> values) { throw new NotImplementedException("UpdateDynamicRecord(string, int, ...) needs implementation."); }
         public static Task<System.Data.DataTable> GetDashboardStatsAsync() { throw new NotImplementedException("GetDashboardStatsAsync() needs implementation."); }
-        #endregion
-
-        // Driver Management
+        #endregion        // Driver Management with optimizations
         public async Task<List<Driver>> GetDriversAsync()
         {
-            var drivers = new List<Driver>();
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-            const string sql = "SELECT Id, FirstName, LastName, PhoneNumber, Email, LicenseNumber FROM Drivers";
-            using var command = new SqlCommand(sql, connection);
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            return await ExecuteWithOptimizationsAsync("GetDriversAsync", async connection =>
             {
-                drivers.Add(new Driver
+                var drivers = new List<Driver>();
+                const string sql = "SELECT Id, FirstName, LastName, PhoneNumber, Email, LicenseNumber FROM Drivers";
+                using var command = new SqlCommand(sql, connection) { CommandTimeout = (int)CommandTimeout.TotalSeconds };
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
-                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                    PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
-                    Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
-                    LicenseNumber = reader.GetString(reader.GetOrdinal("LicenseNumber"))
-                });
-            }
-            return drivers;
+                    drivers.Add(new Driver
+                    {
+                        Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                        PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                        Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+                        LicenseNumber = reader.GetString(reader.GetOrdinal("LicenseNumber"))
+                    });
+                }
+                return drivers;
+            });
+        }
+
+        public async Task<PagedResult<Driver>> GetDriversPagedAsync(int pageNumber = 1, int pageSize = 20)
+        {
+            return await ExecuteWithOptimizationsAsync("GetDriversPagedAsync", async connection =>
+            {
+                var result = new PagedResult<Driver>
+                {
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+
+                // Get total count
+                const string countSql = "SELECT COUNT(*) FROM Drivers";
+                using (var countCommand = new SqlCommand(countSql, connection))
+                {
+                    var countResult = await countCommand.ExecuteScalarAsync();
+                    result.TotalCount = countResult != null ? (int)countResult : 0;
+                }
+
+                // Get paged results
+                const string sql = @"
+                    SELECT Id, FirstName, LastName, PhoneNumber, Email, LicenseNumber
+                    FROM Drivers
+                    ORDER BY LastName, FirstName
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+
+                using var command = new SqlCommand(sql, connection) { CommandTimeout = (int)CommandTimeout.TotalSeconds };
+                command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                command.Parameters.AddWithValue("@PageSize", pageSize);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    result.Items.Add(new Driver
+                    {
+                        Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                        PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                        Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+                        LicenseNumber = reader.GetString(reader.GetOrdinal("LicenseNumber"))                    });
+                }
+
+                return result;
+            });
         }
 
         public async Task<Driver?> GetDriverByIdAsync(Guid id)
@@ -499,6 +711,25 @@ namespace BusBus.Data
                 return false;
             }
         }
+
+        /// <summary>
+        /// Executes a SQL command that doesn't return a result set
+        /// </summary>
+        /// <param name="sql">The SQL command to execute</param>
+        /// <returns>The number of rows affected</returns>
+        public async Task<int> ExecuteNonQueryAsync(string sql)
+        {
+            return await ExecuteWithOptimizationsAsync($"ExecuteNonQuery", async connection =>
+            {
+                using var command = new SqlCommand(sql, connection)
+                {
+                    CommandTimeout = (int)CommandTimeout.TotalSeconds
+                };
+
+                return await command.ExecuteNonQueryAsync();
+            });
+        }
+
         public async Task InitializeDatabaseAsync()
         {
             // Get or create a logger
@@ -697,11 +928,22 @@ namespace BusBus.Data
 
         private static readonly Action<ILogger, Exception?> s_databaseSchemaInitialized =
             LoggerMessage.Define(LogLevel.Information, new EventId(203, "DatabaseSchemaInitialized"),
-                "Database schema initialized successfully");
-
-        public void Dispose()
+                "Database schema initialized successfully");        public void Dispose()
         {
-            // Cleanup if needed
+            _connectionSemaphore?.Dispose();            // Log performance metrics summary            if (_logger != null && _queryPerformanceMetrics.Count > 0)
+            {
+#pragma warning disable CA1848 // Use LoggerMessage delegates for performance - minimal impact in this context
+                _logger?.LogInformation("Database Manager Performance Summary:");
+#pragma warning restore CA1848
+                lock (_metricsLock)
+                {                    foreach (var metric in _queryPerformanceMetrics)
+                    {
+#pragma warning disable CA1848 // Use LoggerMessage delegates for performance - minimal impact in this context
+                        _logger?.LogInformation("  {Operation}: {ElapsedMs}ms", metric.Key, metric.Value);
+#pragma warning restore CA1848
+                    }
+                }
+            }
         }
     }
 }

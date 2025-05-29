@@ -12,15 +12,16 @@
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "justMyCode": false,
+            "justMyCode": true,
+            "suppressJITOptimizations": true,
             "symbolOptions": {
-                "searchMicrosoftSymbolServer": true,
-                "searchNuGetOrgSymbolServer": true,
+                "searchMicrosoftSymbolServer": false,
+                "searchNuGetOrgSymbolServer": false,
                 "cachePath": "${workspaceFolder}/.vscode/symbols"
             },
             "env": {
                 "DOTNET_ENVIRONMENT": "Development",
-                "LOGGING__LOGLEVEL__DEFAULT": "Debug"
+                "LOGGING__LOGLEVEL__DEFAULT": "Information"
             }
         },
         {

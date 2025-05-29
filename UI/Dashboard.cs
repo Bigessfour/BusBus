@@ -8,21 +8,23 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-
-#pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
-#pragma warning disable CA2254 // LoggerMessage delegates for logging performance
-#pragma warning disable CS8618 // Non-nullable field is uninitialized. Suppressed because fields are initialized in SetupLayout.
 using BusBus.Services;
 using BusBus.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BusBus.Data;
+using System.Diagnostics;
 
+#pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
+#pragma warning disable CA2254 // LoggerMessage delegates for logging performance
+#pragma warning disable CS8618 // Non-nullable field is uninitialized. Suppressed because fields are initialized in SetupLayout.
 namespace BusBus.UI
 {    /// <summary>
      /// Main application hub that manages navigation, state, and view lifecycle.
      /// This class serves as the primary container/shell for the entire application.
      /// It contains the header, side panel, content panel, and status bar.
      /// Different views (like DashboardView) are loaded into the content panel.
+     /// Enhanced with SQL Server Express monitoring and performance tracking.
      /// </summary>
     public partial class Dashboard : Form, IApplicationHub
     {
@@ -33,6 +35,25 @@ namespace BusBus.UI
         private readonly Dictionary<string, IView> _viewCache = new();
         private readonly Stack<string> _navigationHistory = new();
         private readonly DashboardState _state = new();
+        private readonly AdvancedSqlServerDatabaseManager? _databaseManager;
+
+        // Performance monitoring
+        private readonly Dictionary<string, long> _performanceMetrics = new();
+        private readonly System.Windows.Forms.Timer _performanceMonitorTimer;
+        private readonly object _metricsLock = new object();
+
+        // Logger message definitions for performance
+        private static readonly Action<ILogger, string, long, Exception?> _logNavigationPerformance =
+            LoggerMessage.Define<string, long>(
+                LogLevel.Debug,
+                new EventId(1, "NavigationPerformance"),
+                "Navigation to '{ViewName}' completed in {ElapsedMs}ms");
+
+        private static readonly Action<ILogger, string, int, Exception?> _logDatabasePerformance =
+            LoggerMessage.Define<string, int>(
+                LogLevel.Information,
+                new EventId(2, "DatabasePerformance"),
+                "Database health check: {Status} - Active connections: {ConnectionCount}");
 
         private TableLayoutPanel _mainLayout;
         private Panel _sidePanel;
@@ -40,9 +61,7 @@ namespace BusBus.UI
         // Note: _footerPanel removed as it's not currently used - status bar serves as footer
         private StatusStrip _statusStrip;
         private ToolStripStatusLabel _statusLabel;
-        private ToolStripProgressBar _progressBar;
-
-        private IView? _currentView;
+        private ToolStripProgressBar _progressBar;        private IView? _currentView;
         private CancellationTokenSource _cancellationTokenSource = new();
         #endregion
 
@@ -70,6 +89,17 @@ namespace BusBus.UI
             _routeService = routeService;
             _logger = logger;
 
+            // Get database manager for performance monitoring
+            _databaseManager = _serviceProvider.GetService<AdvancedSqlServerDatabaseManager>();
+
+            // Initialize performance monitoring timer
+            _performanceMonitorTimer = new System.Windows.Forms.Timer
+            {
+                Interval = 60000 // 1 minute intervals
+            };
+            _performanceMonitorTimer.Tick += async (s, e) => await MonitorDatabasePerformanceAsync();
+            _performanceMonitorTimer.Start();
+
             _logger.LogDebug("[DEBUG] Dashboard constructor called. serviceProvider: {ServiceProvider}, routeService: {RouteService}, logger: {Logger}", serviceProvider, routeService, logger);
 
             // InitializeComponent(); // Removed to avoid duplicate/hidden controls
@@ -77,7 +107,7 @@ namespace BusBus.UI
             RegisterViews();
             SubscribeToEvents();
 
-            _logger.LogInformation("Dashboard initialized successfully");
+            _logger.LogInformation("Dashboard initialized successfully with performance monitoring enabled");
             // pragma disables above
         }
         #endregion
@@ -190,11 +220,9 @@ namespace BusBus.UI
                 Tag = "SidePanel",
                 AutoScroll = true,
                 Padding = new Padding(0, 15, 0, 15) // Increased vertical padding for better spacing
-            };
-
-            var navItems = new[]
+            };            var navItems = new[]
             {
-                new NavigationItem("🏠", "Dashboard", "dashboard", true),
+                new NavigationItem("�", "New Feature Here", "new-feature", true),
                 new NavigationItem("🚌", "Routes", "routes"),
                 new NavigationItem("👥", "Drivers", "drivers"),
                 new NavigationItem("🚗", "Vehicles", "vehicles"),
@@ -213,8 +241,7 @@ namespace BusBus.UI
 
             // Register for high-quality text rendering
             TextRenderingManager.RegisterForHighQualityTextRendering(_sidePanel);
-        }
-        private Button CreateNavigationButton(NavigationItem item)
+        }        private Button CreateNavigationButton(NavigationItem item)
         {
             var button = new Button
             {
@@ -229,7 +256,20 @@ namespace BusBus.UI
             };
 
             button.FlatAppearance.BorderSize = 0;
-            button.Click += async (s, e) => await NavigateToAsync(item.ViewName);
+
+            // Only wire the click event for non-new-feature buttons
+            if (item.ViewName != "new-feature")
+            {
+                button.Click += async (s, e) => await NavigateToAsync(item.ViewName);
+            }
+            else
+            {
+                // New feature button - no functionality yet
+                button.Click += (s, e) =>
+                {
+                    // Placeholder - no action
+                };
+            }
 
             // Register for high-quality text rendering
             TextRenderingManager.RegisterForHighQualityTextRendering(button);
@@ -386,8 +426,13 @@ namespace BusBus.UI
                 }                // Activate view with exception handling for Win32 and InvalidOperation exceptions
                 try
                 {
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
                     await view.ActivateAsync(_cancellationTokenSource.Token);
+                    watch.Stop();
                     _currentView = view;
+
+                    // Log navigation performance
+                    _logNavigationPerformance(_logger, viewName, watch.ElapsedMilliseconds, null);
 
                     // Update UI with proper exception handling
                     UpdateNavigationButtons(viewName);
@@ -456,11 +501,9 @@ namespace BusBus.UI
                     }                    // Create view based on name
                     IView? view = null;
                     try
-                    {
-                        view = viewName.ToLower() switch
+                    {                        view = viewName.ToLower() switch
                         {
-                            "dashboard" => _serviceProvider.GetService<DashboardView>() ?? new DashboardView(_serviceProvider),
-                            "routes" => new RouteListView(_routeService),
+                            "routes" => new RouteListViewPlaceholder(_routeService),
                             "drivers" => new DriverListView(_serviceProvider),
                             "vehicles" => new VehicleListView(_serviceProvider),
                             "reports" => new ReportsView(_serviceProvider),
@@ -549,6 +592,53 @@ namespace BusBus.UI
         private void OnViewStatusUpdated(object? sender, StatusEventArgs e)
         {
             ShowStatus(e.Message, e.Type);
+        }
+        #endregion
+
+        #region Performance Monitoring
+        private async Task MonitorDatabasePerformanceAsync()
+        {
+            try
+            {
+                if (_databaseManager != null)
+                {
+                    // Get database performance metrics
+                    var metrics = _databaseManager.GetPerformanceMetrics();
+
+                    lock (_metricsLock)
+                    {
+                        // Update stored metrics
+                        foreach (var metric in metrics)
+                        {
+                            _performanceMetrics[metric.Key] = metric.Value;
+                        }
+                    }
+
+                    // Test database connection health
+                    var isHealthy = await _databaseManager.TestConnectionAsync();
+                    var connectionCount = metrics.Count;
+
+                    _logDatabasePerformance(_logger, isHealthy ? "Healthy" : "Unhealthy", connectionCount, null);
+
+                    // Update status if database is unhealthy
+                    if (!isHealthy)
+                    {
+                        ShowStatus("Database connection issues detected", StatusType.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during database performance monitoring");
+            }
+        }
+
+        public Dictionary<string, long> GetPerformanceMetrics()
+        {
+            lock (_metricsLock)
+            {
+                return new Dictionary<string, long>(_performanceMetrics);
+            }
         }
         #endregion
 
@@ -652,7 +742,7 @@ namespace BusBus.UI
         private async void OnFormLoad(object? sender, EventArgs e)
         {
             LoadState();
-            await NavigateToAsync(_state.LastView ?? "dashboard");
+            await NavigateToAsync(_state.LastView ?? "routes");
         }
         private async void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
@@ -959,10 +1049,34 @@ namespace BusBus.UI
                     _logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
                 }
             }
-
             try
             {
-                base.Dispose(disposing);
+                // Only call base.Dispose if we're not in the middle of creating a handle
+                if (this.IsHandleCreated && !this.IsDisposed)
+                {
+                    base.Dispose(disposing);
+                }
+                else if (!this.IsDisposed)
+                {
+                    // If handle is not created, dispose more carefully
+                    this.Invoke(new Action(() =>
+                    {
+                        try
+                        {
+                            base.Dispose(disposing);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error in delayed base Dispose call");
+                        }
+                    }));
+                }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("CreateHandle") || ex.Message.Contains("Invoke"))
+            {
+                _logger?.LogWarning("Skipping base disposal due to handle creation conflict: {Message}", ex.Message);
+                _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
+                    this.IsHandleCreated, this.IsDisposed, disposing);
             }
             catch (Exception ex)
             {

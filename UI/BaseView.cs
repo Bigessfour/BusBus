@@ -31,13 +31,34 @@ namespace BusBus.UI
         {
             _viewCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             await OnActivateAsync(_viewCancellationTokenSource.Token);
-        }
-
-        public virtual async Task DeactivateAsync()
+        }        public virtual async Task DeactivateAsync()
         {
-            _viewCancellationTokenSource?.Cancel();
+            try
+            {
+                if (_viewCancellationTokenSource != null && !_viewCancellationTokenSource.IsCancellationRequested)
+                {
+                    _viewCancellationTokenSource.Cancel();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignore if already disposed
+            }
+
             await OnDeactivateAsync();
-            _viewCancellationTokenSource?.Dispose();
+
+            try
+            {
+                _viewCancellationTokenSource?.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignore if already disposed
+            }
+            finally
+            {
+                _viewCancellationTokenSource = null;
+            }
         }
 
         protected abstract Task OnActivateAsync(CancellationToken cancellationToken);

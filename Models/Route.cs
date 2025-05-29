@@ -42,11 +42,14 @@ namespace BusBus.Models
         public int PMEndingMileage { get; set; }
 
         [Range(0, int.MaxValue)]
-        public int PMRiders { get; set; }
-
-        // Foreign keys for Driver and Vehicle
+        public int PMRiders { get; set; }        // Foreign keys for Driver and Vehicle
         public Guid? DriverId { get; set; }
         public Driver? Driver { get; set; }
+
+        // Separate PM Driver support per BusBus Info requirements
+        public Guid? PMDriverId { get; set; }
+        public Driver? PMDriver { get; set; }
+
         public Guid? VehicleId { get; set; }
         public Vehicle? Vehicle { get; set; }
 

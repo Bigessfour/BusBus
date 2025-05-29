@@ -164,6 +164,12 @@ namespace BusBus.Utils
                         // Check if process has exited before accessing properties
                         if (process != null && !process.HasExited)
                         {
+                            // Don't kill the current process
+                            if (process.Id == Environment.ProcessId)
+                            {
+                                continue;
+                            }
+
                             // Only kill related processes (check if they were created by this app)
                             var startTime = process.StartTime;
                             if ((DateTime.Now - startTime).TotalMinutes < 10) // Only recent processes
@@ -252,8 +258,7 @@ namespace BusBus.Utils
                             // Kill all dotnet processes except current one
                             shouldKill = true;
                         }
-
-                        if (shouldKill)
+                        if (shouldKill && process.Id != Environment.ProcessId)
                         {
                             _logger?.LogWarning("Killing lingering process: ID={ProcessId}, Started={StartTime}",
                                 process.Id, process.StartTime);

@@ -1,0 +1,247 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using BusBus.Models;
+using BusBus.Services;
+
+namespace BusBus.UI.Common
+{
+    /// <summary>
+    /// Data view configuration for Routes in the dynamic DataGridView
+    /// </summary>
+    public class RouteDataViewConfiguration : IDataViewConfiguration<Route>
+    {
+        private readonly IRouteService _routeService;
+
+        public string ViewName => "Route";
+        public string PluralName => "Routes";
+        public string Icon => "🚌";
+
+        public RouteDataViewConfiguration(IRouteService routeService)
+        {
+            _routeService = routeService ?? throw new ArgumentNullException(nameof(routeService));
+        }        public void ConfigureColumns(DataGridView dataGrid)
+        {
+            ArgumentNullException.ThrowIfNull(dataGrid);
+
+            dataGrid.Columns.Clear();
+            dataGrid.AutoGenerateColumns = false;
+
+            // Configure columns based on the Route View requirements
+            dataGrid.Columns.AddRange(new DataGridViewColumn[]
+            {
+                // Date column with DD-MM-YY format as specified
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "Date",
+                    DataPropertyName = "RouteDate",
+                    FillWeight = 80,
+                    MinimumWidth = 80,
+                    DefaultCellStyle = new DataGridViewCellStyle { Format = "dd-MM-yy" }
+                },
+                // Route Name column
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "Route Name",
+                    DataPropertyName = "Name",
+                    FillWeight = 120,
+                    MinimumWidth = 100
+                },
+                // Bus column (Vehicle) with dropdown capability
+                new DataGridViewComboBoxColumn
+                {
+                    HeaderText = "Bus",
+                    DataPropertyName = "VehicleId",
+                    DataSource = null, // Will be populated in LoadDataAsync
+                    DisplayMember = "Number",
+                    ValueMember = "Id",
+                    FillWeight = 70,
+                    MinimumWidth = 70
+                },
+                // AM Begin Mileage
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "AM Begin Mileage",
+                    DataPropertyName = "AMStartingMileage",
+                    FillWeight = 100,
+                    MinimumWidth = 90
+                },
+                // AM End Mileage
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "AM End Mileage",
+                    DataPropertyName = "AMEndingMileage",
+                    FillWeight = 100,
+                    MinimumWidth = 90
+                },
+                // AM Riders
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "AM Riders",
+                    DataPropertyName = "AMRiders",
+                    FillWeight = 70,
+                    MinimumWidth = 70
+                },
+                // AM Driver with dropdown capability
+                new DataGridViewComboBoxColumn
+                {
+                    HeaderText = "AM Driver",
+                    DataPropertyName = "DriverId",
+                    DataSource = null, // Will be populated in LoadDataAsync
+                    DisplayMember = "Name",
+                    ValueMember = "Id",
+                    FillWeight = 120,
+                    MinimumWidth = 100
+                },
+                // PM Start Mileage
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "PM Start Mileage",
+                    DataPropertyName = "PMStartMileage",
+                    FillWeight = 100,
+                    MinimumWidth = 90
+                },
+                // PM End Mileage
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "PM End Mileage",
+                    DataPropertyName = "PMEndingMileage",
+                    FillWeight = 100,
+                    MinimumWidth = 90
+                },
+                // PM Riders
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "PM Riders",
+                    DataPropertyName = "PMRiders",
+                    FillWeight = 70,
+                    MinimumWidth = 70
+                },
+                // PM Driver with dropdown capability
+                new DataGridViewComboBoxColumn
+                {
+                    HeaderText = "PM Driver",
+                    DataPropertyName = "PMDriverId", // This may need to be added to the Route model
+                    DataSource = null, // Will be populated in LoadDataAsync
+                    DisplayMember = "Name",
+                    ValueMember = "Id",
+                    FillWeight = 120,
+                    MinimumWidth = 100
+                }
+            });
+        }
+                {
+                    HeaderText = "AM Start",
+                    DataPropertyName = "AMStartingMileage",
+                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
+                    FillWeight = 80,
+                    MinimumWidth = 80
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "AM End",
+                    DataPropertyName = "AMEndingMileage",
+                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
+                    FillWeight = 80,
+                    MinimumWidth = 80
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "PM Start",
+                    DataPropertyName = "PMStartMileage",
+                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
+                    FillWeight = 80,
+                    MinimumWidth = 80
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "PM End",
+                    DataPropertyName = "PMEndingMileage",
+                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
+                    FillWeight = 80,
+                    MinimumWidth = 80
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "Driver",
+                    Name = "DriverName",
+                    ReadOnly = true,
+                    FillWeight = 120,
+                    MinimumWidth = 100
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "Vehicle",
+                    Name = "Number",
+                    ReadOnly = true,
+                    FillWeight = 80,
+                    MinimumWidth = 80
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "Id",
+                    DataPropertyName = "Id",
+                    Visible = false
+                }
+            });
+        }
+
+        public async Task<List<Route>> LoadDataAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            return await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
+        }
+
+        public async Task<int> GetTotalCountAsync(CancellationToken cancellationToken = default)
+        {
+            return await _routeService.GetRoutesCountAsync(cancellationToken);
+        }
+
+        public async Task<Route> CreateAsync(Route entity, CancellationToken cancellationToken = default)
+        {
+            return await _routeService.CreateRouteAsync(entity, cancellationToken);
+        }
+
+        public async Task<Route> UpdateAsync(Route entity, CancellationToken cancellationToken = default)
+        {
+            return await _routeService.UpdateRouteAsync(entity, cancellationToken);
+        }
+
+        public async Task<bool> DeleteAsync(Route entity, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(entity);
+
+            try
+            {
+                await _routeService.DeleteRouteAsync(entity.Id, cancellationToken);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public object GetEntityId(Route entity)
+        {
+            ArgumentNullException.ThrowIfNull(entity);
+
+            return entity.Id;
+        }
+
+        public Route CreateNewEntity()
+        {
+            return new Route
+            {
+                Name = "New Route",
+                RouteDate = DateTime.Today,
+                AMStartingMileage = 0,
+                AMEndingMileage = 0,
+                PMStartMileage = 0,
+                PMEndingMileage = 0
+            };
+        }
+    }
+}

@@ -923,6 +923,26 @@ namespace BusBus.UI
 
             return CardText;
         }
+
+        /// <summary>
+        /// Primary accent color for visual hierarchy and interactive elements
+        /// </summary>
+        public virtual Color PrimaryAccent => Color.FromArgb(60, 120, 215); // Blue
+
+        /// <summary>
+        /// Secondary accent color for less important interactive elements
+        /// </summary>
+        public virtual Color SecondaryAccent => Color.FromArgb(0, 183, 195); // Teal
+
+        /// <summary>
+        /// Tertiary accent color for decorative elements
+        /// </summary>
+        public virtual Color TertiaryAccent => Color.FromArgb(104, 33, 122); // Purple
+
+        /// <summary>
+        /// Primary text color for normal content
+        /// </summary>
+        public virtual Color PrimaryText => CardText;
     }
 
     /// <summary>

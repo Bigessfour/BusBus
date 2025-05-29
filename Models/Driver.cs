@@ -23,9 +23,7 @@ namespace BusBus.Models
         public string FirstName { get; set; } = string.Empty;
 
         [System.ComponentModel.DataAnnotations.Required]
-        public string LastName { get; set; } = string.Empty;
-
-        /// <summary>
+        public string LastName { get; set; } = string.Empty;        /// <summary>
         /// Gets or sets the display name for the driver (for UI and reporting)
         /// </summary>
         public string Name
@@ -33,20 +31,31 @@ namespace BusBus.Models
             get => $"{FirstName} {LastName}".Trim();
             set
             {
-                if (!string.IsNullOrWhiteSpace(value))
+                if (!string.IsNullOrEmpty(value))
                 {
-                    var parts = value.Split(' ', 2);
-                    FirstName = parts[0];
+                    var parts = value.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                    FirstName = parts.Length > 0 ? parts[0] : string.Empty;
                     LastName = parts.Length > 1 ? parts[1] : string.Empty;
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the full name for display in data grids (same as Name property)
+        /// Per BusBus Info: "First Name Last Name" format
+        /// </summary>
+        public string FullName => $"{FirstName} {LastName}".Trim();
 
         public string? PhoneNumber { get; set; }
 
         public string? Email { get; set; }
 
         public string LicenseNumber { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Type of license held by the driver (CDL or Passenger)
+        /// </summary>
+        public string LicenseType { get; set; } = "CDL";
 
         public override string ToString()
         {
@@ -57,6 +66,30 @@ namespace BusBus.Models
         public string DriverName { get; set; } = string.Empty;
         public string ContactInfo { get; set; } = string.Empty;
         public string Status { get; set; } = "Active";
+
+        /// <summary>
+        /// Indicates if the driver is currently active
+        /// </summary>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Indicates if the driver needs a performance review
+        /// </summary>
+        public bool NeedsPerformanceReview => LastPerformanceReview == null ||
+                                             (DateTime.UtcNow - LastPerformanceReview.Value).TotalDays > 365;
+
+        /// <summary>
+        /// Gets the years of service for the driver
+        /// </summary>
+        public int YearsOfService => (int)((DateTime.UtcNow - HireDate).TotalDays / 365.25);
+
+        /// <summary>
+        /// Gets the overall performance score for the driver
+        /// </summary>
+        public double PerformanceScore => (PerformanceMetrics.SafetyScore +
+                                          PerformanceMetrics.PunctualityScore +
+                                          PerformanceMetrics.CustomerServiceScore) / 3.0;
+
         public DateTime HireDate { get; set; }
         public DateTime? LastPerformanceReview { get; set; }
         public int SalaryGrade { get; set; }
@@ -94,36 +127,62 @@ namespace BusBus.Models
             set => _personalDetails = JsonSerializer.Serialize(value);
         }
 
-        // Computed property from SQL Server function
-        public decimal PerformanceScore { get; set; } = 5.0m;
+        private string _performanceMetrics = string.Empty;
+        public string PerformanceMetricsJson
+        {
+            get => _performanceMetrics;
+            set => _performanceMetrics = value;
+        }
 
-        // Calculated properties
-        public int YearsOfService => DateTime.Now.Year - HireDate.Year;
-        public bool NeedsPerformanceReview =>
-            !LastPerformanceReview.HasValue || LastPerformanceReview.Value.AddYears(1) < DateTime.Now;
-    }
+        public PerformanceMetrics PerformanceMetrics
+        {
+            get => string.IsNullOrEmpty(_performanceMetrics) ? new PerformanceMetrics() :
+                   JsonSerializer.Deserialize<PerformanceMetrics>(_performanceMetrics) ?? new PerformanceMetrics();
+            set => _performanceMetrics = JsonSerializer.Serialize(value);
+        }
 
+        public Driver()
+        {
+            CreatedDate = DateTime.UtcNow;
+            ModifiedDate = DateTime.UtcNow;
+            HireDate = DateTime.Today;
+        }
+    }    /// <summary>
+         /// Emergency contact information for a driver
+         /// </summary>
     public class EmergencyContact
     {
         public string Name { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty; // Alternative property name used by tests
         public string Relationship { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Personal details for a driver
+    /// </summary>
     public class PersonalDetails
     {
+        public string Name { get; set; } = string.Empty;
+        public DateTime DateOfBirth { get; set; }
+        public string Address { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string State { get; set; } = string.Empty;
+        public string ZipCode { get; set; } = string.Empty;
         public string HairColor { get; set; } = string.Empty;
-        public string EyeColor { get; set; } = string.Empty;
-        public int? Height { get; set; } // in cm
-        public string BloodType { get; set; } = string.Empty;
-        public List<string> Allergies { get; set; } = new List<string>();
-        public string MedicalNotes { get; set; } = string.Empty;
-        public List<string> Certifications { get; set; } = new List<string>();
+    }
 
-        // This property is serialized as JSON and not a navigation property
-        [System.Text.Json.Serialization.JsonInclude]
-        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-        public Dictionary<string, object> CustomFields { get; set; } = new Dictionary<string, object>();
+    /// <summary>
+    /// Performance metrics for a driver
+    /// </summary>
+    public class PerformanceMetrics
+    {
+        public int Id { get; set; } // Primary key - will be hidden from grid views
+        public double SafetyScore { get; set; }
+        public double PunctualityScore { get; set; }
+        public double CustomerServiceScore { get; set; }
+        public int TotalTrips { get; set; }
+        public int AccidentCount { get; set; }
     }
 }

@@ -234,17 +234,60 @@ namespace BusBus
                 {
                     Console.WriteLine($"[Program] Error in ProcessExit handler: {ex.Message}");
                 }
-            };
-
-            try
+            }; try
             {
+                // Test database connection first
+                Console.WriteLine("[Program] Testing database connection...");
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                    // Test basic connectivity
+                    try
+                    {
+                        var canConnect = await dbContext.Database.CanConnectAsync();
+                        if (!canConnect)
+                        {
+                            throw new InvalidOperationException("Cannot connect to database");
+                        }
+                        Console.WriteLine("[Program] Database connection successful");
+                    }
+                    catch (Exception dbEx)
+                    {
+                        Console.WriteLine($"[Program] Database connection failed: {dbEx.Message}");
+                        Console.WriteLine("[Program] Possible solutions:");
+                        Console.WriteLine("  1. Run: .\\verify-sqlserver-express.ps1");
+                        Console.WriteLine("  2. Run: .\\setup-database.ps1");
+                        Console.WriteLine("  3. Check SQL Server Express installation");
+                        Console.WriteLine("  4. Verify connection string in appsettings.json");
+
+                        MessageBox.Show(
+                            $"Database connection failed: {dbEx.Message}\n\n" +
+                            "Please run verify-sqlserver-express.ps1 to check your SQL Server Express installation.",
+                            "Database Connection Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+                        Environment.Exit(-1);
+                        return;
+                    }
+                }
+
                 // Seed sample data using a scoped service
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var routeService = scope.ServiceProvider.GetRequiredService<IRouteService>();
                     Console.WriteLine("[Program] Seeding sample data...");
-                    await routeService.SeedSampleDataAsync();
-                    Console.WriteLine("[Program] Sample data seeded successfully");
+                    try
+                    {
+                        await routeService.SeedSampleDataAsync();
+                        Console.WriteLine("[Program] Sample data seeded successfully");
+                    }
+                    catch (Exception seedEx)
+                    {
+                        Console.WriteLine($"[Program] Warning: Sample data seeding failed: {seedEx.Message}");
+                        // Continue anyway - this is not critical for app startup
+                    }
                 }
                 var mainForm = _serviceProvider.GetRequiredService<Dashboard>();
 
