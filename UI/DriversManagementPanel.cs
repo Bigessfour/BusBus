@@ -1,4 +1,6 @@
-// Enable nullable reference types for this file
+// finally fixed
+#nullable enable
+// finally fixed
 #nullable enable
 using BusBus.Models;
 using BusBus.Services;
