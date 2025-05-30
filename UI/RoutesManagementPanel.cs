@@ -158,9 +158,7 @@ namespace BusBus.UI
                     FillWeight = 150,
                     MinimumWidth = 120,
                     Items = { "Truck Plaza", "East", "West", "SPED" }
-                },
-
-                // Bus ComboBox (active Vehicles)
+                },                // Bus ComboBox (active Vehicles)
                 new DataGridViewComboBoxColumn {
                     HeaderText = "Bus",
                     Name = "BusColumn",
@@ -168,7 +166,7 @@ namespace BusBus.UI
                     FillWeight = 100,
                     MinimumWidth = 80,
                     DisplayMember = "BusNumber",
-                    ValueMember = "VehicleId"
+                    ValueMember = "Id"
                 },
 
                 // AM Begin Mileage
@@ -333,18 +331,16 @@ namespace BusBus.UI
         {
             ValidateMileageEntry(e);
         }
-
         private async void OnAddRouteClick(object? sender, EventArgs e)
         {
             try
-            {
-                // Create new route with default values
+            {                // Create new route with default values
                 var newRoute = new RouteDisplayDTO
                 {
                     Id = Guid.NewGuid(),
                     RouteDate = DateTime.Today,
                     Name = "Truck Plaza", // Default selection
-                    VehicleId = _vehicles.FirstOrDefault()?.VehicleId ?? 0,
+                    VehicleId = _vehicles.FirstOrDefault()?.Id,
                     AMStartingMileage = 0,
                     AMEndingMileage = 0,
                     AMRiders = 0,
@@ -544,13 +540,12 @@ namespace BusBus.UI
                         _vehicles = allVehicles.Where(v => v.Status == "Active").ToList();
                     }
                     catch
-                    {
-                        // Fallback to sample data
+                    {                        // Fallback to sample data
                         _vehicles = new List<Vehicle>
                         {
-                            new Vehicle { VehicleId = 1, BusNumber = "Bus 001", Status = "Active" },
-                            new Vehicle { VehicleId = 2, BusNumber = "Bus 002", Status = "Active" },
-                            new Vehicle { VehicleId = 3, BusNumber = "Bus 003", Status = "Active" }
+                            new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 001", Status = "Active" },
+                            new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 002", Status = "Active" },
+                            new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 003", Status = "Active" }
                         };
                     }
                 }
@@ -558,9 +553,9 @@ namespace BusBus.UI
                 {
                     _vehicles = new List<Vehicle>
                     {
-                        new Vehicle { VehicleId = 1, BusNumber = "Bus 001", Status = "Active" },
-                        new Vehicle { VehicleId = 2, BusNumber = "Bus 002", Status = "Active" },
-                        new Vehicle { VehicleId = 3, BusNumber = "Bus 003", Status = "Active" }
+                        new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 001", Status = "Active" },
+                        new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 002", Status = "Active" },
+                        new Vehicle { Id = Guid.NewGuid(), BusNumber = "Bus 003", Status = "Active" }
                     };
                 }
 
@@ -581,7 +576,7 @@ namespace BusBus.UI
             {
                 busColumn.DataSource = _vehicles.ToList();
                 busColumn.DisplayMember = "BusNumber";
-                busColumn.ValueMember = "VehicleId";
+                busColumn.ValueMember = "Id";
             }
 
             // Update Driver ComboBoxes
@@ -633,13 +628,12 @@ namespace BusBus.UI
         {
             await LoadRoutesAsync(_currentPage, _pageSize, _cancellationTokenSource.Token);
         }
-
-        public void Show()
+        public new void Show()
         {
             this.Visible = true;
         }
 
-        public void Hide()
+        public new void Hide()
         {
             this.Visible = false;
         }
@@ -670,33 +664,8 @@ namespace BusBus.UI
             if (disposing)
             {
                 _cancellationTokenSource?.Cancel();
-                _cancellationTokenSource?.Dispose();
             }
-            base.Dispose(disposing);
+            #endregion
         }
-        #endregion
     }
 }
-base.Dispose(disposing);
-        }
-        #endregion
-    }
-}
-
-{
-    return new Route
-    {
-        Id = this.Id,
-        RouteDate = this.RouteDate,
-        Name = this.Name,
-        VehicleId = this.VehicleId,
-        AMStartingMileage = this.AMStartingMileage,
-        AMEndingMileage = this.AMEndingMileage,
-        AMRiders = this.AMRiders,
-        PMStartMileage = this.PMStartMileage,
-        PMEndingMileage = this.PMEndingMileage,
-        PMRiders = this.PMRiders,
-        PMDriverId = this.PMDriverId // PM driver
-    };
-}
-

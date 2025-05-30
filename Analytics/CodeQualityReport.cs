@@ -97,6 +97,3 @@ Top 5 Most Complex Methods:
         }
     }
 }
-        }
-    }
-}
