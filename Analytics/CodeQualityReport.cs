@@ -90,6 +90,7 @@ Top 5 Most Complex Methods:
         }
 
         private static List<dynamic> AnalyzeFile(string filePath)
+
         {
             // This is a placeholder - you'd need to implement actual method parsing
             // For now, return empty list to avoid errors
@@ -97,6 +98,4 @@ Top 5 Most Complex Methods:
         }
     }
 }
-        }
-    }
-}
+

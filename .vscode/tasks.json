@@ -22,5 +22,64 @@
             },
             "problemMatcher": "$msCompile"
         }
+    ,
+        {
+          "label": "Fetch GitHub Actions Failure Logs",
+          "type": "shell",
+          "command": "gh run view 15350285709 --repo Bigessfour/BusBus --log > run-failure.log",
+          "problemMatcher": [],
+          "detail": "Fetches logs for the specified GitHub Actions run and saves to run-failure.log"
+        },
+        {
+          "label": "Run Local CI Validation",
+          "type": "shell",
+          "command": "dotnet restore && dotnet build --no-restore BusBus.sln && dotnet test BusBus.Tests/BusBus.Tests.csproj --verbosity minimal --logger \"console;verbosity=minimal\" > local-test-results.log",
+          "problemMatcher": [],
+          "dependsOn": ["Fetch GitHub Actions Failure Logs"],
+          "detail": "Runs local build and test, saving output to local-test-results.log"
+        },
+        {
+          "label": "Download Coverage Artifact",
+          "type": "shell",
+          "command": "gh run download 15350285709 --repo Bigessfour/BusBus --dir TestResults/Coverage",
+          "problemMatcher": [],
+          "dependsOn": ["Run Local CI Validation"],
+          "detail": "Downloads coverage report artifact from the workflow run"
+        },
+        {
+          "label": "Create Failure Report Issue",
+          "type": "shell",
+          "command": "gh issue create --repo Bigessfour/BusBus --title 'CI Failure: Run 15350285709' --body-file failure-report.md --label bug,ci",
+          "problemMatcher": [],
+          "dependsOn": ["Download Coverage Artifact"],
+          "detail": "Creates a GitHub issue from the drafted failure report"
+        },
+        {
+          "label": "Fetch and Report CI Failure",
+          "dependsOn": [
+            "Fetch GitHub Actions Failure Logs",
+            "Run Local CI Validation",
+            "Download Coverage Artifact",
+            "Create Failure Report Issue"
+          ],
+          "dependsOrder": "sequence",
+          "problemMatcher": [],
+          "type": "shell",
+          "command": "echo 'CI Failure fetch and report workflow complete.'"
+        }
+        ,
+        {
+          "label": "Fetch Latest Failure",
+          "type": "shell",
+          "command": "gh run list --repo Bigessfour/BusBus --status failure --limit 1 --json databaseId --jq '.[0].databaseId' > latest-failed-run.txt; runId=$(cat latest-failed-run.txt); gh run view $runId --repo Bigessfour/BusBus --log > run-failure-$runId.log",
+          "problemMatcher": [],
+          "group": "build",
+          "options": {
+            "shell": {
+              "executable": "bash.exe",
+              "args": ["-c"]
+            }
+          }
+        }
     ]
 }
