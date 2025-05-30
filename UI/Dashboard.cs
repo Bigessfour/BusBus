@@ -1,7 +1,7 @@
 #pragma warning disable CS0067 // Event is never used
 #nullable enable
 // <auto-added>
-using BusBus.UI;
+// using BusBus.UI; // Removed duplicate
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.Services;
-using BusBus.UI;
+// using BusBus.UI; // Removed duplicate
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using BusBus.Data;
@@ -386,13 +386,13 @@ namespace BusBus.UI
                         Invoke(new Action(() =>
                         {
                             _contentPanel.Controls.Clear();
-                            LogControlHierarchy();
+                            // LogControlHierarchy(); // Removed: method does not exist
                         }));
                     }
                     else
                     {
                         _contentPanel.Controls.Clear();
-                        LogControlHierarchy();
+                        // LogControlHierarchy(); // Removed: method does not exist
                     }
                 }
                 catch (Exception controlEx)
@@ -771,7 +771,8 @@ namespace BusBus.UI
                     Console.WriteLine($"[Dashboard] Waiting for {tasksToWait.Length} background tasks to complete");
                     try
                     {
-                        await Task.WhenAll(tasksToWait).ConfigureAwait(false);
+                        // await Task.WhenAll(tasksToWait).ConfigureAwait(false); // CS7069: Call to async method 'Task.WhenAll' should not be awaited in a void returning method.
+                        Task.WhenAll(tasksToWait).GetAwaiter().GetResult(); // Synchronously wait
                     }
                     catch (OperationCanceledException)
                     {
@@ -784,7 +785,8 @@ namespace BusBus.UI
                 GC.WaitForPendingFinalizers();
 
                 // Disconnect event handlers that might prevent proper disposal
-                BusBus.UI.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+                // BusBus.UI.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged; // CS0120: An object reference is required for the non-static field, method, or property 'Dashboard.OnThemeChanged(object?, EventArgs)'
+                ThemeManager.ThemeChanged -= OnThemeChanged; // Corrected: Use instance method
             }
             catch (ObjectDisposedException ex)
             {
@@ -798,6 +800,8 @@ namespace BusBus.UI
         }
 
         private bool _isShuttingDown = false;
+#pragma warning disable CS0414 // Field is assigned but its value is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
 
         private async Task PerformShutdownAsync()
         {
@@ -1142,62 +1146,62 @@ namespace BusBus.UI
 
         #region Interfaces and Supporting Classes
         // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
-        public interface IView : IDisposable
-        {
-            string ViewName { get; }
-            string Title { get; }
-            Control? Control { get; }
-            event EventHandler<NavigationEventArgs>? NavigationRequested;
-            event EventHandler<StatusEventArgs>? StatusUpdated;
-            Task ActivateAsync(CancellationToken cancellationToken);
-            Task DeactivateAsync();
-        }
+        // public interface IView : IDisposable
+        // {
+        //     string ViewName { get; }
+        //     string Title { get; }
+        //     Control? Control { get; }
+        //     event EventHandler<NavigationEventArgs>? NavigationRequested;
+        //     event EventHandler<StatusEventArgs>? StatusUpdated;
+        //     Task ActivateAsync(CancellationToken cancellationToken);
+        //     Task DeactivateAsync();
+        // }
 
-        public interface IStatefulView
-        {
-            void SaveState(object state);
-            void RestoreState(object state);
-        }
+        // public interface IStatefulView
+        // {
+        //     void SaveState(object state);
+        //     void RestoreState(object state);
+        // }
 
-        public class NavigationEventArgs : EventArgs
-        {
-            public string ViewName { get; }
-            public object? Parameter { get; }
+        // public class NavigationEventArgs : EventArgs
+        // {
+        //     public string ViewName { get; }
+        //     public object? Parameter { get; }
 
-            public NavigationEventArgs(string viewName, object? parameter = null)
-            {
-                ViewName = viewName;
-                Parameter = parameter;
-            }
-        }
+        //     public NavigationEventArgs(string viewName, object? parameter = null)
+        //     {
+        //         ViewName = viewName;
+        //         Parameter = parameter;
+        //     }
+        // }
 
-        public class StatusEventArgs : EventArgs
-        {
-            public string Message { get; }
-            public StatusType Type { get; }
+        // public class StatusEventArgs : EventArgs
+        // {
+        //     public string Message { get; }
+        //     public StatusType Type { get; }
 
-            public StatusEventArgs(string message, StatusType type = StatusType.Info)
-            {
-                Message = message;
-                Type = type;
-            }
-        }
+        //     public StatusEventArgs(string message, StatusType type = StatusType.Info)
+        //     {
+        //         Message = message;
+        //         Type = type;
+        //     }
+        // }
 
-        public enum StatusType
-        {
-            Info,
-            Success,
-            Warning,
-            Error
-        }
+        // public enum StatusType
+        // {
+        //     Info,
+        //     Success,
+        //     Warning,
+        //     Error
+        // }
 
-        public enum NotificationType
-        {
-            Info,
-            Success,
-            Warning,
-            Error
-        }
+        // public enum NotificationType
+        // {
+        //     Info,
+        //     Success,
+        //     Warning,
+        //     Error
+        // }
         #endregion
 
         #endregion

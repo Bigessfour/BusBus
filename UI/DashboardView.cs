@@ -28,17 +28,29 @@ namespace BusBus.UI
         private readonly ILogger<DashboardView> _logger;
         private readonly Stopwatch _loadingStopwatch = new Stopwatch();
         private TableLayoutPanel _mainLayout = null!;
+#pragma warning disable CS0414 // Field is assigned but its value is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
         private Panel _sidePanel = null!;
+#pragma warning disable CS0414
         private Panel _statsPanel = null!;
+#pragma warning disable CS0414
         private Panel _contentPanel = null!;
+#pragma warning disable CS0414
         private Panel _crudPanel = null!;
+#pragma warning disable CS0414
 
         // Dynamic DataGridView components
         private DynamicDataGridView<Route>? _routeDataGrid;
+#pragma warning disable CS0169 // Field is never used
+#pragma warning disable CS0169 // Field is never used
         private DynamicDataGridView<Driver>? _driverDataGrid;
+#pragma warning disable CS0169
         private DynamicDataGridView<Vehicle>? _vehicleDataGrid;
+#pragma warning disable CS0169
         private Control? _currentDataView;
+#pragma warning disable CS0169
         private string _currentViewType = "";
+#pragma warning disable CS0414
 
         // Constructor to satisfy DI and field requirements
         public DashboardView(IServiceProvider serviceProvider, ILogger<DashboardView> logger)

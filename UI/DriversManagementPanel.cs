@@ -43,6 +43,8 @@ namespace BusBus.UI
         public Control? Control => this;
 
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         public DriversManagementPanel(IDriverService driverService)
@@ -212,7 +214,7 @@ namespace BusBus.UI
         /// <summary>
         /// Creates a Crystal Dark glass-like button with specified text and size
         /// </summary>
-        private Button CreateCrystalDarkButton(string text, Size size)
+        private static Button CreateCrystalDarkButton(string text, Size size)
         {
             var button = new Button
             {
@@ -246,7 +248,7 @@ namespace BusBus.UI
             return button;
         }
 
-        private Panel CreateButtonPanel()
+        private TableLayoutPanel CreateButtonPanel()
         {
             var buttonPanel = new TableLayoutPanel
             {
@@ -528,15 +530,19 @@ namespace BusBus.UI
             await LoadDriversAsync(_currentPage, _pageSize, _cancellationTokenSource.Token);
         }
 
-        public void Show()
+        public new void Show()
         {
             this.Visible = true;
         }
 
-        public void Hide()
+        // CS0108: Hides inherited member 'Control.Hide()'. Use the new keyword if hiding was intended.
+        public new void Hide()
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
         {
             this.Visible = false;
         }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

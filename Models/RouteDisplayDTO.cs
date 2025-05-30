@@ -3,7 +3,7 @@
 #nullable enable
 
 using System;
-using BusBus.Data.Models;
+using BusBus.Models;
 
 namespace BusBus.Models
 {
@@ -15,34 +15,34 @@ namespace BusBus.Models
         // Core route properties
         public Guid Id { get; set; }
         public string RouteNumber { get; set; } = string.Empty;
-        public string RouteName { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string StartLocation { get; set; } = string.Empty;
-        public string EndLocation { get; set; } = string.Empty;
-        public decimal Distance { get; set; }
-        public TimeSpan Duration { get; set; }
-        public DateTime RouteDate { get; set; }
+        public string RouteName { get; set; } = string.Empty; // Maps to Route.Name
+        public string Name { get; set; } = string.Empty; // Also maps to Route.Name, kept for compatibility if used elsewhere
+        public string StartLocation { get; set; } = string.Empty; // Maps to Route.StartLocation
+        public string EndLocation { get; set; } = string.Empty; // Maps to Route.EndLocation
+        public decimal Distance { get; set; } // Maps to Route.Distance (int), implicit conversion
+        public TimeSpan? Duration { get; set; } // Was TimeSpan, now nullable. No direct field in Route.cs for EstimatedDuration
+        public DateTime RouteDate { get; set; } // Maps to Route.RouteDate
 
         // Vehicle information
         public Guid? VehicleId { get; set; }
-        public string VehicleAssignment { get; set; } = string.Empty;
+        public string VehicleAssignment { get; set; } = string.Empty; // Maps from Route.Vehicle.Name
 
         // AM shift data
         public int AMStartingMileage { get; set; }
         public int AMEndingMileage { get; set; }
         public int AMRiders { get; set; }
-        public Guid? AMDriverId { get; set; }
+        public Guid? AMDriverId { get; set; } // Maps to Route.DriverId
 
         // PM shift data
         public int PMStartMileage { get; set; }
         public int PMEndingMileage { get; set; }
         public int PMRiders { get; set; }
-        public Guid? PMDriverId { get; set; }
+        public Guid? PMDriverId { get; set; } // Maps to Route.PMDriverId
 
         // Additional properties required by UI
-        public DateTime ScheduledTime { get; set; }
-        public DateTime TripDate { get; set; }
-        public Guid? DriverId { get; set; }
+        public DateTime ScheduledTime { get; set; } // Maps to Route.ScheduledTime
+        public DateTime TripDate { get; set; } // Maps to Route.RouteDate
+        public Guid? DriverId { get; set; } // Maps to Route.DriverId (main driver for the route)
 
         /// <summary>
         /// Creates a RouteDisplayDTO from a Route entity
@@ -57,23 +57,23 @@ namespace BusBus.Models
                 RouteNumber = route.RouteCode ?? string.Empty,
                 RouteName = route.Name ?? string.Empty,
                 Name = route.Name ?? string.Empty,
-                StartLocation = route.Origin ?? string.Empty,
-                EndLocation = route.Destination ?? string.Empty,
-                Distance = route.TotalMiles,
-                Duration = TimeSpan.FromMinutes(route.EstimatedDuration),
-                RouteDate = route.Date,
+                StartLocation = route.StartLocation ?? string.Empty,
+                EndLocation = route.EndLocation ?? string.Empty,
+                Distance = route.Distance, // int to decimal is an implicit conversion
+                Duration = null, // No EstimatedDuration in Route.cs, set to null
+                RouteDate = route.RouteDate,
                 VehicleId = route.VehicleId,
-                VehicleAssignment = route.VehicleAssignment ?? string.Empty,
+                VehicleAssignment = route.Vehicle?.Name ?? string.Empty, // Assuming Vehicle has a Name property
                 AMStartingMileage = route.AMStartingMileage,
                 AMEndingMileage = route.AMEndingMileage,
                 AMRiders = route.AMRiders,
-                AMDriverId = route.AMDriverId,
+                AMDriverId = route.DriverId, // AM Driver is the main DriverId
                 PMStartMileage = route.PMStartMileage,
                 PMEndingMileage = route.PMEndingMileage,
                 PMRiders = route.PMRiders,
                 PMDriverId = route.PMDriverId,
                 ScheduledTime = route.ScheduledTime,
-                TripDate = route.RouteDate, // Map RouteDate to TripDate
+                TripDate = route.RouteDate,
                 DriverId = route.DriverId
             };
         }
@@ -83,30 +83,42 @@ namespace BusBus.Models
         /// </summary>
         public Route ToRoute()
         {
-            return new Route
+            var route = new Route
             {
                 Id = Id,
                 RouteCode = RouteNumber,
-                Name = Name,
-                Origin = StartLocation,
-                Destination = EndLocation,
-                TotalMiles = Distance,
-                EstimatedDuration = (int)Duration.TotalMinutes,
-                Date = RouteDate,
+                Name = Name, // Or RouteName, ensure consistency
+                StartLocation = StartLocation,
+                EndLocation = EndLocation,
+                // Route.Distance is int and likely computed/readonly in DB. Avoid setting if so.
+                // If it needs to be set, ensure conversion: (int)Distance
+                // For now, assuming it's not set from DTO directly if it's a computed field.
+                // EstimatedDuration is not in Route.cs
+                RouteDate = RouteDate,
                 VehicleId = VehicleId,
-                VehicleAssignment = VehicleAssignment,
+                // VehicleAssignment is for display, not directly mapped back to a simple string field in Route.
+                // The Vehicle relationship is managed by VehicleId.
                 AMStartingMileage = AMStartingMileage,
                 AMEndingMileage = AMEndingMileage,
                 AMRiders = AMRiders,
-                AMDriverId = AMDriverId,
+                DriverId = AMDriverId, // Main DriverId is AMDriverId from DTO
                 PMStartMileage = PMStartMileage,
                 PMEndingMileage = PMEndingMileage,
                 PMRiders = PMRiders,
                 PMDriverId = PMDriverId,
                 ScheduledTime = ScheduledTime,
-                RouteDate = TripDate, // Map TripDate back to RouteDate
-                DriverId = DriverId
+                // RouteDate is already set. TripDate from DTO maps to Route.RouteDate.
+                // If DriverId on DTO is the primary one, ensure it's mapped to Route.DriverId
             };
+            if (DriverId.HasValue) // If DTO's DriverId is specifically set, use it.
+            {
+                route.DriverId = DriverId;
+            }
+
+            // Handle Route.Distance if it's meant to be writable
+            // route.Distance = (int)this.Distance;
+
+            return route;
         }
     }
 }

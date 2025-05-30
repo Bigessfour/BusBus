@@ -47,6 +47,10 @@ namespace BusBus.UI
         public Control? Control => this;
 
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         public RoutesManagementPanel(IRouteService routeService, IDriverService? driverService = null, IVehicleService? vehicleService = null)
@@ -260,7 +264,7 @@ namespace BusBus.UI
         /// <summary>
         /// Creates a Crystal Dark glass-like button with specified text and size
         /// </summary>
-        private Button CreateCrystalDarkButton(string text, Size size)
+        private static Button CreateCrystalDarkButton(string text, Size size)
         {
             var button = new Button
             {
@@ -294,7 +298,7 @@ namespace BusBus.UI
             return button;
         }
 
-        private Panel CreateButtonPanel()
+        private TableLayoutPanel CreateButtonPanel()
         {
             var buttonPanel = new TableLayoutPanel
             {

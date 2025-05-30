@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
@@ -193,7 +194,7 @@ namespace BusBus.Tests.Integration
 
         [TestMethod]
         [TestCategory(TestCategories.Integration)]
-        public async Task VerifyTimerDisposal_DashboardPerformanceMonitor()
+        public void VerifyTimerDisposal_DashboardPerformanceMonitor()
         {
             // This test specifically verifies that Dashboard performance monitor timer
             // is properly disposed during shutdown (the primary fix)

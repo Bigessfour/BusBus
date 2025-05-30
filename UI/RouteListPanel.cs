@@ -47,8 +47,11 @@ namespace BusBus.UI
         public Control? Control => this;
 
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
         public event EventHandler<EntityEventArgs<Route>>? RouteEditRequested;
+#pragma warning disable CS0067 // Event is never used
 
         public RouteListPanel(IRouteService routeService, IDriverService driverService, IVehicleService vehicleService)
         {
@@ -333,7 +336,7 @@ namespace BusBus.UI
             try
             {
                 var pagedDrivers = await _driverService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
-                _drivers = pagedDrivers.Items.ToList();
+                _drivers = pagedDrivers.ToList(); // Fixed: List<T> does not have Items property
             }
             catch
             {
@@ -346,7 +349,7 @@ namespace BusBus.UI
             try
             {
                 var pagedVehicles = await _vehicleService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
-                _vehicles = pagedVehicles.Items.ToList();
+                _vehicles = pagedVehicles.ToList(); // Fixed: List<T> does not have Items property
             }
             catch
             {
@@ -501,8 +504,9 @@ namespace BusBus.UI
             // Theme is already applied in InitializeComponent
         }
 
-        public Task ActivateAsync(object? parameter = null)
+        public Task ActivateAsync(CancellationToken cancellationToken)
         {
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             return LoadDataAsync();
         }
 
@@ -512,7 +516,7 @@ namespace BusBus.UI
             return Task.CompletedTask;
         }
 
-        public void Render(Control parent)
+        public override void Render(Control parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             parent.Controls.Clear();

@@ -197,7 +197,8 @@ namespace BusBus.Tests.UI
                 try
                 {
                     using var scope = _serviceProvider!.CreateScope();
-                    var dashboardView = new DashboardView(scope.ServiceProvider);
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DashboardView>>();
+                    var dashboardView = new DashboardView(scope.ServiceProvider, logger);
 
                     var created = false;
                     var routeViewLoaded = false;
@@ -532,7 +533,8 @@ namespace BusBus.Tests.UI
                     details.Add("Starting BusBus Info dashboard integration test");
 
                     using var scope = _serviceProvider!.CreateScope();
-                    var dashboardView = new DashboardView(scope.ServiceProvider);
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DashboardView>>();
+                    var dashboardView = new DashboardView(scope.ServiceProvider, logger);
 
                     // Force handle creation
                     var handle = dashboardView.Handle;

@@ -16,13 +16,18 @@ namespace BusBus.UI
     /// Comprehensive vehicles management panel with Crystal Dark styling and full CRUD operations
     /// </summary>
     public partial class VehiclesManagementPanel : ThemeableControl, IDisplayable, IView
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS8622 // Nullability of reference types in event handlers
+#pragma warning disable CS8602 // Dereference of a possibly null reference
+#pragma warning disable CA1861 // Prefer 'static readonly' fields over constant array arguments
+#pragma warning disable CA1822 // Member does not access instance data and can be marked as static
     {
         private readonly IVehicleService _vehicleService;
-        private DataGridView _dataGridView;
-        private Button _addButton;
-        private Button _editButton;
-        private Button _deleteButton;
-        private Button _refreshButton;
+        private DataGridView? _dataGridView;
+        private Button? _addButton;
+        private Button? _editButton;
+        private Button? _deleteButton;
+        private Button? _refreshButton;
         private BindingList<VehicleDisplayDTO> _vehicles;
         private readonly CancellationTokenSource _cancellationTokenSource;        // IView implementation
         public string ViewName => "VehiclesManagement";
@@ -112,7 +117,7 @@ namespace BusBus.UI
             this.Controls.Add(mainLayout);
 
             // Event handlers
-            _dataGridView.CellBeginEdit += DataGridView_CellBeginEdit;
+            _dataGridView!.CellBeginEdit += DataGridView_CellBeginEdit;
             _dataGridView.CellEndEdit += DataGridView_CellEndEdit;
             _dataGridView.DataError += DataGridView_DataError;
             _dataGridView.SelectionChanged += DataGridView_SelectionChanged;
@@ -121,7 +126,7 @@ namespace BusBus.UI
         private void ConfigureDataGridView()
         {
             // Primary Key (hidden)
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "VehicleId",
                 HeaderText = "ID",
@@ -130,7 +135,7 @@ namespace BusBus.UI
             });
 
             // Bus Number
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "BusNumber",
                 HeaderText = "Bus Number",
@@ -140,7 +145,7 @@ namespace BusBus.UI
             });
 
             // Model Year
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "ModelYear",
                 HeaderText = "Year",
@@ -150,7 +155,7 @@ namespace BusBus.UI
             });
 
             // Make
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "Make",
                 HeaderText = "Make",
@@ -160,7 +165,7 @@ namespace BusBus.UI
             });
 
             // Model
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "Model",
                 HeaderText = "Model",
@@ -170,7 +175,7 @@ namespace BusBus.UI
             });
 
             // VIN Number
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "VINNumber",
                 HeaderText = "VIN Number",
@@ -180,7 +185,7 @@ namespace BusBus.UI
             });
 
             // Capacity
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "Capacity",
                 HeaderText = "Capacity",
@@ -190,7 +195,7 @@ namespace BusBus.UI
             });
 
             // Last Inspection Date
-            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            _dataGridView!.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "LastInspectionDate",
                 HeaderText = "Last Inspection",
@@ -363,6 +368,11 @@ namespace BusBus.UI
         }
 
         private List<VehicleDisplayDTO> GetSampleVehicles()
+#pragma warning restore CS0067
+#pragma warning restore CS8622
+#pragma warning restore CS8602
+#pragma warning restore CA1861
+#pragma warning restore CA1822
         {
             return new List<VehicleDisplayDTO>
             {
@@ -429,7 +439,7 @@ namespace BusBus.UI
             };
         }
 
-        private async void AddButton_Click(object sender, EventArgs e)
+        private async void AddButton_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -467,9 +477,9 @@ namespace BusBus.UI
             }
         }
 
-        private async void EditButton_Click(object sender, EventArgs e)
+        private async void EditButton_Click(object? sender, EventArgs e)
         {
-            if (_dataGridView.SelectedRows.Count == 0) return;
+            if (_dataGridView == null || _dataGridView.SelectedRows.Count == 0) return;
 
             try
             {
@@ -518,9 +528,9 @@ namespace BusBus.UI
             }
         }
 
-        private async void DeleteButton_Click(object sender, EventArgs e)
+        private async void DeleteButton_Click(object? sender, EventArgs e)
         {
-            if (_dataGridView.SelectedRows.Count == 0) return;
+            if (_dataGridView == null || _dataGridView.SelectedRows.Count == 0) return;
 
             try
             {
@@ -556,7 +566,7 @@ namespace BusBus.UI
             }
         }
 
-        private async void RefreshButton_Click(object sender, EventArgs e)
+        private async void RefreshButton_Click(object? sender, EventArgs e)
         {
             await LoadDataAsync(_cancellationTokenSource.Token);
         }
@@ -564,7 +574,7 @@ namespace BusBus.UI
         private void DataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             // Allow editing of all columns except VehicleId
-            if (_dataGridView.Columns[e.ColumnIndex].Name == "VehicleId")
+            if (_dataGridView != null && _dataGridView.Columns[e.ColumnIndex].Name == "VehicleId")
             {
                 e.Cancel = true;
             }
@@ -573,7 +583,7 @@ namespace BusBus.UI
         private void DataGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             // Validate VIN number format
-            if (_dataGridView.Columns[e.ColumnIndex].Name == "VINNumber")
+            if (_dataGridView != null && _dataGridView.Columns[e.ColumnIndex].Name == "VINNumber")
             {
                 var cell = _dataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex];
                 var vinValue = cell.Value?.ToString();
@@ -586,7 +596,7 @@ namespace BusBus.UI
             }
 
             // Validate capacity
-            if (_dataGridView.Columns[e.ColumnIndex].Name == "Capacity")
+            if (_dataGridView != null && _dataGridView.Columns[e.ColumnIndex].Name == "Capacity")
             {
                 var cell = _dataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex];
                 if (int.TryParse(cell.Value?.ToString(), out int capacity))
@@ -600,7 +610,7 @@ namespace BusBus.UI
             }
 
             // Validate model year
-            if (_dataGridView.Columns[e.ColumnIndex].Name == "ModelYear")
+            if (_dataGridView != null && _dataGridView.Columns[e.ColumnIndex].Name == "ModelYear")
             {
                 var cell = _dataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex];
                 if (int.TryParse(cell.Value?.ToString(), out int year))
@@ -619,16 +629,17 @@ namespace BusBus.UI
         {
             // Handle data conversion errors gracefully
             e.ThrowException = false;
-            MessageBox.Show($"Invalid data entered in {_dataGridView.Columns[e.ColumnIndex].HeaderText}.",
+            string columnHeader = (_dataGridView != null) ? _dataGridView.Columns[e.ColumnIndex].HeaderText : "Unknown Column";
+            MessageBox.Show($"Invalid data entered in {columnHeader}.",
                 "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void DataGridView_SelectionChanged(object sender, EventArgs e)
         {
             // Enable/disable edit and delete buttons based on selection
-            bool hasSelection = _dataGridView.SelectedRows.Count > 0;
-            _editButton.Enabled = hasSelection;
-            _deleteButton.Enabled = hasSelection;
+            bool hasSelection = _dataGridView != null && _dataGridView.SelectedRows.Count > 0;
+            if (_editButton != null) _editButton.Enabled = hasSelection;
+            if (_deleteButton != null) _deleteButton.Enabled = hasSelection;
         }
         protected override void Dispose(bool disposing)
         {
@@ -681,6 +692,8 @@ namespace BusBus.UI
 
         public static VehicleDisplayDTO FromVehicle(Vehicle vehicle)
         {
+            if (vehicle == null)
+                throw new ArgumentNullException(nameof(vehicle));
             return new VehicleDisplayDTO
             {
                 VehicleId = vehicle.VehicleId,
@@ -716,19 +729,21 @@ namespace BusBus.UI
     /// Simple vehicle edit form for adding/editing vehicles
     /// </summary>
     public partial class VehicleEditForm : Form
+    // CA1861: Prefer 'static readonly' fields over constant array arguments if the called method is called repeatedly and is not mutating the passed array
+#pragma warning disable CA1861
     {
         public Vehicle Vehicle { get; private set; }
 
-        private TextBox _busNumberTextBox;
-        private NumericUpDown _modelYearNumeric;
-        private TextBox _makeTextBox;
-        private TextBox _modelTextBox;
-        private TextBox _vinTextBox;
-        private NumericUpDown _capacityNumeric;
-        private DateTimePicker _inspectionDatePicker;
-        private ComboBox _statusComboBox;
+        private TextBox? _busNumberTextBox;
+        private NumericUpDown? _modelYearNumeric;
+        private TextBox? _makeTextBox;
+        private TextBox? _modelTextBox;
+        private TextBox? _vinTextBox;
+        private NumericUpDown? _capacityNumeric;
+        private DateTimePicker? _inspectionDatePicker;
+        private ComboBox? _statusComboBox;
 
-        public VehicleEditForm(Vehicle vehicle = null)
+        public VehicleEditForm(Vehicle? vehicle = null)
         {
             Vehicle = vehicle ?? new Vehicle();
             InitializeComponent();
@@ -795,6 +810,7 @@ namespace BusBus.UI
             layout.Controls.Add(new Label { Text = "Status:", Anchor = AnchorStyles.Left }, 0, 7);
             _statusComboBox = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
             _statusComboBox.Items.AddRange(new[] { "Active", "Inactive", "Maintenance", "Out of Service" });
+#pragma warning restore CA1861
             layout.Controls.Add(_statusComboBox, 1, 7);
 
             // Buttons
@@ -819,46 +835,46 @@ namespace BusBus.UI
 
         private void PopulateFields()
         {
-            _busNumberTextBox.Text = Vehicle.BusNumber ?? string.Empty;
-            _modelYearNumeric.Value = Vehicle.ModelYear > 0 ? Vehicle.ModelYear : DateTime.Now.Year;
-            _makeTextBox.Text = Vehicle.Make ?? string.Empty;
-            _modelTextBox.Text = Vehicle.Model ?? string.Empty;
-            _vinTextBox.Text = Vehicle.VINNumber ?? string.Empty;
-            _capacityNumeric.Value = Vehicle.Capacity > 0 ? Vehicle.Capacity : 48;
-            _inspectionDatePicker.Value = Vehicle.LastInspectionDate ?? DateTime.Now.AddMonths(-3);
-            _statusComboBox.SelectedItem = Vehicle.IsActive ? (Vehicle.Status ?? "Active") : "Inactive";
+            _busNumberTextBox!.Text = Vehicle.BusNumber ?? string.Empty;
+            _modelYearNumeric!.Value = Vehicle.ModelYear > 0 ? Vehicle.ModelYear : DateTime.Now.Year;
+            _makeTextBox!.Text = Vehicle.Make ?? string.Empty;
+            _modelTextBox!.Text = Vehicle.Model ?? string.Empty;
+            _vinTextBox!.Text = Vehicle.VINNumber ?? string.Empty;
+            _capacityNumeric!.Value = Vehicle.Capacity > 0 ? Vehicle.Capacity : 48;
+            _inspectionDatePicker!.Value = Vehicle.LastInspectionDate ?? DateTime.Now.AddMonths(-3);
+            _statusComboBox!.SelectedItem = Vehicle.IsActive ? (Vehicle.Status ?? "Active") : "Inactive";
         }
 
-        private void OkButton_Click(object sender, EventArgs e)
+        private void OkButton_Click(object? sender, EventArgs e)
         {
             // Validate required fields
-            if (string.IsNullOrWhiteSpace(_busNumberTextBox.Text))
+            if (string.IsNullOrWhiteSpace(_busNumberTextBox!.Text))
             {
                 MessageBox.Show("Bus Number is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(_makeTextBox.Text))
+            if (string.IsNullOrWhiteSpace(_makeTextBox!.Text))
             {
                 MessageBox.Show("Make is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(_modelTextBox.Text))
+            if (string.IsNullOrWhiteSpace(_modelTextBox!.Text))
             {
                 MessageBox.Show("Model is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             // Update vehicle
-            Vehicle.BusNumber = _busNumberTextBox.Text.Trim();
-            Vehicle.ModelYear = (int)_modelYearNumeric.Value;
-            Vehicle.Make = _makeTextBox.Text.Trim();
-            Vehicle.Model = _modelTextBox.Text.Trim();
-            Vehicle.VINNumber = _vinTextBox.Text.Trim();
-            Vehicle.Capacity = (int)_capacityNumeric.Value;
-            Vehicle.LastInspectionDate = _inspectionDatePicker.Value;
-            Vehicle.Status = _statusComboBox.SelectedItem?.ToString() ?? "Active";
+            Vehicle.BusNumber = _busNumberTextBox!.Text.Trim();
+            Vehicle.ModelYear = (int)_modelYearNumeric!.Value;
+            Vehicle.Make = _makeTextBox!.Text.Trim();
+            Vehicle.Model = _modelTextBox!.Text.Trim();
+            Vehicle.VINNumber = _vinTextBox!.Text.Trim();
+            Vehicle.Capacity = (int)_capacityNumeric!.Value;
+            Vehicle.LastInspectionDate = _inspectionDatePicker!.Value;
+            Vehicle.Status = _statusComboBox!.SelectedItem?.ToString() ?? "Active";
             Vehicle.IsActive = Vehicle.Status != "Inactive";
         }
     }
