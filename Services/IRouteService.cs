@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BusBus.Models;
+using BusBus.Common;
 
 namespace BusBus.Services
 {
@@ -93,8 +94,44 @@ namespace BusBus.Services
         /// <param name="cancellationToken">Optional cancellation token</param>
         /// <returns>A list of routes on the specified date</returns>
         Task<List<Route>> GetRoutesByDateAsync(DateTime routeDate, CancellationToken cancellationToken = default);
-        // CA1716: Avoid using reserved keyword 'date' as parameter name
-        // Rename 'date' to 'routeDate' for better cross-language compatibility
-        // Task<List<Route>> GetRoutesByDateAsync(DateTime routeDate, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Gets a paginated list of routes (v2)
+        /// </summary>
+        /// <param name="page">The page number (1-based)</param>
+        /// <param name="pageSize">The number of items per page</param>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A paginated result of routes</returns>
+        Task<PagedResult<Route>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Gets all routes (v2)
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A list of all routes</returns>
+        Task<List<Route>> GetAllAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Deletes a route (v2)
+        /// </summary>
+        /// <param name="id">The ID of the route to delete</param>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A task representing the asynchronous operation</returns>
+        Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Creates a new route (v2)
+        /// </summary>
+        /// <param name="route">The route to create</param>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A task representing the asynchronous operation</returns>
+        Task<Route> CreateAsync(Route route, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Updates an existing route (v2)
+        /// </summary>
+        /// <param name="route">The route to update</param>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A task representing the asynchronous operation</returns>
+        Task<Route> UpdateAsync(Route route, CancellationToken cancellationToken);
     }
 }

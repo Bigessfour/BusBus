@@ -92,4 +92,11 @@
   </Target>
   -->
 
+  <ItemGroup>
+    <!-- Exclude archived UI files from compilation -->
+    <Compile Remove="UI\Archived\**" />
+    <Content Remove="UI\Archived\**" />
+    <EmbeddedResource Remove="UI\Archived\**" />
+    <None Remove="UI\Archived\**" />
+  </ItemGroup>
 </Project>

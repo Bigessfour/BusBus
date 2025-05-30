@@ -63,6 +63,7 @@ namespace BusBus.UI
         private ToolStripStatusLabel _statusLabel;
         private ToolStripProgressBar _progressBar; private IView? _currentView;
         private CancellationTokenSource _cancellationTokenSource = new();
+        private readonly List<Task> _backgroundTasks = new(); // Track background tasks
         #endregion
 
         #region Constructor
@@ -510,7 +511,7 @@ namespace BusBus.UI
                         view = viewName.ToLower() switch
                         {
                             "dashboard" => new DashboardOverviewView(_serviceProvider), // Home/overview panel
-                            // "routes" => new RouteListPanel(_routeService), // Full CRUD routes functionality - temporarily disabled
+                            "routes" => new RouteListPanel(_routeService, _driverService, _vehicleService), // Full CRUD routes functionality - now enabled
                             "drivers" => new DriverListView(_serviceProvider),
                             "vehicles" => new VehicleListView(_serviceProvider),
                             "reports" => new ReportsView(_serviceProvider),
@@ -736,57 +737,54 @@ namespace BusBus.UI
         }
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
+            Console.WriteLine("[Dashboard] Form closing started");
+
+            if (e.CloseReason != CloseReason.UserClosing && e.CloseReason != CloseReason.ApplicationExitCall)
+                return;
+
             try
             {
-                _logger?.LogInformation("Dashboard form closing initiated");
+                Console.WriteLine($"Dashboard closing: {e.CloseReason}");
 
-                // Prevent recursive closing
-                if (_isShuttingDown)
+                // Cancel any pending operations
+                _cancellationTokenSource?.Cancel();
+                Console.WriteLine("[Dashboard] Cancellation requested");
+
+                // Wait for all background tasks to complete
+                Task[] tasksToWait;
+                lock (_backgroundTasks)
                 {
-                    _logger?.LogDebug("Already shutting down, allowing form to close");
-                    return;
+                    tasksToWait = _backgroundTasks.Where(t => !t.IsCompleted).ToArray();
                 }
 
-                // Cancel the close operation first so we can control shutdown timing
-                if (!e.Cancel)
+                if (tasksToWait.Length > 0)
                 {
-                    e.Cancel = true;
-                    // Start shutdown process in background and close when done
-                    var shutdownTask = Task.Run(async () =>
+                    Console.WriteLine($"[Dashboard] Waiting for {tasksToWait.Length} background tasks to complete");
+                    try
                     {
-                        try
-                        {
-                            await PerformShutdownAsync();
-
-                            // Close the form on UI thread after cleanup is complete
-                            this.Invoke(() =>
-                            {
-                                // Set a flag to prevent recursive closing
-                                _isShuttingDown = true;
-
-                                // Force close the application
-                                Application.Exit();
-                            });
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error during shutdown process");
-
-                            // Force exit if shutdown fails
-                            Environment.Exit(1);
-                        }
-                    });
-
-                    // Register the shutdown task with the Program class to track it
-                    BusBus.Program.AddBackgroundTask(shutdownTask);
+                        await Task.WhenAll(tasksToWait).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Console.WriteLine("[Dashboard] Background tasks cancelled");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error in OnFormClosing");
 
-                // If we can't shutdown gracefully, force exit
-                Environment.Exit(1);
+                // Force garbage collection to help with cleanup
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                // Disconnect event handlers that might prevent proper disposal
+                BusBus.UI.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+            }
+            catch (ObjectDisposedException ex)
+            {
+                Console.WriteLine($"[Dashboard] Object already disposed during shutdown: {ex.Message}");
+            }
+            finally
+            {
+                _cancellationTokenSource?.Dispose();
+                Console.WriteLine("[Dashboard] Form closing completed");
             }
         }
 
@@ -1043,188 +1041,12 @@ namespace BusBus.UI
         {
             if (disposing)
             {
-                try
-                {
-                    // Enhanced disposal state checks
-                    if (!IsHandleCreated || IsDisposed || Disposing)
-                    {
-                        _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
-                            IsHandleCreated, IsDisposed, Disposing);
-                        return;
-                    }
-                    _logger?.LogInformation("Dashboard disposing resources");
-
-                    // CRITICAL FIX: Stop and dispose performance monitor timer FIRST
-                    try
-                    {
-                        if (_performanceMonitorTimer != null)
-                        {
-                            _performanceMonitorTimer.Stop();
-                            _performanceMonitorTimer.Dispose();
-                            _logger?.LogDebug("Performance monitor timer stopped and disposed");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError(ex, "Error disposing performance monitor timer during shutdown");
-                    }
-
-                    // First try to cancel all operations
-                    var cts = _cancellationTokenSource;
-                    if (cts != null)
-                    {
-                        try
-                        {
-                            if (!cts.IsCancellationRequested)
-                            {
-                                cts.Cancel();
-                                _logger?.LogDebug("Cancellation requested during dispose");
-                            }
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            // Already disposed, ignore
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error canceling token during dispose");
-                        }
-
-                        try
-                        {
-                            cts.Dispose();
-                            _logger?.LogDebug("CancellationTokenSource disposed");
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            // Already disposed, ignore
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error disposing CancellationTokenSource");
-                        }
-                    }
-
-                    // Clear references
-                    _cancellationTokenSource = null!;
-                    _currentView = null;
-
-                    // Dispose cached views with enhanced error handling
-                    foreach (var view in _viewCache.Values.ToList())
-                    {
-                        try
-                        {
-                            if (view is IDisposable disposableView && view.Control != null && !view.Control.IsDisposed)
-                            {
-                                disposableView.Dispose();
-                                _logger?.LogDebug("Disposed view: {ViewType}", view.GetType().Name);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error disposing view {ViewType}", view.GetType().Name);
-                        }
-                    }
-
-                    // Clear collections to release references
-                    _viewCache.Clear();
-                    _navigationHistory.Clear();                    // Notify Program class about dashboard disposal
-                    try
-                    {
-                        _logger?.LogInformation("Notifying Program class about dashboard disposal");
-                        // Call Program.ShutdownApplication() to ensure proper cleanup of background tasks
-                        var programType = Type.GetType("BusBus.Program, BusBus");
-                        var shutdownMethod = programType?.GetMethod("ShutdownApplication",
-                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-
-                        if (shutdownMethod != null)
-                        {
-                            shutdownMethod.Invoke(null, null);
-                            _logger?.LogDebug("Successfully notified Program about dashboard disposal");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError(ex, "Failed to notify Program about dashboard disposal");
-                    }
-
-                    // Force immediate GC collection to help release resources
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-
-                    _logger?.LogInformation("Dashboard resources disposed");
-                }
-                catch (Exception ex)
-                {
-                    // Log any unexpected exceptions but don't crash
-                    System.Diagnostics.Debug.WriteLine($"Error disposing Dashboard: {ex.Message}");
-                    _logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
-                }
+                components?.Dispose();
+                _performanceTimer?.Dispose();
+                _performanceTimer = null;
             }
-            try
-            {
-                // Only call base.Dispose if we're not in the middle of creating a handle
-                if (this.IsHandleCreated && !this.IsDisposed)
-                {
-                    base.Dispose(disposing);
-                }
-                else if (!this.IsDisposed)
-                {
-                    // If handle is not created, dispose more carefully
-                    this.Invoke(new Action(() =>
-                    {
-                        try
-                        {
-                            base.Dispose(disposing);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error in delayed base Dispose call");
-                        }
-                    }));
-                }
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("CreateHandle") || ex.Message.Contains("Invoke"))
-            {
-                _logger?.LogWarning("Skipping base disposal due to handle creation conflict: {Message}", ex.Message);
-                _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
-                    this.IsHandleCreated, this.IsDisposed, disposing);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error in base Dispose call");
-            }
+            base.Dispose(disposing);
         }
-
-        // Helper method to check if CancellationTokenSource is disposed
-        private static bool IsCtsDisposed(CancellationTokenSource cts)
-        {
-            try
-            {
-                // If we can access the Token property without exception, it's not disposed
-                var _ = cts.Token;
-                return false;
-            }
-            catch (ObjectDisposedException)
-            {
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Logs the current control hierarchy for debugging UI issues
-        /// </summary>
-        private void LogControlHierarchy()
-        {
-            if (_contentPanel == null) return;
-
-            _logger.LogDebug($"Content panel control count: {_contentPanel.Controls.Count}");
-            foreach (Control control in _contentPanel.Controls)
-            {
-                _logger.LogDebug($"Control: {control.GetType().Name}, Name: {control.Name}, Visible: {control.Visible}, IsDisposed: {control.IsDisposed}");
-            }
-        }
-        #endregion
     }
 
     #region Interfaces and Supporting Classes
@@ -1285,5 +1107,183 @@ namespace BusBus.UI
         Warning,
         Error
     }
+    #endregion
+}
+{
+    try
+    {
+        if (view is IDisposable disposableView && view.Control != null && !view.Control.IsDisposed)
+        {
+            disposableView.Dispose();
+            _logger?.LogDebug("Disposed view: {ViewType}", view.GetType().Name);
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger?.LogError(ex, "Error disposing view {ViewType}", view.GetType().Name);
+    }
+}
+
+// Clear collections to release references
+_viewCache.Clear();
+_navigationHistory.Clear();                    // Notify Program class about dashboard disposal
+try
+{
+    _logger?.LogInformation("Notifying Program class about dashboard disposal");
+    // Call Program.ShutdownApplication() to ensure proper cleanup of background tasks
+    var programType = Type.GetType("BusBus.Program, BusBus");
+    var shutdownMethod = programType?.GetMethod("ShutdownApplication",
+        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+    if (shutdownMethod != null)
+    {
+        shutdownMethod.Invoke(null, null);
+        _logger?.LogDebug("Successfully notified Program about dashboard disposal");
+    }
+}
+catch (Exception ex)
+{
+    _logger?.LogError(ex, "Failed to notify Program about dashboard disposal");
+}
+
+// Force immediate GC collection to help release resources
+GC.Collect();
+GC.WaitForPendingFinalizers();
+
+_logger?.LogInformation("Dashboard resources disposed");
+                }
+                catch (Exception ex)
+                {
+                    // Log any unexpected exceptions but don't crash
+                    System.Diagnostics.Debug.WriteLine($"Error disposing Dashboard: {ex.Message}");
+_logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
+                }
+            }
+            try
+{
+    // Only call base.Dispose if we're not in the middle of creating a handle
+    if (this.IsHandleCreated && !this.IsDisposed)
+    {
+        base.Dispose(disposing);
+    }
+    else if (!this.IsDisposed)
+    {
+        // If handle is not created, dispose more carefully
+        this.Invoke(new Action(() =>
+        {
+            try
+            {
+                base.Dispose(disposing);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error in delayed base Dispose call");
+            }
+        }));
+    }
+}
+catch (InvalidOperationException ex) when (ex.Message.Contains("CreateHandle") || ex.Message.Contains("Invoke"))
+{
+    _logger?.LogWarning("Skipping base disposal due to handle creation conflict: {Message}", ex.Message);
+    _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
+        this.IsHandleCreated, this.IsDisposed, disposing);
+}
+catch (Exception ex)
+{
+    _logger?.LogError(ex, "Error in base Dispose call");
+}
+        }
+
+        // Helper method to check if CancellationTokenSource is disposed
+        private static bool IsCtsDisposed(CancellationTokenSource cts)
+{
+    try
+    {
+        // If we can access the Token property without exception, it's not disposed
+        var _ = cts.Token;
+        return false;
+    }
+    catch (ObjectDisposedException)
+    {
+        return true;
+    }
+}
+
+/// <summary>
+/// Logs the current control hierarchy for debugging UI issues
+/// </summary>
+private void LogControlHierarchy()
+{
+    if (_contentPanel == null) return;
+
+    _logger.LogDebug($"Content panel control count: {_contentPanel.Controls.Count}");
+    foreach (Control control in _contentPanel.Controls)
+    {
+        _logger.LogDebug($"Control: {control.GetType().Name}, Name: {control.Name}, Visible: {control.Visible}, IsDisposed: {control.IsDisposed}");
+    }
+}
+        #endregion
+    }
+
+    #region Interfaces and Supporting Classes
+    // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
+    public interface IView : IDisposable
+{
+    string ViewName { get; }
+    string Title { get; }
+    Control? Control { get; }
+    event EventHandler<NavigationEventArgs>? NavigationRequested;
+    event EventHandler<StatusEventArgs>? StatusUpdated;
+    Task ActivateAsync(CancellationToken cancellationToken);
+    Task DeactivateAsync();
+}
+
+public interface IStatefulView
+{
+    void SaveState(object state);
+    void RestoreState(object state);
+}
+
+public class NavigationEventArgs : EventArgs
+{
+    public string ViewName { get; }
+    public object? Parameter { get; }
+
+    public NavigationEventArgs(string viewName, object? parameter = null)
+    {
+        ViewName = viewName;
+        Parameter = parameter;
+    }
+}
+
+public class StatusEventArgs : EventArgs
+{
+    public string Message { get; }
+    public StatusType Type { get; }
+
+    public StatusEventArgs(string message, StatusType type = StatusType.Info)
+    {
+        Message = message;
+        Type = type;
+    }
+}
+
+public enum StatusType
+{
+    Info,
+    Success,
+    Warning,
+    Error
+}
+
+public enum NotificationType
+{
+    Info,
+    Success,
+    Warning,
+    Error
+}
+    #endregion
+}
     #endregion
 }

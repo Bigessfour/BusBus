@@ -70,8 +70,15 @@ namespace BusBus.Tests
             }
             finally
             {
-                // Dispose resources
-                Dispose();
+                // Dispose resources even if cleanup fails
+                try
+                {
+                    Dispose();
+                }
+                catch (Exception disposeEx)
+                {
+                    Logger?.LogError(disposeEx, "Error during disposal in test teardown for {TestClass}", GetType().Name);
+                }
             }
         }
 

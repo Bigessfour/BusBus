@@ -10,6 +10,7 @@ using BusBus.Models;
 using BusBus.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using BusBus.Common;
 
 namespace BusBus.Services
 {
@@ -278,6 +279,52 @@ namespace BusBus.Services
                 .Include(r => r.Vehicle)
                 .Where(r => r.RouteDate.Date == routeDate.Date)
                 .ToListAsync(cancellationToken);
+        }
+
+        public async Task<PagedResult<Route>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var query = dbContext.Routes
+                .Include(r => r.Driver)
+                .Include(r => r.Vehicle);
+
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var items = await query
+                .OrderByDescending(r => r.RouteDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<Route>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<List<Route>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            return await GetRoutesAsync();
+        }
+
+        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+        {
+            await DeleteRouteAsync(id);
+        }
+
+        public async Task<Route> CreateAsync(Route route, CancellationToken cancellationToken)
+        {
+            return await CreateRouteAsync(route);
+        }
+
+        public async Task<Route> UpdateAsync(Route route, CancellationToken cancellationToken)
+        {
+            return await UpdateRouteAsync(route);
         }
     }
 }

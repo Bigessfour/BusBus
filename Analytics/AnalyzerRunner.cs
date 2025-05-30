@@ -12,7 +12,8 @@ namespace BusBus.Analytics
         // Remove the Main method to avoid multiple entry points
         public static void RunAnalysis(string[] args)
         {
-            var analyzer = new ProjectAnalyzer();
+            // Remove unused variable to fix CS0219
+            // var analyzer = new ProjectAnalyzer();
             var projectPath = @"c:\Users\steve.mckitrick\Desktop\BusBus";
 
             // Analyze all C# files in the project

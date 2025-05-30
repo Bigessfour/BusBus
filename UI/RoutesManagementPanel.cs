@@ -17,7 +17,7 @@ namespace BusBus.UI
     /// <summary>
     /// Routes management tab with Crystal Dark styling and CRUD operations
     /// </summary>
-    public partial class RoutesManagementPanel : ThemeableControl, IDisplayable, IView
+    public partial class RoutesManagementPanel : ThemeableControl, IView
     {
         private readonly IRouteService _routeService;
         private readonly IDriverService? _driverService;
@@ -643,6 +643,28 @@ namespace BusBus.UI
         {
             this.Visible = false;
         }
+
+        // Add IView interface implementation
+        public async Task ActivateAsync(CancellationToken cancellationToken)
+        {
+            await RefreshAsync();
+        }
+
+        public Task DeactivateAsync()
+        {
+            _cancellationTokenSource?.Cancel();
+            return Task.CompletedTask;
+        }
+
+        public override void Render(Control parent)
+        {
+            if (parent == null) throw new ArgumentNullException(nameof(parent));
+            parent.Controls.Clear();
+            parent.Controls.Add(this);
+            Dock = DockStyle.Fill;
+        }
+
+        #region IDisposable Support
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -652,73 +674,29 @@ namespace BusBus.UI
             }
             base.Dispose(disposing);
         }
-
-        // ThemeableControl implementation
-        public override void Render(Control container)
-        {
-            if (container != null)
-            {
-                this.Dock = DockStyle.Fill;
-                container.Controls.Clear();
-                container.Controls.Add(this);
-            }
-        }        // IView implementation
-        public async Task ActivateAsync(CancellationToken cancellationToken)
-        {
-            await LoadComboBoxDataAsync(cancellationToken);
-        }
-
-        public async Task DeactivateAsync()
-        {
-            await Task.CompletedTask;
-        }
-    }
-
-    /// <summary>
-    /// DTO for displaying routes in the DataGridView
-    /// </summary>    public class RouteDisplayDTO
-    {
-        public Guid Id { get; set; }
-    public DateTime RouteDate { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public Guid? VehicleId { get; set; }
-    public int AMStartingMileage { get; set; }
-    public int AMEndingMileage { get; set; }
-    public int AMRiders { get; set; }
-    public Guid? AMDriverId { get; set; }
-    public int PMStartMileage { get; set; }
-    public int PMEndingMileage { get; set; }
-    public int PMRiders { get; set; }
-    public Guid? PMDriverId { get; set; }
-    public static RouteDisplayDTO FromRoute(Route route)
-    {
-        return new RouteDisplayDTO
-        {
-            Id = route.Id,
-            RouteDate = route.RouteDate,
-            Name = route.Name,
-            VehicleId = route.VehicleId,
-            AMStartingMileage = route.AMStartingMileage,
-            AMEndingMileage = route.AMEndingMileage,
-            AMRiders = route.AMRiders,
-            AMDriverId = route.DriverId, // Main driver
-            PMStartMileage = route.PMStartMileage,
-            PMEndingMileage = route.PMEndingMileage,
-            PMRiders = route.PMRiders,
-            PMDriverId = route.PMDriverId // PM driver
-        };
-    }
-
-    public Route ToRoute()
-    {
-        return new Route
-        {
-            Id = this.Id,
-            RouteDate = this.RouteDate,
-            Name = this.Name,
-            VehicleId = this.VehicleId,
-            AMStartingMileage = this.AMStartingMileage,
-            AMEndingMileage = this.AMEndingMileage,
-        }
+        #endregion
     }
 }
+base.Dispose(disposing);
+        }
+        #endregion
+    }
+}
+
+{
+    return new Route
+    {
+        Id = this.Id,
+        RouteDate = this.RouteDate,
+        Name = this.Name,
+        VehicleId = this.VehicleId,
+        AMStartingMileage = this.AMStartingMileage,
+        AMEndingMileage = this.AMEndingMileage,
+        AMRiders = this.AMRiders,
+        PMStartMileage = this.PMStartMileage,
+        PMEndingMileage = this.PMEndingMileage,
+        PMRiders = this.PMRiders,
+        PMDriverId = this.PMDriverId // PM driver
+    };
+}
+

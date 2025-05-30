@@ -11,11 +11,8 @@ namespace BusBus.Analytics
 {
     public class CodeQualityReport
     {
-        private readonly ProjectAnalyzer _analyzer;
-
         public CodeQualityReport()
         {
-            _analyzer = new ProjectAnalyzer();
         }
 
         /// <summary>
@@ -97,6 +94,9 @@ Top 5 Most Complex Methods:
             // This is a placeholder - you'd need to implement actual method parsing
             // For now, return empty list to avoid errors
             return new List<dynamic>();
+        }
+    }
+}
         }
     }
 }

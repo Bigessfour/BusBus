@@ -1,1145 +1,567 @@
-// Enable nullable reference types for this file
 #nullable enable
-#pragma warning disable CS0169 // Field is never used
-using BusBus.Models;
-using BusBus.Services;
+
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.Models;
+using BusBus.Services;
 using BusBus.UI.Common;
-using System.Drawing;
-using System.Linq;
-using System.Net.Http;
-using Microsoft.EntityFrameworkCore;
 
 namespace BusBus.UI
 {
-    // Event args for route edit events (using RouteDisplayDTO for grid context)
-    public class RouteEventArgs : EventArgs
-    {
-        public RouteDisplayDTO RouteDTO { get; set; }
-
-        // Adding Route property for compatibility with existing code
-        public Route Route => RouteDTO.ToRoute();
-
-        public RouteEventArgs(RouteDisplayDTO route) => RouteDTO = route;
-    }
+    /// <summary>
+    /// Panel for displaying and managing a list of routes with CRUD operations
+    /// </summary>
     public partial class RouteListPanel : ThemeableControl, IDisplayable, IView
     {
         private readonly IRouteService _routeService;
-        private readonly IDriverService? _driverService;
-        private readonly IVehicleService? _vehicleService;
-        // Use BindingList for better data binding and notification support
-        private System.ComponentModel.BindingList<RouteDisplayDTO> _routes = new System.ComponentModel.BindingList<RouteDisplayDTO>();
+        private readonly IDriverService _driverService;
+        private readonly IVehicleService _vehicleService;
+        private DataGridView _routesGrid = null!;
+        private Button _addRouteButton = null!;
+        private Button _editRouteButton = null!;
+        private Button _deleteRouteButton = null!;
+        private Button _prevPageButton = null!;
+        private Button _nextPageButton = null!;
+        private Label _pageInfoLabel = null!;
+        private Label _titleLabel = null!;
+        private TableLayoutPanel _mainLayout = null!;
+        private Panel _buttonPanel = null!;
+        private Panel _paginationPanel = null!;
+
+        private BindingList<RouteDisplayDTO> _routes = new BindingList<RouteDisplayDTO>();
         private List<Driver> _drivers = new List<Driver>();
         private List<Vehicle> _vehicles = new List<Vehicle>();
-        private int _totalRoutes = 0;
         private int _currentPage = 1;
         private int _pageSize = 20;
+        private int _totalRoutes = 0;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private DataGridView _routesGrid;
-        private Button _addRouteButton, _editRouteButton, _deleteRouteButton, _prevPageButton, _nextPageButton;
-        private Label _titleLabel, _pageInfoLabel;
-        public event EventHandler<RouteEventArgs>? RouteEditRequested;        // IView interface implementation
+
         public string ViewName => "routes";
         public string Title => "Routes";
         public Control? Control => this;
 
-#pragma warning disable CS0067 // The event is never used - required by IView interface
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
-#pragma warning restore CS0067
-
         public event EventHandler<StatusEventArgs>? StatusUpdated;
+        public event EventHandler<EntityEventArgs<Route>>? RouteEditRequested;
 
-        // Public accessor for the routes grid
-        public DataGridView RoutesGrid => _routesGrid; public RouteListPanel(IRouteService routeService, IDriverService? driverService = null, IVehicleService? vehicleService = null)
+        public RouteListPanel(IRouteService routeService, IDriverService driverService, IVehicleService vehicleService)
         {
-            ArgumentNullException.ThrowIfNull(routeService);
-            _routeService = routeService;
-            _driverService = driverService;
-            _vehicleService = vehicleService;
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            this.Padding = new Padding(10);
-            this.Dock = DockStyle.Fill;
-            // Enforce dark theme, glassmorphism, and WCAG contrast
-            ThemeManager.EnforceGlassmorphicTextColor(this);
+            _routeService = routeService ?? throw new ArgumentNullException(nameof(routeService));
+            _driverService = driverService ?? throw new ArgumentNullException(nameof(driverService));
+            _vehicleService = vehicleService ?? throw new ArgumentNullException(nameof(vehicleService));
 
             InitializeComponent();
-            SetupEventHandlers();
-            InitializeDataAsync();
+
+            // Apply reader mode if needed
+            if (IsReaderMode)
+            {
+                ConfigureReaderMode();
+            }
         }
 
-        private void SetupEventHandlers()
+        private void InitializeComponent()
         {
-            if (_deleteRouteButton != null && _routesGrid != null && _routeService != null)
+            SuspendLayout();
+
+            // Main layout
+            _mainLayout = new TableLayoutPanel
             {
-                _deleteRouteButton.Click += async (s, e) =>
-                {
-                    if (_routesGrid.SelectedRows.Count > 0 && _routesGrid.SelectedRows[0].Index < _routes.Count)
-                    {
-                        var route = _routes[_routesGrid.SelectedRows[0].Index];
-                        var result = MessageBox.Show(
-                            $"Are you sure you want to delete the route '{route.Name}'?",
-                            "Confirm Delete",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Warning);
+                Dock = DockStyle.Fill,
+                RowCount = 4,
+                ColumnCount = 1,
+                Padding = new Padding(10)
+            };
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F)); // Title
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F)); // Buttons
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // Grid
+            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F)); // Pagination
 
-                        if (result == DialogResult.Yes)
-                        {
-                            try
-                            {
-                                await _routeService.DeleteRouteAsync(route.Id);
-                                await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                            }
-                            catch (DbUpdateException ex)
-                            {
-                                MessageBox.Show($"Database error deleting route: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                            catch (HttpRequestException ex)
-                            {
-                                MessageBox.Show($"Network error deleting route: {ex.Message}", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                            catch (InvalidOperationException ex)
-                            {
-                                MessageBox.Show($"Error deleting route: {ex.Message}", "Operation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
-                    }
-                };
-            }
-
-            // Previous page button
-            if (_prevPageButton != null)
-            {
-                _prevPageButton.Click += async (s, e) =>
-                {
-                    if (_currentPage > 1)
-                    {
-                        _currentPage--;
-                        await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                    }
-                };
-            }
-
-            // Next page button
-            if (_nextPageButton != null)
-            {
-                _nextPageButton.Click += async (s, e) =>
-                {
-                    if (_currentPage * _pageSize < _totalRoutes)
-                    {
-                        _currentPage++;
-                        await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                    }
-                };
-            }
-
-            // Infinite scroll event
-            if (_routesGrid != null)
-            {
-                _routesGrid.Scroll += async (s, e) => await HandleInfiniteScrollAsync();
-            }
-
-            // Initial data load
-            InitializeDataAsync();
-
-            ArgumentNullException.ThrowIfNull(routeService);
-            _routeService = routeService;
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            this.Padding = new Padding(10);
-            this.Dock = DockStyle.Fill;
-            // Enforce dark theme, glassmorphism, and WCAG contrast
-            ThemeManager.EnforceGlassmorphicTextColor(this);
-
-            // Title label
+            // Title
             _titleLabel = new Label
             {
-                Text = "Route Entries",
-                Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold),
-                Dock = DockStyle.Top,
-                Height = 40,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                TextAlign = ContentAlignment.MiddleCenter
+                Text = "Route Management",
+                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
             };
-            this.Controls.Add(_titleLabel);
+            _mainLayout.Controls.Add(_titleLabel, 0, 0);
 
-            // Main container
-            var mainContainer = new TableLayoutPanel
+            // Button panel
+            _buttonPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 3,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                Padding = new Padding(0, 5, 0, 5)
             };
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize)); mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize)); this.Controls.Add(mainContainer);
 
-            // Create Crystal Dark Glass-like CRUD Buttons
-            _addRouteButton = CreateCrystalDarkButton("Add New Route", new Size(120, 35));
-            _editRouteButton = CreateCrystalDarkButton("Edit Selected", new Size(100, 35));
-            _deleteRouteButton = CreateCrystalDarkButton("Delete", new Size(80, 35));
-
-            // Button panel layout
-            var buttonPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                Height = 50,
-                ColumnCount = 3,
-                RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
-                Padding = new Padding(5)
-            };
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-
-            buttonPanel.Controls.Add(_addRouteButton, 0, 0);
-            buttonPanel.Controls.Add(_editRouteButton, 1, 0);
-            buttonPanel.Controls.Add(_deleteRouteButton, 2, 0);
-
-            // First add the grid to the top position
-            // Wire up mileage validation event
-            _routesGrid.CellEndEdit += (s, e) => ValidateMileageEntry(e);
-
-            mainContainer.Controls.Add(_routesGrid, 0, 0);
-
-            // Then add the button panel to the middle position
-            mainContainer.Controls.Add(buttonPanel, 0, 1);// DataGridView
-            _routesGrid = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                BackgroundColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
-                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                ReadOnly = false,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                AutoSize = false,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
-                GridColor = System.Drawing.Color.FromArgb(200, 200, 200),
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-                ColumnHeadersHeight = 40, // Fixed height for better visibility
-                RowHeadersVisible = false,
-                RowTemplate = { Height = 32 },
-                EditMode = DataGridViewEditMode.EditOnEnter
-            };            // Apply consistent theme styling to the grid
-            ThemeManager.CurrentTheme.StyleDataGrid(_routesGrid);
-
-            // Enhance header styling for better visibility
-            _routesGrid.ColumnHeadersDefaultCellStyle.Font = new Font(_routesGrid.Font.FontFamily, 9.5F, FontStyle.Bold); _routesGrid.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
-            _routesGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
-
-            // (Grid is already added to position 0, 0)
-
-            // Columns (updated)
-            _routesGrid.Columns.Clear(); _routesGrid.Columns.AddRange(new DataGridViewColumn[]
-            {
-                // Hidden Primary Key
-                new DataGridViewTextBoxColumn { Name = "Id", DataPropertyName = "Id", Visible = false },
-
-                // Date with DateTimePicker (DD-MM-YY format)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "Date",
-                    DataPropertyName = "RouteDate",
-                    FillWeight = 100,
-                    MinimumWidth = 100,
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "dd-MM-yy" }
-                },
-
-                // Route Name ComboBox (Truck Plaza, East, West, SPED)
-                new DataGridViewComboBoxColumn {
-                    HeaderText = "Route Name",
-                    DataPropertyName = "Name",
-                    FillWeight = 150,
-                    MinimumWidth = 120,
-                    Items = { "Truck Plaza", "East", "West", "SPED" }
-                },
-
-                // Bus ComboBox (active Vehicles)
-                new DataGridViewComboBoxColumn {
-                    HeaderText = "Bus",
-                    Name = "BusColumn",
-                    DataPropertyName = "VehicleId",
-                    FillWeight = 100,
-                    MinimumWidth = 80,
-                    DisplayMember = "BusNumber",
-                    ValueMember = "VehicleId"
-                },
-
-                // AM Begin Mileage (Manual entry)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "AM Begin",
-                    DataPropertyName = "AMStartingMileage",
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
-                    FillWeight = 80,
-                    MinimumWidth = 80
-                },
-
-                // AM End Mileage (Manual entry)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "AM End",
-                    DataPropertyName = "AMEndingMileage",
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
-                    FillWeight = 80,
-                    MinimumWidth = 80
-                },
-
-                // AM Riders (Non-negative)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "AM Riders",
-                    DataPropertyName = "AMRiders",
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
-                    FillWeight = 70,
-                    MinimumWidth = 70
-                },
-
-                // AM Driver ComboBox
-                new DataGridViewComboBoxColumn {
-                    HeaderText = "AM Driver",
-                    Name = "AMDriverColumn",
-                    DataPropertyName = "AMDriverId",
-                    FillWeight = 120,
-                    MinimumWidth = 100,
-                    DisplayMember = "Name",
-                    ValueMember = "Id"
-                },
-
-                // PM Begin Mileage (Manual entry)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "PM Begin",
-                    DataPropertyName = "PMStartMileage",
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
-                    FillWeight = 80,
-                    MinimumWidth = 80
-                },
-
-                // PM End Mileage (Manual entry)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "PM End",
-                    DataPropertyName = "PMEndingMileage",
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
-                    FillWeight = 80,
-                    MinimumWidth = 80
-                },
-
-                // PM Riders (Non-negative)
-                new DataGridViewTextBoxColumn {
-                    HeaderText = "PM Riders",
-                    DataPropertyName = "PMRiders",
-                    DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight },
-                    FillWeight = 70,
-                    MinimumWidth = 70
-                },
-
-                // PM Driver ComboBox
-                new DataGridViewComboBoxColumn {
-                    HeaderText = "PM Driver",
-                    Name = "PMDriverColumn",
-                    DataPropertyName = "PMDriverId",
-                    FillWeight = 120,
-                    MinimumWidth = 100,
-                    DisplayMember = "Name",
-                    ValueMember = "Id"
-                }
-            });// Pagination panel
-            var paginationPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = 40,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
-            };
-            mainContainer.Controls.Add(paginationPanel, 0, 2);
-
-            // Create a horizontal layout for pagination controls
-            var paginationLayout = new FlowLayoutPanel
+            var buttonLayout = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                Padding = new Padding(5),
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                WrapContents = false
             };
 
-            // Previous page button
-            _prevPageButton = new Button
+            _addRouteButton = CreateCrystalDarkButton("Add Route", Color.FromArgb(70, 130, 180));
+            _editRouteButton = CreateCrystalDarkButton("Edit Route", Color.FromArgb(100, 140, 180));
+            _deleteRouteButton = CreateCrystalDarkButton("Delete Route", Color.FromArgb(180, 70, 70));
+
+            _addRouteButton.Click += OnAddRouteClick;
+            _editRouteButton.Click += OnEditRouteClick;
+            _deleteRouteButton.Click += OnDeleteRouteClick;
+
+            buttonLayout.Controls.AddRange(new Control[] { _addRouteButton, _editRouteButton, _deleteRouteButton });
+            _buttonPanel.Controls.Add(buttonLayout);
+            _mainLayout.Controls.Add(_buttonPanel, 0, 1);
+
+            // Routes grid
+            _routesGrid = new DataGridView
             {
-                Text = "◀ Previous",
-                Size = new Size(100, 35),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
-                TextAlign = ContentAlignment.MiddleCenter,
-                UseVisualStyleBackColor = false,
-                Enabled = false,
-                Margin = new Padding(3),
-                Padding = new Padding(5, 10, 5, 10),
-                AutoSize = true
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.FromArgb(45, 45, 48),
+                BorderStyle = BorderStyle.None,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(70, 70, 75),
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    BackColor = Color.FromArgb(40, 40, 45),
+                    ForeColor = Color.FromArgb(220, 220, 220),
+                    SelectionBackColor = Color.FromArgb(70, 130, 180),
+                    SelectionForeColor = Color.White
+                },
+                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+                {
+                    BackColor = Color.FromArgb(50, 50, 55),
+                    ForeColor = Color.FromArgb(220, 220, 220),
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold)
+                },
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                AutoGenerateColumns = false,
+                RowHeadersVisible = false
             };
-            _prevPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _prevPageButton.FlatAppearance.BorderSize = 1;
 
-            // Page info label
+            _routesGrid.CellDoubleClick += (s, e) => OnEditRouteClick(s, e);
+            _mainLayout.Controls.Add(_routesGrid, 0, 2);
+
+            // Pagination panel
+            _paginationPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(35, 35, 40)
+            };
+
+            var paginationLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 3,
+                RowCount = 1
+            };
+            paginationLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+            paginationLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34F));
+            paginationLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+
+            _prevPageButton = CreateCrystalDarkButton("Previous", Color.FromArgb(70, 130, 180));
             _pageInfoLabel = new Label
             {
-                Text = "Page 1",
-                Size = new Size(100, 35),
+                Text = "Page 1 of 1",
+                ForeColor = Color.FromArgb(220, 220, 220),
                 TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
-                AutoSize = false,
-                Margin = new Padding(10, 3, 10, 3)
+                Dock = DockStyle.Fill
             };
+            _nextPageButton = CreateCrystalDarkButton("Next", Color.FromArgb(70, 130, 180));
 
-            // Next page button
-            _nextPageButton = new Button
+            _prevPageButton.Click += async (s, e) => await ChangePage(-1);
+            _nextPageButton.Click += async (s, e) => await ChangePage(1);
+
+            paginationLayout.Controls.Add(_prevPageButton, 0, 0);
+            paginationLayout.Controls.Add(_pageInfoLabel, 1, 0);
+            paginationLayout.Controls.Add(_nextPageButton, 2, 0);
+
+            _paginationPanel.Controls.Add(paginationLayout);
+            _mainLayout.Controls.Add(_paginationPanel, 0, 3);
+
+            Controls.Add(_mainLayout);
+            SetupGridColumns();
+
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        private void SetupGridColumns()
+        {
+            _routesGrid.Columns.Clear();
+            _routesGrid.Columns.AddRange(new DataGridViewColumn[]
             {
-                Text = "Next ▶",
-                Size = new Size(100, 35),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "RouteNumber",
+                    HeaderText = "Route Number",
+                    DataPropertyName = "RouteNumber",
+                    Width = 120,
+                    ReadOnly = true
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "RouteName",
+                    HeaderText = "Route Name",
+                    DataPropertyName = "RouteName",
+                    Width = 200,
+                    ReadOnly = true
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "StartLocation",
+                    HeaderText = "Start Location",
+                    DataPropertyName = "StartLocation",
+                    Width = 180,
+                    ReadOnly = true
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "EndLocation",
+                    HeaderText = "End Location",
+                    DataPropertyName = "EndLocation",
+                    Width = 180,
+                    ReadOnly = true
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "Distance",
+                    HeaderText = "Distance (miles)",
+                    DataPropertyName = "Distance",
+                    Width = 120,
+                    ReadOnly = true,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "Duration",
+                    HeaderText = "Duration",
+                    DataPropertyName = "Duration",
+                    Width = 100,
+                    ReadOnly = true
+                },
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "VehicleAssignment",
+                    HeaderText = "Vehicle",
+                    DataPropertyName = "VehicleAssignment",
+                    Width = 120,
+                    ReadOnly = true
+                }
+            });
+        }
+
+        private static Button CreateCrystalDarkButton(string text, Color accentColor)
+        {
+            return new Button
+            {
+                Text = text,
+                Size = new Size(120, 35),
                 FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
-                TextAlign = ContentAlignment.MiddleCenter,
-                UseVisualStyleBackColor = false,
-                Margin = new Padding(3),
-                Padding = new Padding(5, 10, 5, 10),
-                AutoSize = true
+                BackColor = Color.FromArgb(40, 40, 45),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                FlatAppearance =
+                {
+                    BorderColor = accentColor,
+                    BorderSize = 1,
+                    MouseOverBackColor = Color.FromArgb(60, 60, 65),
+                    MouseDownBackColor = Color.FromArgb(35, 35, 40)
+                },
+                Font = new Font("Segoe UI", 9F),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(5, 0, 5, 0)
             };
-
-
-            _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _nextPageButton.FlatAppearance.BorderSize = 1;
-
-            paginationLayout.Controls.Add(_prevPageButton);
-            paginationLayout.Controls.Add(_pageInfoLabel);
-            paginationLayout.Controls.Add(_nextPageButton);
-            paginationPanel.Controls.Add(paginationLayout);
-
-            // Event handlers (add as needed)
-            _routesGrid.CellFormatting += (s, e) =>
-            {
-                if (e == null || e.RowIndex < 0 || e.ColumnIndex < 0 || e.RowIndex >= _routes.Count) return;
-                var route = _routes[e.RowIndex];
-                if (route == null) return;
-                var colName = _routesGrid.Columns[e.ColumnIndex].Name;
-
-                if (colName == "AMTotalMiles")
-                {
-                    e.Value = Math.Max(0, route.AMEndingMileage - route.AMStartingMileage);
-                    e.FormattingApplied = true;
-                }
-                else if (colName == "PMTotalMiles")
-                {
-                    e.Value = Math.Max(0, route.PMEndingMileage - route.PMStartMileage);
-                    e.FormattingApplied = true;
-                }
-                else if (colName == "DriverName")
-                {
-                    e.Value = route.Driver != null ? $"{route.Driver.FirstName} {route.Driver.LastName}".Trim() : "Unassigned";
-                    e.FormattingApplied = true;
-                }
-                else if (colName == "Number")
-                {
-                    e.Value = (route.Vehicle != null && route.Vehicle.Number != null) ? route.Vehicle.Number : "Unassigned";
-                    e.FormattingApplied = true;
-                }
-            };
-
-            // DataError event handler to suppress default dialogs and log errors
-            _routesGrid.DataError += (sender, e) =>
-            {
-                Console.WriteLine($"DataError: {e.Exception?.Message}");
-                e.ThrowException = false;
-            };
-
-            // Handle row selection for better UX
-            _routesGrid.SelectionChanged += (s, e) =>
-            {
-                bool hasSelection = _routesGrid.SelectedRows.Count > 0;
-                _editRouteButton.Enabled = hasSelection;
-                _deleteRouteButton.Enabled = hasSelection;
-            };
-            // Double-click to edit
-            _routesGrid.CellDoubleClick += (s, e) =>
-            {
-                if (e.RowIndex >= 0 && e.RowIndex < _routes.Count)
-                {
-                    RouteEditRequested?.Invoke(this, new RouteEventArgs(_routes[e.RowIndex]));
-                }
-            };
-
-            // Add cell edit handler for updating driver and vehicle assignments
-            _routesGrid.CellEndEdit += async (s, e) =>
-            {
-                if (e.RowIndex < 0 || e.RowIndex >= _routes.Count) return;
-                var route = _routes[e.RowIndex];
-                // Only handle columns that exist in the grid
-                var colName = _routesGrid.Columns[e.ColumnIndex].Name;
-                if (colName == "DriverName")
-                {
-                    // Optionally implement logic if editing driver name is allowed
-                }
-                else if (colName == "VehicleNumber")
-                {
-                    // Optionally implement logic if editing vehicle number is allowed
-                }
-                try
-                {
-                    await _routeService.UpdateRouteAsync(route.ToRoute());
-                }
-                catch (ArgumentException ex)
-                {
-                    MessageBox.Show($"Invalid data: {ex.Message}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-                catch (DbUpdateException ex)
-                {
-                    MessageBox.Show($"Database error: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                catch (HttpRequestException ex)
-                {
-                    MessageBox.Show($"Connection error: {ex.Message}", "Network Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MessageBox.Show($"Operation error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            };
-
-            // Edit button click handler
-            _editRouteButton.Click += (s, e) =>
-            {
-                if (_routesGrid.SelectedRows.Count > 0 && _routesGrid.SelectedRows[0].Index < _routes.Count)
-                {
-                    RouteEditRequested?.Invoke(this, new RouteEventArgs(_routes[_routesGrid.SelectedRows[0].Index]));
-                }
-            };
-
-            // Add button click handler
-            _addRouteButton.Click += (s, e) =>
-            {
-                var newRoute = new RouteDisplayDTO
-                {
-                    Id = Guid.Empty, // Mark as new route
-                    Name = "New Route",
-                    RouteDate = DateTime.Today
-                };
-                RouteEditRequested?.Invoke(this, new RouteEventArgs(newRoute));
-            };
-
-            // Delete button click handler
-            _deleteRouteButton.Click += async (s, e) =>
-            {
-                if (_routesGrid.SelectedRows.Count > 0 && _routesGrid.SelectedRows[0].Index < _routes.Count)
-                {
-                    var route = _routes[_routesGrid.SelectedRows[0].Index];
-                    var result = MessageBox.Show(
-                        $"Are you sure you want to delete the route '{route.Name}'?",
-                        "Confirm Delete",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        try
-                        {
-                            await _routeService.DeleteRouteAsync(route.Id);
-                            await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                        }
-                        catch (DbUpdateException ex)
-                        {
-                            MessageBox.Show($"Database error deleting route: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                        catch (HttpRequestException ex)
-                        {
-                            MessageBox.Show($"Network error deleting route: {ex.Message}", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            MessageBox.Show($"Error deleting route: {ex.Message}", "Operation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-            };
-
-            // Previous page button
-            _prevPageButton.Click += async (s, e) =>
-            {
-                if (_currentPage > 1)
-                {
-                    _currentPage--;
-                    await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                }
-            };
-
-            // Next page button
-            _nextPageButton.Click += async (s, e) =>
-            {
-                if (_currentPage * _pageSize < _totalRoutes)
-                {
-                    _currentPage++;
-                    await LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None);
-                }
-            };
-
-            // Infinite scroll event
-            _routesGrid.Scroll += async (s, e) => await HandleInfiniteScrollAsync();
-
-            // Initial data load
-            InitializeDataAsync();
         }
 
-        public override void RefreshTheme()
-        {
-            base.RefreshTheme();
-            // Re-apply glassmorphic and WCAG contrast styling
-            ThemeManager.EnforceGlassmorphicTextColor(this);
-        }
-
-        private async Task HandleInfiniteScrollAsync()
-        {
-            if (_routes.Count >= _totalRoutes) return;
-            var visibleRows = _routesGrid.DisplayedRowCount(false);
-            var firstDisplayed = _routesGrid.FirstDisplayedScrollingRowIndex;
-            var lastVisible = firstDisplayed + visibleRows;
-            if (lastVisible >= _routes.Count - 5)
-            {
-                int nextPage = (_routes.Count / _pageSize) + 1; var moreRoutes = await _routeService.GetRoutesAsync(nextPage, _pageSize, CancellationToken.None);
-                if (moreRoutes != null && moreRoutes.Count > 0)
-                {
-                    var moreRouteDTOs = moreRoutes.Select(RouteDisplayDTO.FromRoute).ToList();
-                    foreach (var dto in moreRouteDTOs)
-                    {
-                        _routes.Add(dto);
-                    }
-                    _routesGrid.DataSource = null;
-                    _routesGrid.DataSource = _routes;
-                }
-            }
-        }
-
-        private async void InitializeDataAsync()
+        public async Task LoadDataAsync()
         {
             try
             {
-                if (IsDisposed || _routeService == null)
-                    return;
-                var token = _cancellationTokenSource.Token;
-                try
-                {
-                    token.ThrowIfCancellationRequested();
-                    try
-                    {
-                        _drivers = await _routeService.GetDriversAsync(token);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error loading drivers: {ex.Message}");
-                        _drivers = new List<Driver>();
-                    }
-                    token.ThrowIfCancellationRequested();
-                    try
-                    {
-                        _vehicles = await _routeService.GetVehiclesAsync(token);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error loading vehicles: {ex.Message}");
-                        _vehicles = new List<Vehicle>();
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    Console.WriteLine("Initial data loading was canceled");
-                    return;
-                }
-                if (!IsDisposed && !token.IsCancellationRequested)
-                {
-                    await LoadRoutesAsync(1, _pageSize, token);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("RouteListPanel initialization canceled");
-            }
-            catch (ObjectDisposedException)
-            {
-                Console.WriteLine("RouteListPanel was disposed during initialization");
-            }
-            catch (DbUpdateException ex)
-            {
-                if (!IsDisposed && !_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    this.Invoke((MethodInvoker)delegate
-                    {
-                        MessageBox.Show($"Database error loading data: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    });
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                if (!IsDisposed && !_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    this.Invoke((MethodInvoker)delegate
-                    {
-                        MessageBox.Show($"Network error loading data: {ex.Message}", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    });
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                if (!IsDisposed && !_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    this.Invoke((MethodInvoker)delegate
-                    {
-                        MessageBox.Show($"Error loading initial data: {ex.Message}", "Operation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    });
-                }
-            }
-        }
+                StatusUpdated?.Invoke(this, new StatusEventArgs("Loading routes...", StatusType.Info));
 
-        public async Task LoadRoutesAsync(int page, int pageSize, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                if (cancellationToken.IsCancellationRequested || IsDisposed)
-                {
-                    Console.WriteLine("LoadRoutesAsync canceled or control disposed");
-                    return;
-                }
-                _currentPage = page;
-                _pageSize = pageSize;
-                if (_drivers == null || _drivers.Count == 0)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    _drivers = await _routeService.GetDriversAsync(cancellationToken);
-                }
-                if (cancellationToken.IsCancellationRequested || IsDisposed)
-                {
-                    Console.WriteLine("LoadRoutesAsync canceled after loading drivers");
-                    return;
-                }
-                if (_vehicles == null || _vehicles.Count == 0)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    _vehicles = await _routeService.GetVehiclesAsync(cancellationToken);
-                }
-                if (cancellationToken.IsCancellationRequested || IsDisposed)
-                {
-                    Console.WriteLine("LoadRoutesAsync canceled after loading vehicles");
-                    return;
-                }
-                cancellationToken.ThrowIfCancellationRequested();
-                _totalRoutes = await _routeService.GetRoutesCountAsync(cancellationToken);
-                if (cancellationToken.IsCancellationRequested || IsDisposed)
-                {
-                    Console.WriteLine("LoadRoutesAsync canceled after getting count");
-                    return;
-                }
-                cancellationToken.ThrowIfCancellationRequested();
-                var routes = await _routeService.GetRoutesAsync(page, pageSize, cancellationToken);
+                // Load drivers and vehicles for display
+                await LoadDriversAsync();
+                await LoadVehiclesAsync();
+
+                // Get routes with pagination
+                var pagedResult = await _routeService.GetPagedAsync(_currentPage, _pageSize, _cancellationTokenSource.Token);
+                _totalRoutes = pagedResult.TotalCount;
+
+                // Convert to display DTOs
                 _routes.Clear();
-                foreach (var dto in routes.Select(RouteDisplayDTO.FromRoute))
+                foreach (var route in pagedResult.Items)
                 {
+                    var dto = new RouteDisplayDTO
+                    {
+                        RouteNumber = route.RouteCode ?? $"RT{route.RouteID:D4}",
+                        RouteName = route.Name,
+                        StartLocation = route.StartLocation,
+                        EndLocation = route.EndLocation,
+                        Distance = (decimal)route.TotalMiles,
+                        Duration = route.EstimatedDuration,
+                        VehicleId = route.VehicleId,
+                        VehicleAssignment = GetVehicleDisplay(route.VehicleId)
+                    };
                     _routes.Add(dto);
                 }
-                if (cancellationToken.IsCancellationRequested || IsDisposed)
-                {
-                    Console.WriteLine("LoadRoutesAsync canceled before updating UI");
-                    return;
-                }
-                if (IsHandleCreated && !IsDisposed)
-                {
-                    try
-                    {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            if (IsDisposed) return;
-                            _routesGrid.DataSource = null;
-                            _routesGrid.DataSource = _routes;
-                            _routesGrid.ReadOnly = false;
-                            foreach (DataGridViewColumn col in _routesGrid.Columns)
-                            {
-                                if (col.Name != "DriverId" && col.Name != "VehicleId")
-                                {
-                                    col.ReadOnly = true;
-                                }
-                            }
-                            int totalPages = (_totalRoutes + pageSize - 1) / pageSize;
-                            _pageInfoLabel.Text = $"Page {page} of {totalPages} ({_totalRoutes} routes)";
-                            _prevPageButton.Enabled = page > 1;
-                            _nextPageButton.Enabled = page < totalPages;
-                            _editRouteButton.Enabled = false;
-                            _deleteRouteButton.Enabled = false;
-                        });
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        Console.WriteLine("RouteListPanel disposed during UI refresh");
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        Console.WriteLine($"UI update error: {ex.Message}");
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("LoadRoutesAsync canceled by OperationCanceledException");
-            }
-            catch (HttpRequestException ex)
-            {
-                if (IsHandleCreated && !IsDisposed)
-                {
-                    try
-                    {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            if (!IsDisposed)
-                                MessageBox.Show($"Network error loading routes: {ex.Message}", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        });
-                    }
-                    catch (ObjectDisposedException) { }
-                    catch (InvalidOperationException) { }
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                if (IsHandleCreated && !IsDisposed)
-                {
-                    try
-                    {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            if (!IsDisposed)
-                                MessageBox.Show($"Error loading routes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        });
-                    }
-                    catch (ObjectDisposedException) { }
-                    catch (InvalidOperationException) { }
-                }
-            }
-            catch (Exception ex) when (ex is not OutOfMemoryException && ex is not StackOverflowException)
-            {
-                if (IsHandleCreated && !IsDisposed)
-                {
-                    try
-                    {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            if (!IsDisposed)
-                                MessageBox.Show($"Unexpected error loading routes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        });
-                    }
-                    catch (ObjectDisposedException) { }
-                    catch (InvalidOperationException) { }
-                }
-            }
-        }
 
-        public void RefreshRoutesList()
-        {
-            LoadRoutesAsync(_currentPage, _pageSize, CancellationToken.None).GetAwaiter().GetResult();
-        }
+                _routesGrid.DataSource = _routes;
+                UpdatePaginationControls();
 
-        public override void Render(Control container)
-        {
-            if (container == null) return;
-            container.Controls.Clear();
-            container.Controls.Add(this);
-            this.Dock = DockStyle.Fill;
-        }
-
-        // IView interface methods
-        public virtual async Task ActivateAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                // Load routes when the view is activated
-                await LoadRoutesAsync(_currentPage, _pageSize, cancellationToken);
-                StatusUpdated?.Invoke(this, new StatusEventArgs("Routes loaded", StatusType.Success));
+                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded {_routes.Count} routes", StatusType.Success));
             }
             catch (Exception ex)
             {
                 StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading routes: {ex.Message}", StatusType.Error));
+                LoadSampleData();
             }
         }
 
-        public virtual async Task DeactivateAsync()
+        private async Task LoadDriversAsync()
         {
-            // Cancel any ongoing operations
             try
             {
-                if (!_cancellationTokenSource.IsCancellationRequested)
-                {
-                    _cancellationTokenSource.Cancel();
-                }
+                var pagedDrivers = await _driverService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
+                _drivers = pagedDrivers.Items.ToList();
             }
-            catch (ObjectDisposedException)
+            catch
             {
-                // Ignore if already disposed
+                _drivers = GetSampleDrivers();
             }
-
-            await Task.CompletedTask;
         }
 
+        private async Task LoadVehiclesAsync()
+        {
+            try
+            {
+                var pagedVehicles = await _vehicleService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
+                _vehicles = pagedVehicles.Items.ToList();
+            }
+            catch
+            {
+                _vehicles = GetSampleVehicles();
+            }
+        }
+
+        private string GetVehicleDisplay(Guid? vehicleId)
+        {
+            if (!vehicleId.HasValue) return "Unassigned";
+            var vehicle = _vehicles.FirstOrDefault(v => v.Id == vehicleId.Value);
+            return vehicle != null ? $"Bus #{vehicle.Number}" : "Unknown";
+        }
+
+        private void LoadSampleData()
+        {
+            _routes.Clear();
+            _routes.Add(new RouteDisplayDTO
+            {
+                RouteNumber = "RT001",
+                RouteName = "North Elementary",
+                StartLocation = "Bus Depot",
+                EndLocation = "North Elementary School",
+                Distance = 15.5m,
+                Duration = TimeSpan.FromMinutes(45),
+                VehicleAssignment = "Bus #101"
+            });
+            _routes.Add(new RouteDisplayDTO
+            {
+                RouteNumber = "RT002",
+                RouteName = "South High Route",
+                StartLocation = "Bus Depot",
+                EndLocation = "South High School",
+                Distance = 22.3m,
+                Duration = TimeSpan.FromMinutes(60),
+                VehicleAssignment = "Bus #102"
+            });
+            _routesGrid.DataSource = _routes;
+        }
+
+        private static List<Driver> GetSampleDrivers()
+        {
+            return new List<Driver>
+            {
+                new Driver { Id = Guid.NewGuid(), FirstName = "John", LastName = "Smith" },
+                new Driver { Id = Guid.NewGuid(), FirstName = "Mary", LastName = "Johnson" }
+            };
+        }
+
+        private static List<Vehicle> GetSampleVehicles()
+        {
+            return new List<Vehicle>
+            {
+                new Vehicle { Id = Guid.NewGuid(), Number = "101", Model = "Blue Bird" },
+                new Vehicle { Id = Guid.NewGuid(), Number = "102", Model = "Thomas C2" }
+            };
+        }
+
+        private async Task ChangePage(int direction)
+        {
+            var newPage = _currentPage + direction;
+            var totalPages = (_totalRoutes + _pageSize - 1) / _pageSize;
+
+            if (newPage >= 1 && newPage <= totalPages)
+            {
+                _currentPage = newPage;
+                await LoadDataAsync();
+            }
+        }
+
+        private void UpdatePaginationControls()
+        {
+            var totalPages = Math.Max(1, (_totalRoutes + _pageSize - 1) / _pageSize);
+            _pageInfoLabel.Text = $"Page {_currentPage} of {totalPages}";
+            _prevPageButton.Enabled = _currentPage > 1;
+            _nextPageButton.Enabled = _currentPage < totalPages;
+        }
+
+        private async void OnAddRouteClick(object? sender, EventArgs e)
+        {
+            using var editForm = new RouteEditForm(_routeService, _driverService, _vehicleService, null);
+            if (editForm.ShowDialog(this) == DialogResult.OK)
+            {
+                await LoadDataAsync();
+            }
+        }
+
+        private async void OnEditRouteClick(object? sender, EventArgs e)
+        {
+            if (_routesGrid.SelectedRows.Count == 0) return;
+
+            var selectedDto = (RouteDisplayDTO)_routesGrid.SelectedRows[0].DataBoundItem;
+
+            // Find the actual route by code or name
+            var route = (await _routeService.GetAllAsync(_cancellationTokenSource.Token))
+                .FirstOrDefault(r => r.RouteCode == selectedDto.RouteNumber || r.Name == selectedDto.RouteName);
+
+            if (route != null)
+            {
+                using var editForm = new RouteEditForm(_routeService, _driverService, _vehicleService, route);
+                if (editForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    await LoadDataAsync();
+                }
+            }
+        }
+
+        private async void OnDeleteRouteClick(object? sender, EventArgs e)
+        {
+            if (_routesGrid.SelectedRows.Count == 0) return;
+
+            var selectedDto = (RouteDisplayDTO)_routesGrid.SelectedRows[0].DataBoundItem;
+
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete route '{selectedDto.RouteName}'?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    // Find and delete the actual route
+                    var route = (await _routeService.GetAllAsync(_cancellationTokenSource.Token))
+                        .FirstOrDefault(r => r.RouteCode == selectedDto.RouteNumber || r.Name == selectedDto.RouteName);
+
+                    if (route != null)
+                    {
+                        await _routeService.DeleteAsync(route.Id, _cancellationTokenSource.Token);
+                        StatusUpdated?.Invoke(this, new StatusEventArgs("Route deleted successfully", StatusType.Success));
+                        await LoadDataAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting route: {ex.Message}", StatusType.Error));
+                }
+            }
+        }
+
+        public async Task LoadRoutesAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            _currentPage = page;
+            _pageSize = pageSize;
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            await LoadDataAsync();
+        }
+
+        protected override void ApplyTheme()
+        {
+            // Theme is already applied in InitializeComponent
+        }
+
+        public Task ActivateAsync(object? parameter = null)
+        {
+            return LoadDataAsync();
+        }
+
+        public Task DeactivateAsync()
+        {
+            _cancellationTokenSource?.Cancel();
+            return Task.CompletedTask;
+        }
+
+        public void Render(Control parent)
+        {
+            if (parent == null) throw new ArgumentNullException(nameof(parent));
+            parent.Controls.Clear();
+            parent.Controls.Add(this);
+            Dock = DockStyle.Fill;
+        }
+
+        private void ConfigureReaderMode()
+        {
+            // Configure UI for read-only mode by hiding edit controls
+            _editRouteButton.Visible = false;
+            _deleteRouteButton.Visible = false;
+            _addRouteButton.Visible = false;
+            _routesGrid.ReadOnly = true;
+            _routesGrid.AllowUserToAddRows = false;
+            _routesGrid.AllowUserToDeleteRows = false;
+        }
+
+        #region Reader Mode Support
+
+        /// <summary>
+        /// Gets whether the panel is in reader mode (view-only)
+        /// </summary>
+        public bool IsReaderMode { get; set; }
+
+        #endregion
+
+        #region Event Handlers
+
+        // ...existing code...
+
+        #endregion
+
+        #region IStatefulView Implementation
+
+        // ...existing code...
+
+        #endregion
+
+        #region IDisposable Support
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                try { _cancellationTokenSource?.Cancel(); } catch { }
+                _cancellationTokenSource?.Cancel();
                 _cancellationTokenSource?.Dispose();
-                _routesGrid?.Dispose();
-                _prevPageButton?.Dispose();
-                _nextPageButton?.Dispose();
-                _pageInfoLabel?.Dispose();
-                _addRouteButton?.Dispose();
-                _editRouteButton?.Dispose();
-                _deleteRouteButton?.Dispose();
-                _titleLabel?.Dispose();
             }
             base.Dispose(disposing);
         }
-
-        // Method added for test compatibility
-        private void ShowRoutePanel(Route route)
-        {
-            // Convert Route to RouteDisplayDTO
-            var routeDto = RouteDisplayDTO.FromRoute(route);
-            // Trigger the edit event
-            RouteEditRequested?.Invoke(this, new RouteEventArgs(routeDto));
-        }
-
-        /// <summary>
-        /// Creates a Crystal Dark glass-like styled button for CRUD operations
-        /// </summary>
-        private Button CreateCrystalDarkButton(string text, Size size)
-        {
-            var button = new Button
-            {
-                Text = text,
-                Size = size,
-                Margin = new Padding(5),
-                Padding = new Padding(8, 6, 8, 6),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular),
-                TextAlign = ContentAlignment.MiddleCenter,
-                UseVisualStyleBackColor = false,
-                Cursor = Cursors.Hand,
-
-                // Crystal Dark glass-like styling
-                BackColor = Color.FromArgb(40, 40, 45),              // Dark translucent background
-                ForeColor = Color.FromArgb(220, 220, 220),           // Light text
-            };
-
-            // Glass-like border and hover effects
-            button.FlatAppearance.BorderColor = Color.FromArgb(70, 130, 180);  // Steel blue accent
-            button.FlatAppearance.BorderSize = 1;
-            button.FlatAppearance.MouseDownBackColor = Color.FromArgb(60, 60, 70);
-            button.FlatAppearance.MouseOverBackColor = Color.FromArgb(50, 50, 60);
-
-            // Add subtle glow effect on hover
-            button.MouseEnter += (s, e) =>
-            {
-                button.FlatAppearance.BorderColor = Color.FromArgb(100, 150, 200);
-                button.BackColor = Color.FromArgb(50, 50, 60);
-            };
-
-            button.MouseLeave += (s, e) =>
-            {
-                button.FlatAppearance.BorderColor = Color.FromArgb(70, 130, 180);
-                button.BackColor = Color.FromArgb(40, 40, 45);
-            };
-
-            return button;
-        }        /// <summary>
-        /// Loads drivers and vehicles data for ComboBox columns
-        /// TODO: Implement proper service resolution when Driver/Vehicle services are available
-        /// </summary>        private async Task LoadComboBoxDataAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                // Load actual data from services
-                // Note: For now using dummy data since actual services might not be fully implemented
-                // TODO: Replace with actual service calls when DriverService and VehicleService are implemented
-                if (_driverService != null)
-                {
-                    try
-                    {
-                        _drivers = await _driverService.GetAllDriversAsync(cancellationToken);
-    }
-                    catch
-                    {
-                        // Fallback to sample data if service fails
-                        _drivers = new List<Driver>
-                        {
-                            new Driver { Id = Guid.NewGuid(), FirstName = "John", LastName = "Smith" },
-                            new Driver { Id = Guid.NewGuid(), FirstName = "Jane", LastName = "Doe" },
-                            new Driver { Id = Guid.NewGuid(), FirstName = "Mike", LastName = "Johnson" }
-                        };
-                    }
-                }
-                else
-{
-    _drivers = new List<Driver>
-                    {
-                        new Driver { Id = Guid.NewGuid(), FirstName = "John", LastName = "Smith" },
-                        new Driver { Id = Guid.NewGuid(), FirstName = "Jane", LastName = "Doe" },
-                        new Driver { Id = Guid.NewGuid(), FirstName = "Mike", LastName = "Johnson" }
-                    };
-}
-
-if (_vehicleService != null)
-{
-    try
-    {
-        var allVehicles = await _vehicleService.GetAllVehiclesAsync(cancellationToken);
-        // Filter only active vehicles for routes dropdown
-        _vehicles = allVehicles.Where(v => v.Status == "Active").ToList();
-    }
-    catch
-    {
-        // Fallback to sample data if service fails
-        _vehicles = new List<Vehicle>
-                        {
-                            new Vehicle { VehicleId = 1, BusNumber = "Bus 001", Status = "Active" },
-                            new Vehicle { VehicleId = 2, BusNumber = "Bus 002", Status = "Active" },
-                            new Vehicle { VehicleId = 3, BusNumber = "Bus 003", Status = "Active" }
-                        };
+        #endregion
     }
 }
-else
-{
-    _vehicles = new List<Vehicle>
-                    {
-                        new Vehicle { VehicleId = 1, BusNumber = "Bus 001", Status = "Active" },
-                        new Vehicle { VehicleId = 2, BusNumber = "Bus 002", Status = "Active" },
-                        new Vehicle { VehicleId = 3, BusNumber = "Bus 003", Status = "Active" }
-                    };
-}
-
-// Update ComboBox data sources
-UpdateComboBoxDataSources();
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't fail completely
-                Console.WriteLine($"Warning: Could not load ComboBox data: {ex.Message}");
-
-// Provide minimal fallback data
-_drivers = new List<Driver>();
-_vehicles = new List<Vehicle>();
-UpdateComboBoxDataSources();
-            }
-        }
-
-        /// <summary>
-        /// Updates the data sources for ComboBox columns
-        /// </summary>
-        private void UpdateComboBoxDataSources()
-{
-    if (_routesGrid != null)
-    {
-        // Update Bus ComboBox
-        var busColumn = _routesGrid.Columns["BusColumn"] as DataGridViewComboBoxColumn;
-        if (busColumn != null)
-        {
-            busColumn.DataSource = _vehicles.ToList();
-            busColumn.DisplayMember = "BusNumber";
-            busColumn.ValueMember = "VehicleId";
-        }
-
-        // Update AM Driver ComboBox
-        var amDriverColumn = _routesGrid.Columns["AMDriverColumn"] as DataGridViewComboBoxColumn;
-        if (amDriverColumn != null)
-        {
-            amDriverColumn.DataSource = _drivers.ToList();
-            amDriverColumn.DisplayMember = "Name";
-            amDriverColumn.ValueMember = "Id";
-        }
-
-        // Update PM Driver ComboBox
-        var pmDriverColumn = _routesGrid.Columns["PMDriverColumn"] as DataGridViewComboBoxColumn;
-        if (pmDriverColumn != null)
-        {
-            pmDriverColumn.DataSource = _drivers.ToList();
-            pmDriverColumn.DisplayMember = "Name";
-            pmDriverColumn.ValueMember = "Id";
-        }
-    }
-}
-
-/// <summary>
-/// Validates mileage entries and shows warnings for invalid values
-/// </summary>
-private void ValidateMileageEntry(DataGridViewCellEventArgs e)
-{
-    if (_routesGrid == null || e.RowIndex < 0) return;
-
-    var row = _routesGrid.Rows[e.RowIndex];
-    var columnName = _routesGrid.Columns[e.ColumnIndex].Name;
-
-    // Check if we're dealing with mileage columns
-    if (columnName == "AMStartingMileage" || columnName == "AMEndingMileage" ||
-        columnName == "PMStartMileage" || columnName == "PMEndingMileage")
-    {
-        try
-        {
-            // Get mileage values
-            var amStart = Convert.ToDouble(row.Cells["AMStartingMileage"].Value ?? 0);
-            var amEnd = Convert.ToDouble(row.Cells["AMEndingMileage"].Value ?? 0);
-            var pmStart = Convert.ToDouble(row.Cells["PMStartMileage"].Value ?? 0);
-            var pmEnd = Convert.ToDouble(row.Cells["PMEndingMileage"].Value ?? 0);
-
-            string warningMessage = "";
-
-            // Validate AM mileage (warn if end < start)
-            if (amEnd > 0 && amStart > 0 && amEnd < amStart)
-            {
-                warningMessage += "⚠️ AM End Mileage should be ≥ AM Begin Mileage. ";
-            }
-
-            // Validate PM mileage (warn if end < start)
-            if (pmEnd > 0 && pmStart > 0 && pmEnd < pmStart)
-            {
-                warningMessage += "⚠️ PM End Mileage should be ≥ PM Start Mileage. ";
-            }
-
-            // Show warning if any validation issues
-            if (!string.IsNullOrEmpty(warningMessage))
-            {
-                // Set cell style to indicate warning
-                row.Cells[e.ColumnIndex].Style.BackColor = Color.FromArgb(255, 255, 200); // Light yellow
-                row.Cells[e.ColumnIndex].ToolTipText = warningMessage;
-
-                // Show warning message (non-blocking)
-                MessageBox.Show(warningMessage, "Mileage Validation Warning",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            else
-            {
-                // Clear warning styling
-                row.Cells[e.ColumnIndex].Style.BackColor = Color.Empty;
-                row.Cells[e.ColumnIndex].ToolTipText = "";
-            }
-        }
-        catch (Exception ex)
-        {
-            // Handle conversion errors silently
-            Console.WriteLine($"Mileage validation error: {ex.Message}");
-        }
-    }
-}
-    }
-}
-#pragma warning restore CS0169 // Field is never used
-

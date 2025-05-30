@@ -10,25 +10,45 @@ using BusBus.Models;
 #nullable enable
 namespace BusBus.Analytics
 {
-    public class ProjectAnalyzer
+    public class ProjectAnalyzer : IDisposable
     {
         private readonly AdvancedSqlServerDatabaseManager dbManager;
+        private bool _disposed;
 
         public ProjectAnalyzer()
         {
             dbManager = new AdvancedSqlServerDatabaseManager();
         }
 
+        // Add IDisposable implementation
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    dbManager?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
         /// <summary>
         /// Generates a full analytics report asynchronously.
         /// </summary>
-        public async Task<AnalyticsReport> GenerateFullReportAsync()
+        public async Task<AnalyticsReport> GenerateFullReportAsync(CancellationToken cancellationToken = default)
         {
             var report = new AnalyticsReport
             {
                 GeneratedDate = DateTime.Now,
-                DatabaseHealth = await AnalyzeDatabaseHealthAsync(),
-                PerformanceMetrics = await AnalyzePerformanceAsync(),
+                DatabaseHealth = await AnalyzeDatabaseHealthAsync(cancellationToken),
+                PerformanceMetrics = await AnalyzePerformanceAsync(cancellationToken),
                 FeatureUtilization = AnalyzeFeatureUtilization(),
                 SecurityAnalysis = AnalyzeSecurity(),
                 IntegrationStatus = AnalyzeIntegrationStatus()
@@ -36,9 +56,11 @@ namespace BusBus.Analytics
 
             return report;
         }
-        private async Task<DatabaseHealthReport> AnalyzeDatabaseHealthAsync()
+        private async Task<DatabaseHealthReport> AnalyzeDatabaseHealthAsync(CancellationToken cancellationToken)
         {
-            // ...implementation...
+            // Check cancellation
+            cancellationToken.ThrowIfCancellationRequested();
+
             return new DatabaseHealthReport
             {
                 ConnectionStatus = await dbManager.TestConnectionAsync() ? "Connected" : "Disconnected",
@@ -50,9 +72,9 @@ namespace BusBus.Analytics
         }
 
         // Stub for missing method
-        private static async Task<PerformanceMetrics> AnalyzePerformanceAsync()
+        private static async Task<PerformanceMetrics> AnalyzePerformanceAsync(CancellationToken cancellationToken)
         {
-            await Task.Delay(10);
+            await Task.Delay(10, cancellationToken);
             return new PerformanceMetrics();
         }
 

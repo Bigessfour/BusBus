@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BusBus.Services;
 using BusBus.Models;
+using BusBus.Common;
 
 namespace BusBus.Services
 {
@@ -152,6 +153,46 @@ namespace BusBus.Services
             return await Task.Run(() =>
                 _routes.Where(r => r.ScheduledTime.Date == routeDate.Date).ToList(),
                 cancellationToken);
+        }
+
+        public async Task<PagedResult<Route>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            return await Task.Run(() =>
+            {
+                var totalCount = _routes.Count;
+                var items = _routes
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                return new PagedResult<Route>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = page,
+                    PageSize = pageSize
+                };
+            }, cancellationToken);
+        }
+
+        public async Task<List<Route>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await GetRoutesAsync(cancellationToken);
+        }
+
+        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            await DeleteRouteAsync(id, cancellationToken);
+        }
+
+        public async Task<Route> CreateAsync(Route route, CancellationToken cancellationToken = default)
+        {
+            return await CreateRouteAsync(route, cancellationToken);
+        }
+
+        public async Task<Route> UpdateAsync(Route route, CancellationToken cancellationToken = default)
+        {
+            return await UpdateRouteAsync(route, cancellationToken);
         }
     }
 }

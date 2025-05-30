@@ -559,7 +559,7 @@ namespace BusBus.UI
         }        // IView implementation
         public async Task ActivateAsync(CancellationToken cancellationToken)
         {
-            await LoadDriversAsync(cancellationToken);
+            await LoadDriversAsync(_currentPage, _pageSize, cancellationToken);
         }
 
         public async Task DeactivateAsync()
@@ -586,6 +586,8 @@ namespace BusBus.UI
 
         public static DriverDisplayDTO FromDriver(Driver driver)
         {
+            if (driver == null) throw new ArgumentNullException(nameof(driver));
+
             return new DriverDisplayDTO
             {
                 Id = driver.Id,
