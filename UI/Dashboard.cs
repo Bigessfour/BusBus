@@ -510,7 +510,7 @@ namespace BusBus.UI
                         view = viewName.ToLower() switch
                         {
                             "dashboard" => new DashboardOverviewView(_serviceProvider), // Home/overview panel
-                            "routes" => new RouteListPanel(_routeService), // Full CRUD routes functionality
+                            // "routes" => new RouteListPanel(_routeService), // Full CRUD routes functionality - temporarily disabled
                             "drivers" => new DriverListView(_serviceProvider),
                             "vehicles" => new VehicleListView(_serviceProvider),
                             "reports" => new ReportsView(_serviceProvider),
@@ -859,8 +859,9 @@ namespace BusBus.UI
                                 {
                                     // Ignore disposal errors during shutdown
                                 }
-                            });
+                            }, Program.AppCancellationToken);
                             disposeTasks.Add(disposeTask);
+                            BusBus.Program.AddBackgroundTask(disposeTask);
                         }
                         catch (Exception ex)
                         {
@@ -1029,7 +1030,8 @@ namespace BusBus.UI
                 }                // Navigate to the previous view if available
                 if (!string.IsNullOrEmpty(dashboardState.CurrentViewName))
                 {
-                    _ = Task.Run(async () => await NavigateToAsync(dashboardState.CurrentViewName));
+                    var navigationTask = Task.Run(async () => await NavigateToAsync(dashboardState.CurrentViewName), Program.AppCancellationToken);
+                    BusBus.Program.AddBackgroundTask(navigationTask);
                 }
 
                 _logger.LogInformation("Dashboard state restored with {Count} history items", dashboardState.NavigationHistory.Count);
@@ -1050,8 +1052,22 @@ namespace BusBus.UI
                             IsHandleCreated, IsDisposed, Disposing);
                         return;
                     }
-
                     _logger?.LogInformation("Dashboard disposing resources");
+
+                    // CRITICAL FIX: Stop and dispose performance monitor timer FIRST
+                    try
+                    {
+                        if (_performanceMonitorTimer != null)
+                        {
+                            _performanceMonitorTimer.Stop();
+                            _performanceMonitorTimer.Dispose();
+                            _logger?.LogDebug("Performance monitor timer stopped and disposed");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Error disposing performance monitor timer during shutdown");
+                    }
 
                     // First try to cancel all operations
                     var cts = _cancellationTokenSource;

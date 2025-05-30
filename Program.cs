@@ -88,12 +88,17 @@ namespace BusBus
                 Console.WriteLine("[Program] Console cancel key pressed - initiating emergency shutdown");
                 e.Cancel = true; // Cancel the immediate termination
 
-                // Use emergency shutdown for immediate termination
-                Task.Run(() =>
+                // Use emergency shutdown for immediate termination - TRACK THE TASK
+                var emergencyTask = Task.Run(async () =>
                 {
-                    Thread.Sleep(100); // Brief delay to allow message to print
-                    EmergencyShutdown();
-                });
+                    await Task.Delay(100, AppCancellationToken); // Brief delay with cancellation support
+                    if (!AppCancellationToken.IsCancellationRequested)
+                    {
+                        EmergencyShutdown();
+                    }
+                }, AppCancellationToken);
+
+                AddBackgroundTask(emergencyTask);
             };// .NET 8 Windows Forms modern initialization
             ApplicationConfiguration.Initialize();
 
@@ -194,40 +199,45 @@ namespace BusBus
                 Console.WriteLine("[Program] Application exit handler started");
                 ShutdownApplication();
 
-                // Force process exit after a short delay if still running
-                Task.Run(() =>
+                // Force process exit after a short delay if still running - TRACK THE TASK
+                var exitTask = Task.Run(async () =>
                 {
-                    Thread.Sleep(500); // Give time for clean shutdown
-                    Console.WriteLine("[Program] Forcing process exit");
-                    try
+                    await Task.Delay(500, AppCancellationToken); // Give time for clean shutdown with cancellation support
+                    if (!AppCancellationToken.IsCancellationRequested)
                     {
-                        // Kill any child processes first
-                        foreach (var process in System.Diagnostics.Process.GetProcessesByName("dotnet"))
+                        Console.WriteLine("[Program] Forcing process exit");
+                        try
                         {
-                            try
+                            // Kill any child processes first
+                            foreach (var process in System.Diagnostics.Process.GetProcessesByName("dotnet"))
                             {
-                                // Only kill child processes, not the main process
-                                if (process.Id != Environment.ProcessId &&
-                                    process.MainWindowTitle.Contains("BusBus"))
+                                try
                                 {
-                                    process.Kill();
-                                    Console.WriteLine($"[Program] Killed child process: {process.Id}");
+                                    // Only kill child processes, not the main process
+                                    if (process.Id != Environment.ProcessId &&
+                                        process.MainWindowTitle.Contains("BusBus"))
+                                    {
+                                        process.Kill();
+                                        Console.WriteLine($"[Program] Killed child process: {process.Id}");
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"[Program] Error killing process {process.Id}: {ex.Message}");
                                 }
                             }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"[Program] Error killing process {process.Id}: {ex.Message}");
-                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[Program] Error in process cleanup: {ex.Message}");
-                    }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Program] Error in process cleanup: {ex.Message}");
+                        }
 
-                    // Final force exit with no further wait
-                    Environment.Exit(0);
-                });
+                        // Final force exit with no further wait
+                        Environment.Exit(0);
+                    }
+                }, AppCancellationToken);
+
+                AddBackgroundTask(exitTask);
             };
 
             Application.ApplicationExit += applicationExitHandler;
@@ -302,10 +312,9 @@ namespace BusBus
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var routeService = scope.ServiceProvider.GetRequiredService<IRouteService>();
-                    Console.WriteLine("[Program] Seeding sample data...");
-                    try
+                    Console.WriteLine("[Program] Seeding sample data..."); try
                     {
-                        await routeService.SeedSampleDataAsync();
+                        await routeService.SeedSampleDataAsync(AppCancellationToken);
                         Console.WriteLine("[Program] Sample data seeded successfully");
                     }
                     catch (Exception seedEx)

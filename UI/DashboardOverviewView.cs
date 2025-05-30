@@ -32,10 +32,11 @@ namespace BusBus.UI
             LoggerMessage.Define(LogLevel.Information, new EventId(2, "Initialized"), "Dashboard Overview View initialized successfully");
 
         private static readonly Action<ILogger, Exception?> LogStatsLoaded =
-            LoggerMessage.Define(LogLevel.Debug, new EventId(3, "StatsLoaded"), "Dashboard overview stats loaded successfully");
-
-        private static readonly Action<ILogger, Exception?> LogStatsError =
+            LoggerMessage.Define(LogLevel.Debug, new EventId(3, "StatsLoaded"), "Dashboard overview stats loaded successfully"); private static readonly Action<ILogger, Exception?> LogStatsError =
             LoggerMessage.Define(LogLevel.Error, new EventId(4, "StatsError"), "Error loading dashboard overview stats");
+
+        private static readonly Action<ILogger, Exception?> LogStatsCancelled =
+            LoggerMessage.Define(LogLevel.Debug, new EventId(5, "StatsCancelled"), "LoadStatsAsync was cancelled");
 
         public DashboardOverviewView(IServiceProvider serviceProvider)
         {
@@ -58,13 +59,12 @@ namespace BusBus.UI
 
             // Set the form properties
             Size = new Size(800, 600);
-            BackColor = ThemeManager.CurrentTheme.MainBackground;
-
-            CreateWelcomeSection();
+            BackColor = ThemeManager.CurrentTheme.MainBackground; CreateWelcomeSection();
             CreateStatsSection();
             CreateSummarySection();
 
-            LoadStatsAsync();
+            // Start loading stats in background (fire-and-forget for initialization)
+            _ = LoadStatsAsync();
 
             LogInitialized(_logger, null);
         }
@@ -230,13 +230,12 @@ namespace BusBus.UI
 
             _summaryPanel.Controls.Add(buttonPanel);
         }
-
-        private async void LoadStatsAsync()
+        private async Task LoadStatsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                // Load actual statistics                var totalRoutes = await _routeService.GetRoutesCountAsync();
-                var activeRoutes = (await _routeService.GetRoutesAsync()).Count(r => r.IsActive);
+                // Load actual statistics                var totalRoutes = await _routeService.GetRoutesCountAsync(cancellationToken);
+                var activeRoutes = (await _routeService.GetRoutesAsync(cancellationToken)).Count(r => r.IsActive);
 
                 // Update stats cards
                 UpdateStatsCard("activeroutes", activeRoutes.ToString());
@@ -245,6 +244,11 @@ namespace BusBus.UI
                 UpdateStatsCard("totalcapacity", "540"); // Placeholder
 
                 LogStatsLoaded(_logger, null);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Operation was cancelled, don't update UI
+                LogStatsCancelled(_logger, null);
             }
             catch (Exception ex)
             {
@@ -275,8 +279,7 @@ namespace BusBus.UI
 
         public event Action<string>? NavigateToView; protected override async Task OnActivateAsync(CancellationToken cancellationToken)
         {
-            LoadStatsAsync();
-            await Task.CompletedTask;
+            await LoadStatsAsync(cancellationToken);
         }
 
         protected override async Task OnDeactivateAsync()
