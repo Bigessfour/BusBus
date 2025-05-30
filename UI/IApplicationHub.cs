@@ -24,6 +24,7 @@ namespace BusBus.UI
         /// Shows a notification to the user
         /// </summary>
         void ShowNotification(string title, string message, NotificationType type = NotificationType.Info);
+        void ShowNotification(string title, string message, Dashboard.NotificationType type);
 
         /// <summary>
         /// Gets the current active view

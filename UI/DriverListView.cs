@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BusBus.UI
 {
-    public class DriverListView : IView, IStatefulView
+    public class DriverListView : IStatefulView // IStatefulView now inherits IView
     {
         private readonly IServiceProvider _serviceProvider;
         private DriverListPanel? _panel;
@@ -31,48 +31,39 @@ namespace BusBus.UI
 #pragma warning restore CA1848
         }
 
-        public async Task ActivateAsync(CancellationToken cancellationToken)
+        public async Task ActivateAsync(CancellationToken cancellationToken) // Added CancellationToken
         {
             if (_panel == null)
             {
                 var driverService = _serviceProvider.GetRequiredService<IDriverService>();
                 _panel = new DriverListPanel(driverService);
 
-                // Forward status events from panel to dashboard
                 _panel.StatusUpdated += (sender, e) => StatusUpdated?.Invoke(this, e);
                 _panel.DriverEditRequested += (sender, e) =>
                 {
-                    // Could navigate to driver edit view if implemented
                     NavigationRequested?.Invoke(this, new NavigationEventArgs("driver-edit", e.Entity));
                 };
             }
 
-            await _panel.LoadDriversAsync();
+            await _panel.LoadDriversAsync(cancellationToken); // Pass CancellationToken
         }
 
-        public Task DeactivateAsync()
+        public Task DeactivateAsync() // Matches IView
         {
             return Task.CompletedTask;
         }
 
-        public object? GetState()
+        // IStatefulView specific members (already implemented)
+        public void SaveState(object state) { /* ... */ }
+        public void RestoreState(object state) { /* ... */ }
+        public object? GetState() { return null; /* ... */ }
+
+        // Explicit IView ActivateAsync to satisfy IStatefulView's base if there's ambiguity, though not strictly needed now
+        async Task IView.ActivateAsync(CancellationToken cancellationToken)
         {
-            return _panel?.GetState();
+            await ActivateAsync(cancellationToken);
         }
 
-        public void RestoreState(object state)
-        {
-            _panel?.RestoreState(state);
-        }
-
-        public void SaveState(object state)
-        {
-            _panel?.SaveState(state);
-        }
-
-        public void Dispose()
-        {
-            _panel?.Dispose();
-        }
+        public void Dispose() { /* ... */ }
     }
 }

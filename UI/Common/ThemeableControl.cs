@@ -77,51 +77,44 @@ namespace BusBus.UI.Common
         protected virtual void ApplyTheme()
         {
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-        }        /// <summary>
+
+            // Recursively apply theme to children
+            ApplyThemeToChildControls(this);
+        }
+
+        /// <summary>
         /// Recursively applies theme to a control and all its children.
         /// This is the centralized theme application logic.
+        /// </summary>
+        protected static void ApplyThemeToChildControls(Control parentControl)
+        {
+            if (parentControl == null)
+                return;
+
+            foreach (Control control in parentControl.Controls)
+            {
+                ApplyThemeToControl(control); // Apply to direct child
+                if (control.Controls.Count > 0)
+                {
+                    ApplyThemeToChildControls(control); // Recurse for grandchildren
+                }
+            }
+        }
+
+        /// <summary>
+        /// Applies theme to a single control based on its type.
         /// </summary>
         protected static void ApplyThemeToControl(Control control)
         {
             if (control == null)
                 return;
 
-            try
-            {
-                // Apply theme based on control type
-                switch (control)
-                {
-                    case TextBox textBox:
-                        textBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
-                        textBox.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
-                    case ComboBox comboBox:
-                        comboBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
-                        comboBox.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
-                    case NumericUpDown numericUpDown:
-                        numericUpDown.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
-                        numericUpDown.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
-                    default:
-                        // Apply default theme to the control itself
-                        control.BackColor = ThemeManager.CurrentTheme.CardBackground;
-                        control.ForeColor = ThemeManager.CurrentTheme.CardText;
-                        break;
-                }
+            // Use ThemeManager's static method to apply theme to individual controls
+            // This leverages the detailed styling logic within ThemeManager and Theme classes
+            ThemeManager.ApplyThemeToControl(control);
+        }
 
-                // Recursively apply theme to all child controls
-                foreach (Control child in control.Controls)
-                {
-                    ApplyThemeToControl(child);
-                }
-            }
-            catch (ObjectDisposedException)
-            {
-                // Control was disposed while applying theme
-                // This is normal during application shutdown
-            }
-        }/// <summary>
+        /// <summary>
         /// Renders the control into the specified container.
         /// Must be implemented by derived classes.
         /// </summary>

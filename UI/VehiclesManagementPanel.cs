@@ -18,18 +18,24 @@ namespace BusBus.UI
     public partial class VehiclesManagementPanel : ThemeableControl, IDisplayable, IView
     {
         private readonly IVehicleService _vehicleService;
-        private DataGridView _dataGridView;
-        private Button _addButton;
-        private Button _editButton;
-        private Button _deleteButton;
-        private Button _refreshButton;
+        private DataGridView _dataGridView = null!;
+        private Button _addButton = null!;
+        private Button _editButton = null!;
+        private Button _deleteButton = null!;
+        private Button _refreshButton = null!;
         private BindingList<VehicleDisplayDTO> _vehicles;
         private readonly CancellationTokenSource _cancellationTokenSource;        // IView implementation
         public string ViewName => "VehiclesManagement";
         public string Title => "Vehicles Management";
         public Control? Control => this;
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning restore CS0067 // Event is never used
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
+#pragma warning restore CS0067 // Event is never used
+
+        internal static readonly string[] VehicleStatuses = { "Active", "Inactive", "Maintenance", "Out of Service" };
 
         public VehiclesManagementPanel(IVehicleService vehicleService)
         {
@@ -210,7 +216,7 @@ namespace BusBus.UI
                 FlatStyle = FlatStyle.Flat
             };
 
-            statusColumn.Items.AddRange(new[] { "Active", "Inactive", "Maintenance", "Out of Service" });
+            statusColumn.Items.AddRange(VehicleStatuses);
             statusColumn.DefaultCellStyle.BackColor = Color.FromArgb(70, 70, 74);
             statusColumn.DefaultCellStyle.ForeColor = Color.FromArgb(241, 241, 241);
             _dataGridView.Columns.Add(statusColumn);
@@ -260,7 +266,7 @@ namespace BusBus.UI
             _deleteButton.Enabled = false;
         }
 
-        private Button CreateCrystalDarkButton(string text, string tooltip)
+        private static Button CreateCrystalDarkButton(string text, string tooltip)
         {
             var button = new Button
             {
@@ -362,7 +368,7 @@ namespace BusBus.UI
             }
         }
 
-        private List<VehicleDisplayDTO> GetSampleVehicles()
+        private static List<VehicleDisplayDTO> GetSampleVehicles()
         {
             return new List<VehicleDisplayDTO>
             {
@@ -429,7 +435,7 @@ namespace BusBus.UI
             };
         }
 
-        private async void AddButton_Click(object sender, EventArgs e)
+        private async void AddButton_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -467,7 +473,7 @@ namespace BusBus.UI
             }
         }
 
-        private async void EditButton_Click(object sender, EventArgs e)
+        private async void EditButton_Click(object? sender, EventArgs e)
         {
             if (_dataGridView.SelectedRows.Count == 0) return;
 
@@ -518,7 +524,7 @@ namespace BusBus.UI
             }
         }
 
-        private async void DeleteButton_Click(object sender, EventArgs e)
+        private async void DeleteButton_Click(object? sender, EventArgs e)
         {
             if (_dataGridView.SelectedRows.Count == 0) return;
 
@@ -556,12 +562,12 @@ namespace BusBus.UI
             }
         }
 
-        private async void RefreshButton_Click(object sender, EventArgs e)
+        private async void RefreshButton_Click(object? sender, EventArgs e)
         {
             await LoadDataAsync(_cancellationTokenSource.Token);
         }
 
-        private void DataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        private void DataGridView_CellBeginEdit(object? sender, DataGridViewCellCancelEventArgs e)
         {
             // Allow editing of all columns except VehicleId
             if (_dataGridView.Columns[e.ColumnIndex].Name == "VehicleId")
@@ -570,7 +576,7 @@ namespace BusBus.UI
             }
         }
 
-        private void DataGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        private void DataGridView_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
         {
             // Validate VIN number format
             if (_dataGridView.Columns[e.ColumnIndex].Name == "VINNumber")
@@ -615,7 +621,7 @@ namespace BusBus.UI
             }
         }
 
-        private void DataGridView_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        private void DataGridView_DataError(object? sender, DataGridViewDataErrorEventArgs e)
         {
             // Handle data conversion errors gracefully
             e.ThrowException = false;
@@ -623,7 +629,7 @@ namespace BusBus.UI
                 "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
-        private void DataGridView_SelectionChanged(object sender, EventArgs e)
+        private void DataGridView_SelectionChanged(object? sender, EventArgs e)
         {
             // Enable/disable edit and delete buttons based on selection
             bool hasSelection = _dataGridView.SelectedRows.Count > 0;
@@ -681,6 +687,10 @@ namespace BusBus.UI
 
         public static VehicleDisplayDTO FromVehicle(Vehicle vehicle)
         {
+            if (vehicle == null)
+            {
+                throw new ArgumentNullException(nameof(vehicle));
+            }
             return new VehicleDisplayDTO
             {
                 VehicleId = vehicle.VehicleId,
@@ -719,16 +729,16 @@ namespace BusBus.UI
     {
         public Vehicle Vehicle { get; private set; }
 
-        private TextBox _busNumberTextBox;
-        private NumericUpDown _modelYearNumeric;
-        private TextBox _makeTextBox;
-        private TextBox _modelTextBox;
-        private TextBox _vinTextBox;
-        private NumericUpDown _capacityNumeric;
-        private DateTimePicker _inspectionDatePicker;
-        private ComboBox _statusComboBox;
+        private TextBox _busNumberTextBox = null!;
+        private NumericUpDown _modelYearNumeric = null!;
+        private TextBox _makeTextBox = null!;
+        private TextBox _modelTextBox = null!;
+        private TextBox _vinTextBox = null!;
+        private NumericUpDown _capacityNumeric = null!;
+        private DateTimePicker _inspectionDatePicker = null!;
+        private ComboBox _statusComboBox = null!;
 
-        public VehicleEditForm(Vehicle vehicle = null)
+        public VehicleEditForm(Vehicle? vehicle = null)
         {
             Vehicle = vehicle ?? new Vehicle();
             InitializeComponent();
@@ -794,7 +804,7 @@ namespace BusBus.UI
             // Status
             layout.Controls.Add(new Label { Text = "Status:", Anchor = AnchorStyles.Left }, 0, 7);
             _statusComboBox = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
-            _statusComboBox.Items.AddRange(new[] { "Active", "Inactive", "Maintenance", "Out of Service" });
+            _statusComboBox.Items.AddRange(VehiclesManagementPanel.VehicleStatuses);
             layout.Controls.Add(_statusComboBox, 1, 7);
 
             // Buttons
@@ -829,7 +839,7 @@ namespace BusBus.UI
             _statusComboBox.SelectedItem = Vehicle.IsActive ? (Vehicle.Status ?? "Active") : "Inactive";
         }
 
-        private void OkButton_Click(object sender, EventArgs e)
+        private void OkButton_Click(object? sender, EventArgs e)
         {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(_busNumberTextBox.Text))

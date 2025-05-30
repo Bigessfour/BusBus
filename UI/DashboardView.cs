@@ -5,13 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Diagnostics; // Added for Stopwatch
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using BusBus.UI.Common;
-using BusBus.Services;
-using BusBus.Models;
-using System.Data;
 
 namespace BusBus.UI
 {
@@ -27,18 +24,6 @@ namespace BusBus.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<DashboardView> _logger;
         private readonly Stopwatch _loadingStopwatch = new Stopwatch();
-        private TableLayoutPanel _mainLayout = null!;
-        private Panel _sidePanel = null!;
-        private Panel _statsPanel = null!;
-        private Panel _contentPanel = null!;
-        private Panel _crudPanel = null!;
-
-        // Dynamic DataGridView components
-        private DynamicDataGridView<Route>? _routeDataGrid;
-        private DynamicDataGridView<Driver>? _driverDataGrid;
-        private DynamicDataGridView<Vehicle>? _vehicleDataGrid;
-        private Control? _currentDataView;
-        private string _currentViewType = "";
 
         // Constructor to satisfy DI and field requirements
         public DashboardView(IServiceProvider serviceProvider, ILogger<DashboardView> logger)
@@ -62,7 +47,5 @@ namespace BusBus.UI
             // TODO: Add deactivation logic
             return Task.CompletedTask;
         }
-
-        // ...existing code...
     }
 }

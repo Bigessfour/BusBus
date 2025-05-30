@@ -2,12 +2,11 @@ using System.Threading.Tasks;
 
 namespace BusBus.UI
 {
-    public interface IStatefulView
+    public interface IStatefulView : IView // Inherit from IView
     {
         void SaveState(object state);
         void RestoreState(object state);
         object? GetState();
-        Task ActivateAsync();
-        Task DeactivateAsync();
+        // ActivateAsync and DeactivateAsync are inherited from IView
     }
 }

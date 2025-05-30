@@ -32,7 +32,7 @@ namespace BusBus.UI
         private Label _titleLabel = null!;
 
         // Pagination and state
-        private int _totalDrivers = 0;
+        // private int _totalDrivers = 0; // Unused
         private int _currentPage = 1;
         private int _pageSize = 20;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -42,7 +42,9 @@ namespace BusBus.UI
         public string Title => "Drivers";
         public Control? Control => this;
 
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning restore CS0067 // Event is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         public DriversManagementPanel(IDriverService driverService)
@@ -212,7 +214,7 @@ namespace BusBus.UI
         /// <summary>
         /// Creates a Crystal Dark glass-like button with specified text and size
         /// </summary>
-        private Button CreateCrystalDarkButton(string text, Size size)
+        private static Button CreateCrystalDarkButton(string text, Size size)
         {
             var button = new Button
             {
@@ -246,7 +248,7 @@ namespace BusBus.UI
             return button;
         }
 
-        private Panel CreateButtonPanel()
+        private TableLayoutPanel CreateButtonPanel() // Changed return type
         {
             var buttonPanel = new TableLayoutPanel
             {
@@ -528,12 +530,12 @@ namespace BusBus.UI
             await LoadDriversAsync(_currentPage, _pageSize, _cancellationTokenSource.Token);
         }
 
-        public void Show()
+        public new void Show()
         {
             this.Visible = true;
         }
 
-        public void Hide()
+        public new void Hide()
         {
             this.Visible = false;
         }

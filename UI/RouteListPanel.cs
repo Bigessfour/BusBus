@@ -46,9 +46,13 @@ namespace BusBus.UI
         public string Title => "Routes";
         public Control? Control => this;
 
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning restore CS0067 // Event is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<EntityEventArgs<Route>>? RouteEditRequested;
+#pragma warning restore CS0067 // Event is never used
 
         public RouteListPanel(IRouteService routeService, IDriverService driverService, IVehicleService vehicleService)
         {
@@ -332,8 +336,7 @@ namespace BusBus.UI
         {
             try
             {
-                var pagedDrivers = await _driverService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
-                _drivers = pagedDrivers.Items.ToList();
+                _drivers = await _driverService.GetDriversAsync(1, 1000, _cancellationTokenSource.Token);
             }
             catch
             {
@@ -345,8 +348,7 @@ namespace BusBus.UI
         {
             try
             {
-                var pagedVehicles = await _vehicleService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
-                _vehicles = pagedVehicles.Items.ToList();
+                _vehicles = await _vehicleService.GetVehiclesAsync(1, 1000, _cancellationTokenSource.Token);
             }
             catch
             {
@@ -496,23 +498,31 @@ namespace BusBus.UI
             await LoadDataAsync();
         }
 
+        public async Task LoadRoutesAsync(CancellationToken cancellationToken)
+        {
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            await LoadDataAsync();
+        }
+
         protected override void ApplyTheme()
         {
             // Theme is already applied in InitializeComponent
         }
 
-        public Task ActivateAsync(object? parameter = null)
+        public async Task ActivateAsync(CancellationToken cancellationToken) // Added CancellationToken
         {
-            return LoadDataAsync();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            await LoadRoutesAsync(_cancellationTokenSource.Token); // Pass CancellationToken
         }
 
-        public Task DeactivateAsync()
+        public Task DeactivateAsync() // Matches IView
         {
-            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource.Cancel();
+            // ... any other deactivation logic ...
             return Task.CompletedTask;
         }
 
-        public void Render(Control parent)
+        public override void Render(Control parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             parent.Controls.Clear();

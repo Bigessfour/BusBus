@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.Models;
@@ -35,8 +36,14 @@ namespace BusBus.UI
 
         public event EventHandler<EntityEventArgs<Driver>>? DriverEditRequested;
         public event EventHandler<StatusEventArgs>? StatusUpdated;
+#pragma warning disable CS0067 // Event is never used
+        public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning restore CS0067 // Event is never used
 
-        public static string Title => "Drivers";
+        // IView properties
+        public string ViewName => "DriverListPanel";
+        public string Title => "Drivers"; // Removed 'new' keyword
+        public Control Control => this;
 
         public DriverListPanel(IDriverService driverService)
         {
@@ -45,7 +52,7 @@ namespace BusBus.UI
             SetupDataGridView();
             SetupButtons();
             SetupPagination();
-            _ = LoadDriversAsync();
+            _ = LoadDriversAsync(CancellationToken.None); // Pass CancellationToken.None
         }
 
         public void SaveState(object state)
@@ -66,7 +73,8 @@ namespace BusBus.UI
             var mainLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 1,                RowCount = 3,
+                ColumnCount = 1,
+                RowCount = 3,
                 BackColor = Color.Transparent
             };
 
@@ -90,7 +98,7 @@ namespace BusBus.UI
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false,                
+                EnableHeadersVisualStyles = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AutoSize = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
@@ -99,12 +107,12 @@ namespace BusBus.UI
                 ColumnHeadersHeight = 40, // Fixed height for better visibility
                 RowHeadersVisible = false,
                 RowTemplate = { Height = 32 },
-                EditMode = DataGridViewEditMode.EditOnEnter            
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
 
             // Apply consistent theme styling to the grid
             ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
-            
+
             // Enhance header styling for better visibility
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Font = new Font(_driversDataGridView.Font.FontFamily, 9.5F, FontStyle.Bold);
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
@@ -120,7 +128,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
             };
-            
+
             // Add button panel to the middle
             mainLayout.Controls.Add(_buttonPanel, 0, 1);
 
@@ -379,14 +387,14 @@ namespace BusBus.UI
         }
         #endregion
 
-        public async Task LoadDriversAsync()
+        public async Task LoadDriversAsync(CancellationToken cancellationToken = default) // Add default CancellationToken
         {
             try
             {
                 var totalCount = await _driverService.GetCountAsync();
                 _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
 
-                _currentDrivers = await _driverService.GetPagedAsync(_currentPage, _pageSize);
+                _currentDrivers = await _driverService.GetPagedAsync(_currentPage, _pageSize, cancellationToken); // Pass cancellationToken
 
                 _driversDataGridView.DataSource = _currentDrivers;
                 UpdatePaginationControls();
@@ -394,7 +402,7 @@ namespace BusBus.UI
             catch (Exception ex)
             {
                 StatusUpdated?.Invoke(this, new StatusEventArgs(
-                    $"Error loading drivers: {ex.Message}", StatusType.Error));
+                    $"Error loading drivers: {ex.Message}", StatusType.Error)); // Add StatusType
             }
         }
 
@@ -439,12 +447,12 @@ namespace BusBus.UI
                     try
                     {
                         await _driverService.DeleteAsync(driver.Id);
-                        await LoadDriversAsync();
-                        StatusUpdated?.Invoke(this, new StatusEventArgs("Driver deleted successfully"));
+                        await LoadDriversAsync(CancellationToken.None); // Pass CancellationToken.None
+                        StatusUpdated?.Invoke(this, new StatusEventArgs("Driver deleted successfully", StatusType.Success)); // Add StatusType
                     }
                     catch (Exception ex)
                     {
-                        StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting driver: {ex.Message}"));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting driver: {ex.Message}", StatusType.Error)); // Add StatusType
                     }
                 }
             }
@@ -474,11 +482,11 @@ namespace BusBus.UI
                 }
 
                 await _driverService.UpdateAsync(driver);
-                StatusUpdated?.Invoke(this, new StatusEventArgs("Driver updated successfully"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs("Driver updated successfully", StatusType.Success)); // Add StatusType
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating driver: {ex.Message}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating driver: {ex.Message}", StatusType.Error)); // Add StatusType
             }
         }
 
@@ -494,7 +502,7 @@ namespace BusBus.UI
             if (_currentPage > 1)
             {
                 _currentPage--;
-                await LoadDriversAsync();
+                await LoadDriversAsync(CancellationToken.None); // Pass CancellationToken.None
             }
         }
 
@@ -503,7 +511,7 @@ namespace BusBus.UI
             if (_currentPage < _totalPages)
             {
                 _currentPage++;
-                await LoadDriversAsync();
+                await LoadDriversAsync(CancellationToken.None); // Pass CancellationToken.None
             }
         }
 
@@ -583,19 +591,35 @@ namespace BusBus.UI
 
         public async Task RefreshAsync()
         {
-            await LoadDriversAsync();
+            await LoadDriversAsync(CancellationToken.None); // Pass CancellationToken.None
         }
-    }    // Add missing event args classes
-    public class EntityEventArgs<T> : EventArgs
-    {
-        public T Entity { get; }
-        public EntityEventArgs(T entity) => Entity = entity;
-    }
 
-    public class DriverListState
-    {
-        public int CurrentPage { get; set; }
-        public int PageSize { get; set; }
-        public int? SelectedDriverId { get; set; }
+        public async Task ActivateAsync(CancellationToken cancellationToken)
+        {
+            await LoadDriversAsync(cancellationToken);
+        }
+
+        public Task DeactivateAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        // Explicit IView ActivateAsync to satisfy IStatefulView's base
+        async Task IView.ActivateAsync(CancellationToken cancellationToken)
+        {
+            await ActivateAsync(cancellationToken);
+        }
     }
+}    // Add missing event args classes
+public class EntityEventArgs<T> : EventArgs
+{
+    public T Entity { get; }
+    public EntityEventArgs(T entity) => Entity = entity;
+}
+
+public class DriverListState
+{
+    public int CurrentPage { get; set; }
+    public int PageSize { get; set; }
+    public int? SelectedDriverId { get; set; }
 }

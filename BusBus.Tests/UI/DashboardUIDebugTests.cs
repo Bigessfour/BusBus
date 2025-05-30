@@ -197,7 +197,8 @@ namespace BusBus.Tests.UI
                 try
                 {
                     using var scope = _serviceProvider!.CreateScope();
-                    var dashboardView = new DashboardView(scope.ServiceProvider);
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DashboardView>>();
+                    var dashboardView = new DashboardView(scope.ServiceProvider, logger);
 
                     var created = false;
                     var routeViewLoaded = false;
@@ -387,7 +388,8 @@ namespace BusBus.Tests.UI
             var tcs = new TaskCompletionSource<bool>();
 
             var thread = new Thread(() =>
-            {                try
+            {
+                try
                 {
                     using var scope = _serviceProvider?.CreateScope();
                     var routeService = scope?.ServiceProvider.GetRequiredService<IRouteService>();
@@ -493,7 +495,7 @@ namespace BusBus.Tests.UI
 
                     // Verify AM/PM structure per BusBus Info
                     Assert.IsTrue(foundRoute.AMStartingMileage > 0, $"{expectedRoute} should have AM starting mileage");
-                    Assert.IsTrue(foundRoute.AMEndingMileage > foundRoute.AMStartingMileage, $"{expectedRoute} AM ending should be > starting");                    Assert.IsTrue(foundRoute.PMStartMileage >= foundRoute.AMEndingMileage, $"{expectedRoute} PM start should be >= AM end");
+                    Assert.IsTrue(foundRoute.AMEndingMileage > foundRoute.AMStartingMileage, $"{expectedRoute} AM ending should be > starting"); Assert.IsTrue(foundRoute.PMStartMileage >= foundRoute.AMEndingMileage, $"{expectedRoute} PM start should be >= AM end");
                     Assert.IsTrue(foundRoute.PMEndingMileage > foundRoute.PMStartMileage, $"{expectedRoute} PM ending should be > PM starting");
                 }
 
@@ -532,7 +534,8 @@ namespace BusBus.Tests.UI
                     details.Add("Starting BusBus Info dashboard integration test");
 
                     using var scope = _serviceProvider!.CreateScope();
-                    var dashboardView = new DashboardView(scope.ServiceProvider);
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DashboardView>>();
+                    var dashboardView = new DashboardView(scope.ServiceProvider, logger);
 
                     // Force handle creation
                     var handle = dashboardView.Handle;

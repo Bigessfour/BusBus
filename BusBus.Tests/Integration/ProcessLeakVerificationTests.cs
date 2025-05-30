@@ -7,6 +7,8 @@ using System.Threading;
 using System.Windows.Forms;
 using BusBus.Tests;
 
+#nullable enable
+
 namespace BusBus.Tests.Integration
 {
     /// <summary>

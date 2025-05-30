@@ -3,7 +3,6 @@
 #nullable enable
 
 using System;
-using BusBus.Data.Models;
 
 namespace BusBus.Models
 {
@@ -55,25 +54,25 @@ namespace BusBus.Models
             {
                 Id = route.Id,
                 RouteNumber = route.RouteCode ?? string.Empty,
-                RouteName = route.Name ?? string.Empty,
+                RouteName = route.Name ?? string.Empty, // Use Name from Route for RouteName DTO property
                 Name = route.Name ?? string.Empty,
-                StartLocation = route.Origin ?? string.Empty,
-                EndLocation = route.Destination ?? string.Empty,
-                Distance = route.TotalMiles,
-                Duration = TimeSpan.FromMinutes(route.EstimatedDuration),
-                RouteDate = route.Date,
+                StartLocation = route.StartLocation ?? string.Empty, // Use StartLocation from Route
+                EndLocation = route.EndLocation ?? string.Empty, // Use EndLocation from Route
+                Distance = (decimal)route.TotalMiles, // Cast double to decimal
+                Duration = route.EstimatedDuration, // Directly use TimeSpan
+                RouteDate = route.RouteDate, // Use RouteDate from Route
                 VehicleId = route.VehicleId,
-                VehicleAssignment = route.VehicleAssignment ?? string.Empty,
+                VehicleAssignment = route.Vehicle?.Name ?? string.Empty, // Get Vehicle name if available
                 AMStartingMileage = route.AMStartingMileage,
                 AMEndingMileage = route.AMEndingMileage,
                 AMRiders = route.AMRiders,
-                AMDriverId = route.AMDriverId,
+                AMDriverId = route.DriverId, // Assuming AMDriverId maps to the main DriverId
                 PMStartMileage = route.PMStartMileage,
                 PMEndingMileage = route.PMEndingMileage,
                 PMRiders = route.PMRiders,
                 PMDriverId = route.PMDriverId,
                 ScheduledTime = route.ScheduledTime,
-                TripDate = route.RouteDate, // Map RouteDate to TripDate
+                TripDate = route.RouteDate,
                 DriverId = route.DriverId
             };
         }
@@ -88,24 +87,24 @@ namespace BusBus.Models
                 Id = Id,
                 RouteCode = RouteNumber,
                 Name = Name,
-                Origin = StartLocation,
-                Destination = EndLocation,
-                TotalMiles = Distance,
-                EstimatedDuration = (int)Duration.TotalMinutes,
-                Date = RouteDate,
+                StartLocation = StartLocation, // Map back to StartLocation
+                EndLocation = EndLocation, // Map back to EndLocation
+                // TotalMiles is a calculated property in Route, so no direct assignment
+                // EstimatedDuration is a calculated property in Route, so no direct assignment
+                RouteDate = RouteDate, // Map back to RouteDate
                 VehicleId = VehicleId,
-                VehicleAssignment = VehicleAssignment,
+                // VehicleAssignment is not directly on Route, it's through Vehicle.Name
                 AMStartingMileage = AMStartingMileage,
                 AMEndingMileage = AMEndingMileage,
                 AMRiders = AMRiders,
-                AMDriverId = AMDriverId,
+                DriverId = AMDriverId, // Assuming AMDriverId maps to the main DriverId
                 PMStartMileage = PMStartMileage,
                 PMEndingMileage = PMEndingMileage,
                 PMRiders = PMRiders,
                 PMDriverId = PMDriverId,
-                ScheduledTime = ScheduledTime,
-                RouteDate = TripDate, // Map TripDate back to RouteDate
-                DriverId = DriverId
+                ScheduledTime = ScheduledTime
+                // RouteDate is already mapped
+                // DriverId is already mapped
             };
         }
     }
