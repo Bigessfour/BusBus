@@ -533,10 +533,13 @@ namespace BusBus.UI
 
         #region Reader Mode Support
 
-        /// <summary>
-        /// Gets whether the panel is in reader mode (view-only)
-        /// </summary>
         public bool IsReaderMode { get; set; }
+
+        private bool IsReaderModeEnabled()
+        {
+            // TODO: Implement logic to determine reader mode
+            return IsReaderMode;
+        }
 
         #endregion
 

@@ -1041,156 +1041,156 @@ namespace BusBus.UI
         {
             if (disposing)
             {
-                components?.Dispose();
-                _performanceTimer?.Dispose();
-                _performanceTimer = null;
-            }
-            base.Dispose(disposing);
-        }
-    }
+                try
+                {
+                    if (!IsHandleCreated || IsDisposed || Disposing)
+                    {
+                        _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
+                            IsHandleCreated, IsDisposed, Disposing);
+                        return;
+                    }
+                    _logger?.LogInformation("Dashboard disposing resources");
 
-    #region Interfaces and Supporting Classes
-    // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
-    public interface IView : IDisposable
-    {
-        string ViewName { get; }
-        string Title { get; }
-        Control? Control { get; }
-        event EventHandler<NavigationEventArgs>? NavigationRequested;
-        event EventHandler<StatusEventArgs>? StatusUpdated;
-        Task ActivateAsync(CancellationToken cancellationToken);
-        Task DeactivateAsync();
-    }
+                    if (_performanceMonitorTimer != null)
+                    {
+                        _performanceMonitorTimer.Stop();
+                        _performanceMonitorTimer.Dispose();
+                        _logger?.LogDebug("Performance monitor timer stopped and disposed");
+                    }
 
-    public interface IStatefulView
-    {
-        void SaveState(object state);
-        void RestoreState(object state);
-    }
+                    if (_cancellationTokenSource != null && !IsCtsDisposed(_cancellationTokenSource))
+                    {
+                        _cancellationTokenSource.Cancel();
+                        _cancellationTokenSource.Dispose();
+                        _logger?.LogDebug("CancellationTokenSource disposed");
+                    }
 
-    public class NavigationEventArgs : EventArgs
-    {
-        public string ViewName { get; }
-        public object? Parameter { get; }
+                    _cancellationTokenSource = null!;
+                    _currentView = null;
 
-        public NavigationEventArgs(string viewName, object? parameter = null)
-        {
-            ViewName = viewName;
-            Parameter = parameter;
-        }
-    }
+                    foreach (var view in _viewCache.Values.ToList())
+                    {
+                        try
+                        {
+                            if (view is IDisposable disposableView && view.Control != null && !view.Control.IsDisposed)
+                            {
+                                disposableView.Dispose();
+                                _logger?.LogDebug("Disposed view: {ViewType}", view.GetType().Name);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error disposing view {ViewType}", view.GetType().Name);
+                        }
+                    }
 
-    public class StatusEventArgs : EventArgs
-    {
-        public string Message { get; }
-        public StatusType Type { get; }
+                    _viewCache.Clear();
+                    _navigationHistory.Clear();
 
-        public StatusEventArgs(string message, StatusType type = StatusType.Info)
-        {
-            Message = message;
-            Type = type;
-        }
-    }
+                    try
+                    {
+                        _logger?.LogInformation("Notifying Program class about dashboard disposal");
+                        var programType = Type.GetType("BusBus.Program, BusBus");
+                        var shutdownMethod = programType?.GetMethod("ShutdownApplication",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 
-    public enum StatusType
-    {
-        Info,
-        Success,
-        Warning,
-        Error
-    }
+                        if (shutdownMethod != null)
+                        {
+                            shutdownMethod.Invoke(null, null);
+                            _logger?.LogDebug("Successfully notified Program about dashboard disposal");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Failed to notify Program about dashboard disposal");
+                    }
 
-    public enum NotificationType
-    {
-        Info,
-        Success,
-        Warning,
-        Error
-    }
-    #endregion
-}
-{
-    try
-    {
-        if (view is IDisposable disposableView && view.Control != null && !view.Control.IsDisposed)
-        {
-            disposableView.Dispose();
-            _logger?.LogDebug("Disposed view: {ViewType}", view.GetType().Name);
-        }
-    }
-    catch (Exception ex)
-    {
-        _logger?.LogError(ex, "Error disposing view {ViewType}", view.GetType().Name);
-    }
-}
-
-// Clear collections to release references
-_viewCache.Clear();
-_navigationHistory.Clear();                    // Notify Program class about dashboard disposal
-try
-{
-    _logger?.LogInformation("Notifying Program class about dashboard disposal");
-    // Call Program.ShutdownApplication() to ensure proper cleanup of background tasks
-    var programType = Type.GetType("BusBus.Program, BusBus");
-    var shutdownMethod = programType?.GetMethod("ShutdownApplication",
-        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-
-    if (shutdownMethod != null)
-    {
-        shutdownMethod.Invoke(null, null);
-        _logger?.LogDebug("Successfully notified Program about dashboard disposal");
-    }
-}
-catch (Exception ex)
-{
-    _logger?.LogError(ex, "Failed to notify Program about dashboard disposal");
-}
-
-// Force immediate GC collection to help release resources
-GC.Collect();
-GC.WaitForPendingFinalizers();
-
-_logger?.LogInformation("Dashboard resources disposed");
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    _logger?.LogInformation("Dashboard resources disposed");
                 }
                 catch (Exception ex)
                 {
-                    // Log any unexpected exceptions but don't crash
                     System.Diagnostics.Debug.WriteLine($"Error disposing Dashboard: {ex.Message}");
-_logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
+                    _logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
                 }
             }
-            try
-{
-    // Only call base.Dispose if we're not in the middle of creating a handle
-    if (this.IsHandleCreated && !this.IsDisposed)
-    {
-        base.Dispose(disposing);
-    }
-    else if (!this.IsDisposed)
-    {
-        // If handle is not created, dispose more carefully
-        this.Invoke(new Action(() =>
+            base.Dispose(disposing);
+        }
+
+        private static bool IsCtsDisposed(CancellationTokenSource cts)
         {
             try
             {
-                base.Dispose(disposing);
+                var _ = cts.Token;
+                return false;
             }
-            catch (Exception ex)
+            catch (ObjectDisposedException)
             {
-                _logger?.LogError(ex, "Error in delayed base Dispose call");
+                return true;
             }
-        }));
+        }
+
+        #region Interfaces and Supporting Classes
+        // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
+        public interface IView : IDisposable
+        {
+            string ViewName { get; }
+            string Title { get; }
+            Control? Control { get; }
+            event EventHandler<NavigationEventArgs>? NavigationRequested;
+            event EventHandler<StatusEventArgs>? StatusUpdated;
+            Task ActivateAsync(CancellationToken cancellationToken);
+            Task DeactivateAsync();
+        }
+
+        public interface IStatefulView
+        {
+            void SaveState(object state);
+            void RestoreState(object state);
+        }
+
+        public class NavigationEventArgs : EventArgs
+        {
+            public string ViewName { get; }
+            public object? Parameter { get; }
+
+            public NavigationEventArgs(string viewName, object? parameter = null)
+            {
+                ViewName = viewName;
+                Parameter = parameter;
+            }
+        }
+
+        public class StatusEventArgs : EventArgs
+        {
+            public string Message { get; }
+            public StatusType Type { get; }
+
+            public StatusEventArgs(string message, StatusType type = StatusType.Info)
+            {
+                Message = message;
+                Type = type;
+            }
+        }
+
+        public enum StatusType
+        {
+            Info,
+            Success,
+            Warning,
+            Error
+        }
+
+        public enum NotificationType
+        {
+            Info,
+            Success,
+            Warning,
+            Error
+        }
+        #endregion
     }
-}
-catch (InvalidOperationException ex) when (ex.Message.Contains("CreateHandle") || ex.Message.Contains("Invoke"))
-{
-    _logger?.LogWarning("Skipping base disposal due to handle creation conflict: {Message}", ex.Message);
-    _logger?.LogDebug("Skipping disposal - invalid state (HandleCreated: {HandleCreated}, IsDisposed: {IsDisposed}, Disposing: {Disposing})",
-        this.IsHandleCreated, this.IsDisposed, disposing);
-}
-catch (Exception ex)
-{
-    _logger?.LogError(ex, "Error in base Dispose call");
 }
         }
 
