@@ -675,28 +675,5 @@ namespace BusBus.UI
             base.Dispose(disposing);
         }
         #endregion
-    }
-}
-base.Dispose(disposing);
-        }
-        #endregion
-    }
-}
 
-{
-    return new Route
-    {
-        Id = this.Id,
-        RouteDate = this.RouteDate,
-        Name = this.Name,
-        VehicleId = this.VehicleId,
-        AMStartingMileage = this.AMStartingMileage,
-        AMEndingMileage = this.AMEndingMileage,
-        AMRiders = this.AMRiders,
-        PMStartMileage = this.PMStartMileage,
-        PMEndingMileage = this.PMEndingMileage,
-        PMRiders = this.PMRiders,
-        PMDriverId = this.PMDriverId // PM driver
-    };
-}
 
