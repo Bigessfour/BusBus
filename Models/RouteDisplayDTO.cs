@@ -1,9 +1,9 @@
+
 #pragma warning disable CS8618 // Non-nullable property must contain a non-null value when exiting constructor
 #pragma warning disable CS8603 // Possible null reference return
 #nullable enable
-
 using System;
-using BusBus.Data.Models;
+
 
 namespace BusBus.Models
 {
@@ -55,25 +55,25 @@ namespace BusBus.Models
             {
                 Id = route.Id,
                 RouteNumber = route.RouteCode ?? string.Empty,
-                RouteName = route.Name ?? string.Empty,
+                RouteName = route.RouteName ?? string.Empty,
                 Name = route.Name ?? string.Empty,
-                StartLocation = route.Origin ?? string.Empty,
-                EndLocation = route.Destination ?? string.Empty,
-                Distance = route.TotalMiles,
-                Duration = TimeSpan.FromMinutes(route.EstimatedDuration),
-                RouteDate = route.Date,
+                StartLocation = route.StartLocation ?? string.Empty,
+                EndLocation = route.EndLocation ?? string.Empty,
+                Distance = (decimal)route.TotalMiles,
+                Duration = route.EstimatedDuration,
+                RouteDate = route.RouteDate,
                 VehicleId = route.VehicleId,
-                VehicleAssignment = route.VehicleAssignment ?? string.Empty,
+                VehicleAssignment = string.Empty, // No VehicleAssignment property in Route
                 AMStartingMileage = route.AMStartingMileage,
                 AMEndingMileage = route.AMEndingMileage,
                 AMRiders = route.AMRiders,
-                AMDriverId = route.AMDriverId,
+                AMDriverId = null, // No AMDriverId property in Route
                 PMStartMileage = route.PMStartMileage,
                 PMEndingMileage = route.PMEndingMileage,
                 PMRiders = route.PMRiders,
                 PMDriverId = route.PMDriverId,
                 ScheduledTime = route.ScheduledTime,
-                TripDate = route.RouteDate, // Map RouteDate to TripDate
+                TripDate = route.RouteDate,
                 DriverId = route.DriverId
             };
         }
@@ -88,23 +88,19 @@ namespace BusBus.Models
                 Id = Id,
                 RouteCode = RouteNumber,
                 Name = Name,
-                Origin = StartLocation,
-                Destination = EndLocation,
-                TotalMiles = Distance,
-                EstimatedDuration = (int)Duration.TotalMinutes,
-                Date = RouteDate,
-                VehicleId = VehicleId,
-                VehicleAssignment = VehicleAssignment,
+                StartLocation = StartLocation,
+                EndLocation = EndLocation,
+                // TotalMiles and EstimatedDuration are calculated properties, not settable
                 AMStartingMileage = AMStartingMileage,
                 AMEndingMileage = AMEndingMileage,
                 AMRiders = AMRiders,
-                AMDriverId = AMDriverId,
+                // No AMDriverId property in Route
                 PMStartMileage = PMStartMileage,
                 PMEndingMileage = PMEndingMileage,
                 PMRiders = PMRiders,
                 PMDriverId = PMDriverId,
                 ScheduledTime = ScheduledTime,
-                RouteDate = TripDate, // Map TripDate back to RouteDate
+                RouteDate = TripDate,
                 DriverId = DriverId
             };
         }
