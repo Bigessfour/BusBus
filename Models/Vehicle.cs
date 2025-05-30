@@ -42,26 +42,28 @@ namespace BusBus.Models
         public int Capacity { get; set; }
         public string? Model { get; set; }
         public string? LicensePlate { get; set; }
-        public bool IsActive { get; set; } = true;
-
-        /// <summary>
-        /// Vehicle manufacturer (e.g., Blue Bird, Thomas, IC Bus)
-        /// </summary>
+        public bool IsActive { get; set; } = true;        /// <summary>
+                                                          /// Vehicle manufacturer (e.g., Blue Bird, Thomas, IC Bus)
+                                                          /// </summary>
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public string Make { get; set; } = string.Empty;
 
         /// <summary>
         /// Vehicle Identification Number (17-18 digit alphanumeric)
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public string VINNumber { get; set; } = string.Empty;
 
         /// <summary>
         /// Model year of the vehicle (4-digit number)
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public int ModelYear { get; set; }
 
         /// <summary>
         /// Date of last yearly inspection
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public DateTime? LastInspectionDate { get; set; }
 
         // (Removed duplicate LicensePlate and IsActive properties)

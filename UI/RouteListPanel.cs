@@ -26,8 +26,7 @@ namespace BusBus.UI
 
         public RouteEventArgs(RouteDisplayDTO route) => RouteDTO = route;
     }
-
-    public partial class RouteListPanel : ThemeableControl, IDisplayable
+    public partial class RouteListPanel : ThemeableControl, IDisplayable, IView
     {
         private readonly IRouteService _routeService;
         // Use BindingList for better data binding and notification support
@@ -41,7 +40,16 @@ namespace BusBus.UI
         private DataGridView _routesGrid;
         private Button _addRouteButton, _editRouteButton, _deleteRouteButton, _prevPageButton, _nextPageButton;
         private Label _titleLabel, _pageInfoLabel;
-        public event EventHandler<RouteEventArgs>? RouteEditRequested;
+        public event EventHandler<RouteEventArgs>? RouteEditRequested;        // IView interface implementation
+        public string ViewName => "routes";
+        public string Title => "Routes";
+        public Control? Control => this;
+        
+#pragma warning disable CS0067 // The event is never used - required by IView interface
+        public event EventHandler<NavigationEventArgs>? NavigationRequested;
+#pragma warning restore CS0067
+        
+        public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         // Public accessor for the routes grid
         public DataGridView RoutesGrid => _routesGrid;
@@ -148,10 +156,10 @@ namespace BusBus.UI
                 RowCount = 3,
                 BackColor = ThemeManager.CurrentTheme.CardBackground
             };
+            mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));            mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this.Controls.Add(mainContainer);            // Buttons
+            this.Controls.Add(mainContainer);// Buttons
             _addRouteButton = new Button
             {
                 Text = "Add New Route",
@@ -216,11 +224,15 @@ namespace BusBus.UI
             };
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-            buttonPanel.Controls.Add(_addRouteButton, 0, 0);
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));            buttonPanel.Controls.Add(_addRouteButton, 0, 0);
             buttonPanel.Controls.Add(_editRouteButton, 1, 0);
             buttonPanel.Controls.Add(_deleteRouteButton, 2, 0);
-            mainContainer.Controls.Add(buttonPanel, 0, 0);            // DataGridView
+
+            // First add the grid to the top position
+            mainContainer.Controls.Add(_routesGrid, 0, 0);
+            
+            // Then add the button panel to the middle position
+            mainContainer.Controls.Add(buttonPanel, 0, 1);// DataGridView
             _routesGrid = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -233,22 +245,26 @@ namespace BusBus.UI
                 ReadOnly = false,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
-                AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false,
+                AutoGenerateColumns = false,                EnableHeadersVisualStyles = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AutoSize = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 GridColor = System.Drawing.Color.FromArgb(200, 200, 200),
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                ColumnHeadersHeight = 40, // Fixed height for better visibility
                 RowHeadersVisible = false,
                 RowTemplate = { Height = 32 },
                 EditMode = DataGridViewEditMode.EditOnEnter
-            };
-
-            // Apply consistent theme styling to the grid
+            };            // Apply consistent theme styling to the grid
             ThemeManager.CurrentTheme.StyleDataGrid(_routesGrid);
+            
+            // Enhance header styling for better visibility
+            _routesGrid.ColumnHeadersDefaultCellStyle.Font = new Font(_routesGrid.Font.FontFamily, 9.5F, FontStyle.Bold);            _routesGrid.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
+            _routesGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
-            mainContainer.Controls.Add(_routesGrid, 0, 1);// Columns (updated)
+            // (Grid is already added to position 0, 0)
+            
+            // Columns (updated)
             _routesGrid.Columns.Clear();
             _routesGrid.Columns.AddRange(new DataGridViewColumn[]
             {
@@ -769,6 +785,39 @@ namespace BusBus.UI
             container.Controls.Clear();
             container.Controls.Add(this);
             this.Dock = DockStyle.Fill;
+        }
+
+        // IView interface methods
+        public virtual async Task ActivateAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Load routes when the view is activated
+                await LoadRoutesAsync(_currentPage, _pageSize, cancellationToken);
+                StatusUpdated?.Invoke(this, new StatusEventArgs("Routes loaded", StatusType.Success));
+            }
+            catch (Exception ex)
+            {
+                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading routes: {ex.Message}", StatusType.Error));
+            }
+        }
+
+        public virtual async Task DeactivateAsync()
+        {
+            // Cancel any ongoing operations
+            try
+            {
+                if (!_cancellationTokenSource.IsCancellationRequested)
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignore if already disposed
+            }
+
+            await Task.CompletedTask;
         }
 
         protected override void Dispose(bool disposing)

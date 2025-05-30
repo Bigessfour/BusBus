@@ -61,7 +61,7 @@ namespace BusBus.UI
         // Note: _footerPanel removed as it's not currently used - status bar serves as footer
         private StatusStrip _statusStrip;
         private ToolStripStatusLabel _statusLabel;
-        private ToolStripProgressBar _progressBar;        private IView? _currentView;
+        private ToolStripProgressBar _progressBar; private IView? _currentView;
         private CancellationTokenSource _cancellationTokenSource = new();
         #endregion
 
@@ -220,7 +220,7 @@ namespace BusBus.UI
                 Tag = "SidePanel",
                 AutoScroll = true,
                 Padding = new Padding(0, 15, 0, 15) // Increased vertical padding for better spacing
-            };            var navItems = new[]
+            }; var navItems = new[]
             {
                 new NavigationItem("�", "New Feature Here", "new-feature", true),
                 new NavigationItem("🚌", "Routes", "routes"),
@@ -241,7 +241,8 @@ namespace BusBus.UI
 
             // Register for high-quality text rendering
             TextRenderingManager.RegisterForHighQualityTextRendering(_sidePanel);
-        }        private Button CreateNavigationButton(NavigationItem item)
+        }
+        private Button CreateNavigationButton(NavigationItem item)
         {
             var button = new Button
             {
@@ -383,7 +384,33 @@ namespace BusBus.UI
                         _contentPanel.Controls.Clear();
                         LogControlHierarchy();
                     }
+                }
+                catch (Exception controlEx)
+                {
+                    _logger.LogError(controlEx, $"Error clearing content panel for {viewName}");
+                    throw;
+                }
 
+                // Activate view first - this creates the Control for views that need it
+                try
+                {
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    await view.ActivateAsync(_cancellationTokenSource.Token);
+                    watch.Stop();
+                    _currentView = view;
+
+                    // Log navigation performance
+                    _logNavigationPerformance(_logger, viewName, watch.ElapsedMilliseconds, null);
+                }
+                catch (Exception activationEx)
+                {
+                    _logger.LogError(activationEx, $"Error activating view: {viewName}");
+                    throw;
+                }
+
+                // Now add the control to the UI (after activation)
+                try
+                {
                     if (view.Control != null)
                     {
                         // Verify the control is not disposed before adding
@@ -416,45 +443,23 @@ namespace BusBus.UI
                     }
                     else
                     {
-                        _logger.LogWarning($"View control is null for: {viewName}");
+                        _logger.LogError($"View control is still null after activation for: {viewName}");
+                        ShowStatus($"Failed to load {viewName} - no control available", StatusType.Error);
+                        return;
                     }
                 }
                 catch (Exception controlEx)
                 {
                     _logger.LogError(controlEx, $"Error managing view controls for {viewName}");
                     throw;
-                }                // Activate view with exception handling for Win32 and InvalidOperation exceptions
-                try
-                {
-                    var watch = System.Diagnostics.Stopwatch.StartNew();
-                    await view.ActivateAsync(_cancellationTokenSource.Token);
-                    watch.Stop();
-                    _currentView = view;
-
-                    // Log navigation performance
-                    _logNavigationPerformance(_logger, viewName, watch.ElapsedMilliseconds, null);
-
-                    // Update UI with proper exception handling
-                    UpdateNavigationButtons(viewName);
-                    UpdateTitle(view.Title);
-
-                    HideProgress();
-                    ShowStatus($"{view.Title} loaded", StatusType.Success);
                 }
-                catch (System.ComponentModel.Win32Exception ex)
-                {
-                    _logger.LogError(ex, $"Win32 error during view activation for {viewName}");
-                    HideProgress();
-                    ShowStatus($"System error loading {viewName}", StatusType.Error);
-                    throw;
-                }
-                catch (InvalidOperationException ex)
-                {
-                    _logger.LogError(ex, $"Invalid operation during view activation for {viewName}");
-                    HideProgress();
-                    ShowStatus($"Operation error loading {viewName}", StatusType.Error);
-                    throw;
-                }
+
+                // Update UI with proper exception handling
+                UpdateNavigationButtons(viewName);
+                UpdateTitle(view.Title);
+
+                HideProgress();
+                ShowStatus($"{view.Title} loaded", StatusType.Success);
             }
             catch (Exception ex)
             {
@@ -501,9 +506,11 @@ namespace BusBus.UI
                     }                    // Create view based on name
                     IView? view = null;
                     try
-                    {                        view = viewName.ToLower() switch
+                    {
+                        view = viewName.ToLower() switch
                         {
-                            "routes" => new RouteListViewPlaceholder(_routeService),
+                            "dashboard" => new DashboardOverviewView(_serviceProvider), // Home/overview panel
+                            "routes" => new RouteListPanel(_routeService), // Full CRUD routes functionality
                             "drivers" => new DriverListView(_serviceProvider),
                             "vehicles" => new VehicleListView(_serviceProvider),
                             "reports" => new ReportsView(_serviceProvider),
@@ -516,25 +523,8 @@ namespace BusBus.UI
                         _logger.LogError(ex, $"Error creating view instance for: {viewName}");
                         return null;
                     }
-
                     if (view != null)
                     {
-                        // Verify the Control property is accessible
-                        try
-                        {
-                            var control = view.Control;
-                            if (control == null)
-                            {
-                                _logger.LogError($"View control is null for: {viewName}");
-                                return null;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, $"Error accessing view control for: {viewName}");
-                            return null;
-                        }
-
                         // Cache the view and subscribe to events
                         _viewCache[viewName] = view;
                         view.NavigationRequested += OnViewNavigationRequested;
@@ -744,21 +734,78 @@ namespace BusBus.UI
             LoadState();
             await NavigateToAsync(_state.LastView ?? "routes");
         }
-        private async void OnFormClosing(object? sender, FormClosingEventArgs e)
+        private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
             try
             {
                 _logger?.LogInformation("Dashboard form closing initiated");
-                SaveState();                // Set a variable to indicate we're closing - for future use if needed
-                                            // bool isDisposing = true;
 
-                // Cleanup - handle potential ObjectDisposedException
+                // Prevent recursive closing
+                if (_isShuttingDown)
+                {
+                    _logger?.LogDebug("Already shutting down, allowing form to close");
+                    return;
+                }
+
+                // Cancel the close operation first so we can control shutdown timing
+                if (!e.Cancel)
+                {
+                    e.Cancel = true;
+                    // Start shutdown process in background and close when done
+                    var shutdownTask = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await PerformShutdownAsync();
+
+                            // Close the form on UI thread after cleanup is complete
+                            this.Invoke(() =>
+                            {
+                                // Set a flag to prevent recursive closing
+                                _isShuttingDown = true;
+
+                                // Force close the application
+                                Application.Exit();
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error during shutdown process");
+
+                            // Force exit if shutdown fails
+                            Environment.Exit(1);
+                        }
+                    });
+
+                    // Register the shutdown task with the Program class to track it
+                    BusBus.Program.AddBackgroundTask(shutdownTask);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error in OnFormClosing");
+
+                // If we can't shutdown gracefully, force exit
+                Environment.Exit(1);
+            }
+        }
+
+        private bool _isShuttingDown = false;
+
+        private async Task PerformShutdownAsync()
+        {
+            try
+            {
+                _logger?.LogInformation("Starting async shutdown process");
+                SaveState();
+
+                // Cancel all background operations
                 try
                 {
                     if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
                     {
                         _cancellationTokenSource.Cancel();
-                        _logger?.LogDebug("Cancellation requested during form closing");
+                        _logger?.LogDebug("Cancellation requested during shutdown");
                     }
                 }
                 catch (ObjectDisposedException)
@@ -767,7 +814,7 @@ namespace BusBus.UI
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogError(ex, "Error canceling token source during form closing");
+                    _logger?.LogError(ex, "Error canceling token source during shutdown");
                 }
 
                 // Deactivate current view with timeout protection
@@ -775,32 +822,26 @@ namespace BusBus.UI
                 {
                     try
                     {
-                        // Create a task with timeout to prevent hanging
                         var deactivateTask = _currentView.DeactivateAsync();
-                        var timeoutTask = Task.Delay(500); // 500ms timeout - reduced from 1s to speed up closing
+                        var timeoutTask = Task.Delay(300); // Quick timeout for shutdown
 
-                        // Wait for either task to complete
                         await Task.WhenAny(deactivateTask, timeoutTask);
 
                         if (!deactivateTask.IsCompleted)
                         {
-                            _logger?.LogWarning("View deactivation timed out after 500ms");
-                        }
-                        else
-                        {
-                            _logger?.LogDebug("View deactivated successfully");
+                            _logger?.LogWarning("View deactivation timed out during shutdown");
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger?.LogError(ex, "Error deactivating view during form closing");
+                        _logger?.LogError(ex, "Error deactivating view during shutdown");
                     }
                 }
 
                 // Clear current view reference
                 _currentView = null;
 
-                // Dispose all cached views quickly with timeouts
+                // Dispose all cached views quickly
                 var disposeTasks = new List<Task>();
                 foreach (var view in _viewCache.Values)
                 {
@@ -808,41 +849,78 @@ namespace BusBus.UI
                     {
                         try
                         {
-                            // Run disposals in parallel with individual timeouts
                             var disposeTask = Task.Run(() =>
                             {
                                 try
                                 {
                                     disposableView.Dispose();
-                                    return true;
                                 }
                                 catch (Exception)
                                 {
-                                    return false;
+                                    // Ignore disposal errors during shutdown
                                 }
                             });
                             disposeTasks.Add(disposeTask);
                         }
                         catch (Exception ex)
                         {
-                            _logger?.LogError(ex, "Error scheduling view disposal");
+                            _logger?.LogError(ex, "Error scheduling view disposal during shutdown");
                         }
+                    }
+                }                // Wait for disposals with short timeout
+                if (disposeTasks.Count > 0)
+                {
+                    _logger?.LogInformation($"Waiting for {disposeTasks.Count} view disposal tasks to complete");
+                    try
+                    {
+                        var timeoutTask = Task.Delay(300); // Slightly longer timeout
+                        var completedTask = await Task.WhenAny(Task.WhenAll(disposeTasks), timeoutTask);
+
+                        if (completedTask == timeoutTask)
+                        {
+                            _logger?.LogWarning("Timed out waiting for view disposal tasks");
+
+                            // Count incomplete tasks
+                            int incompleteCount = disposeTasks.Count(t => !t.IsCompleted);
+                            _logger?.LogWarning($"{incompleteCount} disposal tasks still running at timeout");
+                        }
+                        else
+                        {
+                            _logger?.LogInformation("All view disposal tasks completed successfully");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Error waiting for view disposal tasks");
                     }
                 }
 
-                // Wait for disposals with timeout
-                if (disposeTasks.Count > 0)
+                // Clear caches
+                _viewCache.Clear();
+                _navigationHistory.Clear();                // Signal application to clean up all background tasks
+                try
                 {
-                    var timeoutTask = Task.Delay(300); // 300ms maximum for all disposals
-                    await Task.WhenAny(Task.WhenAll(disposeTasks), timeoutTask);
-                    _logger?.LogDebug("View disposal tasks completed or timed out");
+                    _logger?.LogInformation("Calling global application shutdown");
+                    // Invoke the static application shutdown method to ensure all background tasks are cleaned up
+                    var shutdownMethod = Type.GetType("BusBus.Program, BusBus")?.GetMethod("ShutdownApplication",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+                    if (shutdownMethod != null)
+                    {
+                        shutdownMethod.Invoke(null, null);
+                        _logger?.LogInformation("Global application shutdown completed");
+                    }
+                    else
+                    {
+                        _logger?.LogWarning("Could not find Program.ShutdownApplication method");
+                    }
+                }
+                catch (Exception shutdownEx)
+                {
+                    _logger?.LogError(shutdownEx, "Error invoking application shutdown");
                 }
 
-                // Clear the cache to release references
-                _viewCache.Clear();
-                _navigationHistory.Clear();
-
-                _logger?.LogInformation("Dashboard form closing completed");
+                _logger?.LogInformation("Async shutdown process completed");
             }
             catch (Exception ex)
             {
@@ -1034,7 +1112,25 @@ namespace BusBus.UI
 
                     // Clear collections to release references
                     _viewCache.Clear();
-                    _navigationHistory.Clear();
+                    _navigationHistory.Clear();                    // Notify Program class about dashboard disposal
+                    try
+                    {
+                        _logger?.LogInformation("Notifying Program class about dashboard disposal");
+                        // Call Program.ShutdownApplication() to ensure proper cleanup of background tasks
+                        var programType = Type.GetType("BusBus.Program, BusBus");
+                        var shutdownMethod = programType?.GetMethod("ShutdownApplication",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+                        if (shutdownMethod != null)
+                        {
+                            shutdownMethod.Invoke(null, null);
+                            _logger?.LogDebug("Successfully notified Program about dashboard disposal");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Failed to notify Program about dashboard disposal");
+                    }
 
                     // Force immediate GC collection to help release resources
                     GC.Collect();

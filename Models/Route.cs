@@ -15,7 +15,7 @@ namespace BusBus.Models
     public class Route
     {
         [Required]
-        public Guid Id { get; set; } = Guid.NewGuid();        [Timestamp]
+        public Guid Id { get; set; } = Guid.NewGuid(); [Timestamp]
         [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Required for Entity Framework RowVersion/Timestamp")]
         public byte[] RowVersion { get; set; }
 
@@ -47,7 +47,10 @@ namespace BusBus.Models
         public Driver? Driver { get; set; }
 
         // Separate PM Driver support per BusBus Info requirements
+        // TODO: Add PMDriverId column to database schema
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public Guid? PMDriverId { get; set; }
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public Driver? PMDriver { get; set; }
 
         public Guid? VehicleId { get; set; }

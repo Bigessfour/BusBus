@@ -66,25 +66,17 @@ namespace BusBus.UI
             var mainLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 3,
+                ColumnCount = 1,                RowCount = 3,
                 BackColor = Color.Transparent
             };
 
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Buttons
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // DataGridView
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Pagination
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // DataGridView first
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Buttons in middle
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Pagination last
 
             Controls.Add(mainLayout);
 
-            // Button panel
-            _buttonPanel = new Panel
-            {
-                Height = 50,
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent
-            };
-            mainLayout.Controls.Add(_buttonPanel, 0, 0);            // DataGridView
+            // Button panel            // First create and setup the DataGridView
             _driversDataGridView = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -98,21 +90,39 @@ namespace BusBus.UI
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false,
+                EnableHeadersVisualStyles = false,                
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AutoSize = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 GridColor = System.Drawing.Color.FromArgb(200, 200, 200),
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                ColumnHeadersHeight = 40, // Fixed height for better visibility
                 RowHeadersVisible = false,
                 RowTemplate = { Height = 32 },
-                EditMode = DataGridViewEditMode.EditOnEnter
+                EditMode = DataGridViewEditMode.EditOnEnter            
             };
 
             // Apply consistent theme styling to the grid
             ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
+            
+            // Enhance header styling for better visibility
+            _driversDataGridView.ColumnHeadersDefaultCellStyle.Font = new Font(_driversDataGridView.Font.FontFamily, 9.5F, FontStyle.Bold);
+            _driversDataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
+            _driversDataGridView.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
-            mainLayout.Controls.Add(_driversDataGridView, 0, 1);
+            // Add DataGridView to the top
+            mainLayout.Controls.Add(_driversDataGridView, 0, 0);
+
+            // Now create and setup the button panel
+            _buttonPanel = new Panel
+            {
+                Height = 50,
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent
+            };
+            
+            // Add button panel to the middle
+            mainLayout.Controls.Add(_buttonPanel, 0, 1);
 
             // Pagination panel
             _paginationPanel = new Panel

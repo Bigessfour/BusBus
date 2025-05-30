@@ -24,8 +24,8 @@ namespace BusBus.Models
 
         [System.ComponentModel.DataAnnotations.Required]
         public string LastName { get; set; } = string.Empty;        /// <summary>
-        /// Gets or sets the display name for the driver (for UI and reporting)
-        /// </summary>
+                                                                    /// Gets or sets the display name for the driver (for UI and reporting)
+                                                                    /// </summary>
         public string Name
         {
             get => $"{FirstName} {LastName}".Trim();
@@ -48,13 +48,9 @@ namespace BusBus.Models
 
         public string? PhoneNumber { get; set; }
 
-        public string? Email { get; set; }
-
-        public string LicenseNumber { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Type of license held by the driver (CDL or Passenger)
-        /// </summary>
+        public string? Email { get; set; }        public string LicenseNumber { get; set; } = string.Empty;        /// <summary>
+                                                                         /// Type of license held by the driver (CDL or Passenger)
+                                                                         /// </summary>
         public string LicenseType { get; set; } = "CDL";
 
         public override string ToString()
@@ -125,9 +121,7 @@ namespace BusBus.Models
             get => string.IsNullOrEmpty(_personalDetails) ? new PersonalDetails() :
                    JsonSerializer.Deserialize<PersonalDetails>(_personalDetails) ?? new PersonalDetails();
             set => _personalDetails = JsonSerializer.Serialize(value);
-        }
-
-        private string _performanceMetrics = string.Empty;
+        }        private string _performanceMetrics = string.Empty;
         public string PerformanceMetricsJson
         {
             get => _performanceMetrics;

@@ -28,10 +28,11 @@ namespace BusBus
         private static readonly int[] SqlRetryErrorNumbers = new[] { 1205, 10054 };
         private static readonly List<Task> _backgroundTasks = new List<Task>();
         private static readonly CancellationTokenSource _appCancellationTokenSource = new CancellationTokenSource();
-        private static IServiceProvider? _serviceProvider;
-
-        public static void AddBackgroundTask(Task task)
+        private static IServiceProvider? _serviceProvider; public static void AddBackgroundTask(Task task)
         {
+            if (task == null)
+                return;
+
             Console.WriteLine($"[Program] Adding background task: {task.Id}");
 
             // Debug information for task monitoring
@@ -42,34 +43,58 @@ namespace BusBus
                 var caller = stackTrace.GetFrame(1)?.GetMethod()?.DeclaringType?.Name;
                 var method = stackTrace.GetFrame(1)?.GetMethod()?.Name;
                 Console.WriteLine($"TASK_LEAK: Task {task.Id} created by {caller}.{method}");
-
-                // Add continuation to track task completion
-                task.ContinueWith(t =>
-                {
-                    Console.WriteLine($"TASK_COMPLETED: Task {t.Id} {(t.IsFaulted ? "faulted" : "completed")}");
-                });
             }
+
+            // Don't add already completed tasks
+            if (task.IsCompleted)
+            {
+                Console.WriteLine($"[Program] Task {task.Id} already completed, not adding to tracker");
+                return;
+            }
+
+            // Add continuation to track task completion and auto-remove from the list
+            task.ContinueWith(t =>
+            {
+                Console.WriteLine($"TASK_COMPLETED: Task {t.Id} {(t.IsFaulted ? "faulted" : t.IsCanceled ? "canceled" : "completed")}");
+
+                // Auto-remove the task from tracking list once completed
+                lock (_backgroundTasks)
+                {
+                    _backgroundTasks.Remove(t);
+                    Console.WriteLine($"[Program] Removed completed task {t.Id}. Remaining tasks: {_backgroundTasks.Count}");
+                }
+            });
 
             lock (_backgroundTasks)
             {
                 _backgroundTasks.Add(task);
             }
+
+            // Clean the list of any completed tasks periodically
+            if (_backgroundTasks.Count % 10 == 0) // Every 10 tasks added
+            {
+                CleanupCompletedTasks();
+            }
+
             Console.WriteLine($"[Program] Added background task. Total tasks: {_backgroundTasks.Count}");
         }        /// <summary>
                  /// The main entry point for the application.
                  /// </summary>        [STAThread]
         static async Task Main(string[] args)
         {
-            Console.WriteLine("[Program] Application starting...");
-
-            // Add a console handler for Ctrl+C to ensure clean shutdown
+            Console.WriteLine("[Program] Application starting...");            // Add a console handler for Ctrl+C to ensure clean shutdown
             Console.CancelKeyPress += (sender, e) =>
             {
-                Console.WriteLine("[Program] Console cancel key pressed - initiating shutdown");
+                Console.WriteLine("[Program] Console cancel key pressed - initiating emergency shutdown");
                 e.Cancel = true; // Cancel the immediate termination
-                ShutdownApplication();
-                Environment.Exit(0);
-            };            // .NET 8 Windows Forms modern initialization
+
+                // Use emergency shutdown for immediate termination
+                Task.Run(() =>
+                {
+                    Thread.Sleep(100); // Brief delay to allow message to print
+                    EmergencyShutdown();
+                });
+            };// .NET 8 Windows Forms modern initialization
             ApplicationConfiguration.Initialize();
 
             // Additional modern configuration
@@ -378,9 +403,52 @@ namespace BusBus
                 ShutdownApplication();
             }
         }
-        private static void ShutdownApplication()
+        private static bool _isShuttingDown = false;
+
+        public static void ShutdownApplication()
         {
+            // Avoid multiple shutdown attempts
+            if (_isShuttingDown)
+            {
+                Console.WriteLine("[Program] Shutdown already in progress, ignoring duplicate request");
+                return;
+            }
+
+            _isShuttingDown = true;
             Console.WriteLine("[Program] Starting application shutdown");
+
+            // Set up a very aggressive safety timer to force exit if shutdown takes too long
+            var safetyTimer = new System.Timers.Timer(1000); // 1 second max (reduced from 2)
+            safetyTimer.Elapsed += (s, e) =>
+            {
+                Console.WriteLine("[Program] Shutdown timeout reached - FORCE KILLING ALL DOTNET PROCESSES");
+
+                // Kill ALL dotnet processes (including this one)
+                try
+                {
+                    var processes = System.Diagnostics.Process.GetProcessesByName("dotnet");
+                    foreach (var process in processes)
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[Program] Force killing dotnet process {process.Id}");
+                            process.Kill(entireProcessTree: true);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Program] Error killing process {process.Id}: {ex.Message}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Error during force process cleanup: {ex.Message}");
+                }
+
+                // Ultimate fallback - terminate this process immediately
+                Environment.Exit(1);
+            };
+            safetyTimer.Start();
 
             try
             {
@@ -400,16 +468,36 @@ namespace BusBus
                     _backgroundTasks.Clear();
                 }
 
-                Console.WriteLine($"[Program] Waiting for {tasksToWait.Length} background tasks to complete...");
-
-                // Wait for tasks with a shorter timeout (1 second) to prevent hanging
+                Console.WriteLine($"[Program] Waiting for {tasksToWait.Length} background tasks to complete...");                // Wait for tasks with a very short timeout (100ms) to prevent hanging
                 var waitTask = Task.WhenAll(tasksToWait);
-                if (!waitTask.Wait(TimeSpan.FromSeconds(1)))
+                if (!waitTask.Wait(TimeSpan.FromMilliseconds(100))) // Reduced from 200ms
                 {
-                    Console.WriteLine("[Program] Timeout waiting for background tasks - force terminating");
+                    Console.WriteLine("[Program] Timeout waiting for background tasks - EMERGENCY TERMINATION");
 
-                    // Force terminate any remaining tasks by setting a static flag that tasks can check
-                    Console.WriteLine("[Program] Application shutdown forced - tasks may be terminated abruptly");
+                    // Don't wait for tasks - just force terminate ALL dotnet processes
+                    try
+                    {
+                        var processes = System.Diagnostics.Process.GetProcessesByName("dotnet");
+                        foreach (var process in processes)
+                        {
+                            try
+                            {
+                                Console.WriteLine($"[Program] Emergency killing dotnet process {process.Id}");
+                                process.Kill(entireProcessTree: true);
+                            }
+                            catch (Exception killEx)
+                            {
+                                Console.WriteLine($"[Program] Error killing process {process.Id}: {killEx.Message}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Program] Error during emergency process cleanup: {ex.Message}");
+                    }
+
+                    // Immediate exit with error code
+                    Environment.Exit(1);
                 }
                 else
                 {
@@ -421,11 +509,41 @@ namespace BusBus
                 Console.WriteLine($"[Program] Error during task shutdown: {ex.Message}");
                 // Continue with shutdown despite errors
             }
-
             try
             {
                 // Give a brief moment for UI cleanup before disposing services
-                Thread.Sleep(100);                // Use ProcessMonitor to clean up any lingering processes or timers
+                Thread.Sleep(100);
+
+                // Make a copy of any remaining background tasks to properly clean them up
+                Task[] remainingTasks;
+                lock (_backgroundTasks)
+                {
+                    remainingTasks = _backgroundTasks.ToArray();
+                    _backgroundTasks.Clear();
+                }
+
+                if (remainingTasks.Length > 0)
+                {
+                    Console.WriteLine($"[Program] Found {remainingTasks.Length} unfinished background tasks during final cleanup");
+
+                    // Cancel them if they're still running
+                    foreach (var task in remainingTasks.Where(t => !t.IsCompleted && t.Status != TaskStatus.Canceled))
+                    {
+                        Console.WriteLine($"[Program] Task {task.Id} status: {task.Status} - forcing cancellation");
+                    }
+
+                    // Try to wait with very short timeout
+                    try
+                    {
+                        Task.WaitAll(remainingTasks, 100);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Program] Error waiting for remaining tasks: {ex.Message}");
+                    }
+                }
+
+                // Use ProcessMonitor to clean up any lingering processes or timers
                 try
                 {
                     Utils.ProcessMonitor.Instance.Cleanup();
@@ -470,13 +588,18 @@ namespace BusBus
 
                 // Second GC collection pass to ensure finalizers that released resources are collected
                 GC.Collect();
-                GC.WaitForPendingFinalizers();
+                GC.WaitForPendingFinalizers(); Console.WriteLine("[Program] Application shutdown complete");
 
-                Console.WriteLine("[Program] Application shutdown complete");
+                // Stop the safety timer since we completed successfully
+                safetyTimer?.Stop();
+                safetyTimer?.Dispose();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[Program] Error during final cleanup: {ex.Message}");
+                // Still try to stop the timer
+                safetyTimer?.Stop();
+                safetyTimer?.Dispose();
             }
         }
         private static void ConfigureServices(IServiceCollection services)
@@ -891,8 +1014,7 @@ namespace BusBus
         // Nested class for LoggerMessage.Define
         static partial class Log
         {
-            [LoggerMessage(
-                EventId = 0,
+            [LoggerMessage(EventId = 0,
                 Level = LogLevel.Information,
                 Message = "[Program] Verbose logging enabled")]
             public static partial void VerboseLoggingEnabled(ILogger logger, Exception? ex);
@@ -902,6 +1024,91 @@ namespace BusBus
                 Level = LogLevel.Information,
                 Message = "Application startup initialized")]
             public static partial void ApplicationStartupInitialized(ILogger logger, Exception? ex);
+        }
+
+        /// <summary>
+        /// Emergency shutdown that immediately terminates the process
+        /// </summary>
+        public static void EmergencyShutdown()
+        {
+            Console.WriteLine("[Program] EMERGENCY SHUTDOWN INITIATED - IMMEDIATE TERMINATION");
+
+            try
+            {
+                // Cancel all operations immediately
+                _appCancellationTokenSource?.Cancel();
+
+                // AGGRESSIVE: Kill ALL dotnet processes immediately
+                try
+                {
+                    var processes = System.Diagnostics.Process.GetProcessesByName("dotnet");
+                    Console.WriteLine($"[Program] Found {processes.Length} dotnet processes to terminate");
+
+                    foreach (var process in processes)
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[Program] EMERGENCY: Killing dotnet process {process.Id} ({process.ProcessName})");
+                            process.Kill(entireProcessTree: true);
+                            process.WaitForExit(1000); // Wait max 1 second
+                        }
+                        catch (Exception killEx)
+                        {
+                            Console.WriteLine($"[Program] Error killing process {process.Id}: {killEx.Message}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Error during process cleanup: {ex.Message}");
+                }
+
+                // Quick cleanup of critical resources (but don't wait)
+                try
+                {
+                    if (_serviceProvider is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Service disposal error: {ex.Message}");
+                }
+
+                try
+                {
+                    _appCancellationTokenSource?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Token disposal error: {ex.Message}");
+                }
+
+                Console.WriteLine("[Program] Critical resources disposed");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Program] Emergency shutdown error: {ex.Message}");
+            }            // FINAL: Force terminate this process immediately
+            Console.WriteLine("[Program] TERMINATING PROCESS IMMEDIATELY");
+            Environment.Exit(1);
+        }
+
+        private static void CleanupCompletedTasks()
+        {
+            lock (_backgroundTasks)
+            {
+                var completedTasks = _backgroundTasks.Where(t => t.IsCompleted).ToList();
+                if (completedTasks.Count > 0)
+                {
+                    foreach (var task in completedTasks)
+                    {
+                        _backgroundTasks.Remove(task);
+                    }
+                    Console.WriteLine($"[Program] Cleaned up {completedTasks.Count} completed tasks. Remaining: {_backgroundTasks.Count}");
+                }
+            }
         }
     }
 }

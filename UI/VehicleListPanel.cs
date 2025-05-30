@@ -34,15 +34,17 @@ namespace BusBus.UI
 
         public event EventHandler<EntityEventArgs<Vehicle>>? VehicleEditRequested;
 
-        public static string Title => "Vehicles";
-
-        public VehicleListPanel(IVehicleService vehicleService)
+        public static string Title => "Vehicles"; public VehicleListPanel(IVehicleService vehicleService)
         {
             _vehicleService = vehicleService ?? throw new ArgumentNullException(nameof(vehicleService));
             InitializeComponent();
             SetupDataGridView();
             SetupButtons();
             SetupPagination();
+
+            // Ensure the current theme is applied
+            ThemeManager.ApplyThemeToControl(this);
+
             _ = LoadVehiclesAsync();
         }
 
@@ -62,11 +64,9 @@ namespace BusBus.UI
                 ColumnCount = 1,
                 RowCount = 3,
                 BackColor = Color.Transparent
-            };
-
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Buttons
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // DataGridView
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Pagination
+            }; mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // DataGridView first
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Buttons in middle
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Pagination last
 
             Controls.Add(mainLayout);
 
@@ -77,9 +77,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
             };
-            mainLayout.Controls.Add(_buttonPanel, 0, 0);
-
-            // DataGridView
+            mainLayout.Controls.Add(_buttonPanel, 0, 0);            // DataGridView
             _vehiclesDataGridView = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -93,9 +91,19 @@ namespace BusBus.UI
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false
+                EnableHeadersVisualStyles = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                ColumnHeadersHeight = 40, // Fixed height for better visibility
+                RowHeadersVisible = false,
+                RowTemplate = { Height = 32 }
             };
             mainLayout.Controls.Add(_vehiclesDataGridView, 0, 1);
+
+            // Enhance header styling for better visibility
+            _vehiclesDataGridView.ColumnHeadersDefaultCellStyle.Font = new Font(_vehiclesDataGridView.Font.FontFamily, 9.5F, FontStyle.Bold);
+            _vehiclesDataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
+            _vehiclesDataGridView.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
             // Pagination panel
             _paginationPanel = new Panel
@@ -182,7 +190,6 @@ namespace BusBus.UI
             _vehiclesDataGridView.SelectionChanged += VehiclesDataGridView_SelectionChanged;
             _vehiclesDataGridView.CellValueChanged += VehiclesDataGridView_CellValueChanged;
         }
-
         private void SetupButtons()
         {
             var buttonLayout = new FlowLayoutPanel
@@ -195,16 +202,13 @@ namespace BusBus.UI
 
             _addButton = new Button
             {
-                Text = "Add Vehicle",
+                Text = "Add",
                 Size = new Size(100, 40),
                 Margin = new Padding(0, 10, 10, 10),
-                BackColor = Color.FromArgb(52, 152, 219),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
                 Padding = new Padding(5, 10, 5, 10),
-                AutoSize = false
+                AutoSize = false,
+                Tag = "ActionButton"
             };
-            _addButton.FlatAppearance.BorderSize = 0;
             _addButton.Click += AddButton_Click;
 
             _editButton = new Button
@@ -212,33 +216,75 @@ namespace BusBus.UI
                 Text = "Edit",
                 Size = new Size(80, 40),
                 Margin = new Padding(0, 10, 10, 10),
-                BackColor = Color.FromArgb(46, 204, 113),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Enabled = false,
                 Padding = new Padding(5, 10, 5, 10),
-                AutoSize = false
+                AutoSize = false,
+                Enabled = false,
+                Tag = "ActionButton"
             };
-            _editButton.FlatAppearance.BorderSize = 0;
             _editButton.Click += EditButton_Click;
 
             _deleteButton = new Button
             {
                 Text = "Delete",
-                Size = new Size(80, 30),
+                Size = new Size(80, 40),
                 Margin = new Padding(0, 10, 10, 10),
-                BackColor = Color.FromArgb(231, 76, 60),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Padding = new Padding(5, 10, 5, 10),
+                AutoSize = false,
+                Enabled = false,
+                Tag = "ActionButton"
             };
-            _deleteButton.FlatAppearance.BorderSize = 0;
             _deleteButton.Click += DeleteButton_Click;
+
+            // Apply theme to buttons
+            ApplyThemeToButtons();
+            // Subscribe to theme changed event
+            ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
 
             buttonLayout.Controls.Add(_addButton);
             buttonLayout.Controls.Add(_editButton);
-            buttonLayout.Controls.Add(_deleteButton);
-            _buttonPanel.Controls.Add(buttonLayout);
+            buttonLayout.Controls.Add(_deleteButton); _buttonPanel.Controls.Add(buttonLayout);
+        }
+
+        private void ApplyThemeToButtons()
+        {
+            if (_addButton != null)
+            {
+                _addButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _addButton.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                _addButton.FlatStyle = FlatStyle.Flat;
+                _addButton.FlatAppearance.BorderSize = 0;
+                _addButton.Font = ThemeManager.CurrentTheme.ButtonFont;
+            }
+
+            if (_editButton != null)
+            {
+                _editButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _editButton.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                _editButton.FlatStyle = FlatStyle.Flat;
+                _editButton.FlatAppearance.BorderSize = 0;
+                _editButton.Font = ThemeManager.CurrentTheme.ButtonFont;
+
+                if (!_editButton.Enabled)
+                {
+                    _editButton.BackColor = ThemeManager.CurrentTheme.ButtonDisabledBackground;
+                    _editButton.ForeColor = ThemeManager.CurrentTheme.ButtonDisabledText;
+                }
+            }
+
+            if (_deleteButton != null)
+            {
+                _deleteButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _deleteButton.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                _deleteButton.FlatStyle = FlatStyle.Flat;
+                _deleteButton.FlatAppearance.BorderSize = 0;
+                _deleteButton.Font = ThemeManager.CurrentTheme.ButtonFont;
+
+                if (!_deleteButton.Enabled)
+                {
+                    _deleteButton.BackColor = ThemeManager.CurrentTheme.ButtonDisabledBackground;
+                    _deleteButton.ForeColor = ThemeManager.CurrentTheme.ButtonDisabledText;
+                }
+            }
         }
 
         private void SetupPagination()
@@ -249,29 +295,23 @@ namespace BusBus.UI
                 FlowDirection = FlowDirection.LeftToRight,
                 AutoSize = true,
                 BackColor = Color.Transparent
-            };
-
-            _previousPageButton = new Button
+            }; _previousPageButton = new Button
             {
                 Text = "Previous",
                 Size = new Size(80, 40),
                 Margin = new Padding(0, 5, 10, 5),
-                BackColor = Color.FromArgb(149, 165, 166),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
                 Enabled = false,
                 Padding = new Padding(5, 10, 5, 10),
-                AutoSize = false
+                AutoSize = false,
+                Tag = "NavigationButton"
             };
-            _previousPageButton.FlatAppearance.BorderSize = 0;
             _previousPageButton.Click += PreviousPageButton_Click;
 
             _pageInfoLabel = new Label
             {
                 Text = "Page 1 of 1",
                 AutoSize = true,
-                Margin = new Padding(10, 8, 10, 5),
-                ForeColor = Color.FromArgb(52, 73, 94)
+                Margin = new Padding(10, 8, 10, 5)
             };
 
             _nextPageButton = new Button
@@ -279,20 +319,21 @@ namespace BusBus.UI
                 Text = "Next",
                 Size = new Size(80, 40),
                 Margin = new Padding(0, 5, 10, 5),
-                BackColor = Color.FromArgb(149, 165, 166),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
                 Enabled = false,
                 Padding = new Padding(5, 10, 5, 10),
-                AutoSize = false
+                AutoSize = false,
+                Tag = "NavigationButton"
             };
-            _nextPageButton.FlatAppearance.BorderSize = 0;
-            _nextPageButton.Click += NextPageButton_Click;
-
-            paginationLayout.Controls.Add(_previousPageButton);
+            _nextPageButton.Click += NextPageButton_Click; paginationLayout.Controls.Add(_previousPageButton);
             paginationLayout.Controls.Add(_pageInfoLabel);
             paginationLayout.Controls.Add(_nextPageButton);
             _paginationPanel!.Controls.Add(paginationLayout);
+
+            // Apply theme to pagination buttons
+            ApplyThemeToPaginationButtons();
+
+            // Apply theme to pagination buttons
+            ApplyThemeToPaginationButtons();
         }
 
         public async Task LoadVehiclesAsync()
@@ -313,12 +354,21 @@ namespace BusBus.UI
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void UpdatePaginationControls()
         {
             _pageInfoLabel.Text = $"Page {_currentPage} of {_totalPages}";
+
+            bool prevWasEnabled = _previousPageButton.Enabled;
+            bool nextWasEnabled = _nextPageButton.Enabled;
+
             _previousPageButton.Enabled = _currentPage > 1;
             _nextPageButton.Enabled = _currentPage < _totalPages;
+
+            // Update button visuals if enabled state changed
+            if (prevWasEnabled != _previousPageButton.Enabled || nextWasEnabled != _nextPageButton.Enabled)
+            {
+                ApplyThemeToPaginationButtons();
+            }
         }
 
         private async void AddButton_Click(object? sender, EventArgs e)
@@ -424,12 +474,20 @@ namespace BusBus.UI
                 }
             }
         }
-
         private void VehiclesDataGridView_SelectionChanged(object? sender, EventArgs e)
         {
             bool hasSelection = _vehiclesDataGridView.SelectedRows.Count > 0;
+            bool editWasEnabled = _editButton.Enabled;
+            bool deleteWasEnabled = _deleteButton.Enabled;
+
             _editButton.Enabled = hasSelection;
             _deleteButton.Enabled = hasSelection;
+
+            // Update button visuals if enabled state changed
+            if (editWasEnabled != hasSelection || deleteWasEnabled != hasSelection)
+            {
+                ApplyThemeToButtons();
+            }
         }
 
         private async void PreviousPageButton_Click(object? sender, EventArgs e)
@@ -461,6 +519,74 @@ namespace BusBus.UI
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
             ThemeManager.CurrentTheme.StyleDataGrid(_vehiclesDataGridView);
             _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+        }
+
+        private void ApplyThemeToPaginationButtons()
+        {
+            if (_previousPageButton != null)
+            {
+                _previousPageButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _previousPageButton.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                _previousPageButton.FlatStyle = FlatStyle.Flat;
+                _previousPageButton.FlatAppearance.BorderSize = 0;
+                _previousPageButton.Font = ThemeManager.CurrentTheme.ButtonFont;
+
+                if (!_previousPageButton.Enabled)
+                {
+                    _previousPageButton.BackColor = ThemeManager.CurrentTheme.ButtonDisabledBackground;
+                    _previousPageButton.ForeColor = ThemeManager.CurrentTheme.ButtonDisabledText;
+                }
+            }
+
+            if (_pageInfoLabel != null)
+            {
+                _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+                _pageInfoLabel.Font = ThemeManager.CurrentTheme.CardFont;
+            }
+
+            if (_nextPageButton != null)
+            {
+                _nextPageButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                _nextPageButton.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                _nextPageButton.FlatStyle = FlatStyle.Flat;
+                _nextPageButton.FlatAppearance.BorderSize = 0;
+                _nextPageButton.Font = ThemeManager.CurrentTheme.ButtonFont;
+
+                if (!_nextPageButton.Enabled)
+                {
+                    _nextPageButton.BackColor = ThemeManager.CurrentTheme.ButtonDisabledBackground;
+                    _nextPageButton.ForeColor = ThemeManager.CurrentTheme.ButtonDisabledText;
+                }
+            }
+        }
+
+        private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
+        {
+            ApplyThemeToButtons();
+            ApplyThemeToPaginationButtons();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Unsubscribe from the theme changed event
+                ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+
+                // Unsubscribe from other events
+                if (_addButton != null) _addButton.Click -= AddButton_Click;
+                if (_editButton != null) _editButton.Click -= EditButton_Click;
+                if (_deleteButton != null) _deleteButton.Click -= DeleteButton_Click;
+                if (_previousPageButton != null) _previousPageButton.Click -= PreviousPageButton_Click;
+                if (_nextPageButton != null) _nextPageButton.Click -= NextPageButton_Click;
+                if (_vehiclesDataGridView != null)
+                {
+                    _vehiclesDataGridView.CellEndEdit -= VehiclesDataGridView_CellEndEdit;
+                    _vehiclesDataGridView.SelectionChanged -= VehiclesDataGridView_SelectionChanged;
+                    _vehiclesDataGridView.CellValueChanged -= VehiclesDataGridView_CellValueChanged;
+                }
+            }
+            base.Dispose(disposing);
         }
     }
 }
