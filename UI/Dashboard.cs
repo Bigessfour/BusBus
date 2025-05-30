@@ -1,6 +1,7 @@
 #pragma warning disable CS0067 // Event is never used
 #nullable enable
 // <auto-added>
+using BusBus.UI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -36,6 +37,10 @@ namespace BusBus.UI
         private readonly Stack<string> _navigationHistory = new();
         private readonly DashboardState _state = new();
         private readonly AdvancedSqlServerDatabaseManager? _databaseManager;
+
+        // Added missing service fields
+        private readonly IDriverService _driverService;
+        private readonly IVehicleService _vehicleService;
 
         // Performance monitoring
         private readonly Dictionary<string, long> _performanceMetrics = new();
@@ -86,9 +91,13 @@ namespace BusBus.UI
                 throw new ArgumentNullException(nameof(logger));
             }
 
+
             _serviceProvider = serviceProvider;
             _routeService = routeService;
             _logger = logger;
+            // Resolve missing services
+            _driverService = _serviceProvider.GetRequiredService<IDriverService>();
+            _vehicleService = _serviceProvider.GetRequiredService<IVehicleService>();
 
             // Get database manager for performance monitoring
             _databaseManager = _serviceProvider.GetService<AdvancedSqlServerDatabaseManager>();
@@ -1190,100 +1199,8 @@ namespace BusBus.UI
             Error
         }
         #endregion
-    }
-}
-        }
 
-        // Helper method to check if CancellationTokenSource is disposed
-        private static bool IsCtsDisposed(CancellationTokenSource cts)
-{
-    try
-    {
-        // If we can access the Token property without exception, it's not disposed
-        var _ = cts.Token;
-        return false;
-    }
-    catch (ObjectDisposedException)
-    {
-        return true;
-    }
-}
-
-/// <summary>
-/// Logs the current control hierarchy for debugging UI issues
-/// </summary>
-private void LogControlHierarchy()
-{
-    if (_contentPanel == null) return;
-
-    _logger.LogDebug($"Content panel control count: {_contentPanel.Controls.Count}");
-    foreach (Control control in _contentPanel.Controls)
-    {
-        _logger.LogDebug($"Control: {control.GetType().Name}, Name: {control.Name}, Visible: {control.Visible}, IsDisposed: {control.IsDisposed}");
-    }
-}
         #endregion
     }
-
-    #region Interfaces and Supporting Classes
-    // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
-    public interface IView : IDisposable
-{
-    string ViewName { get; }
-    string Title { get; }
-    Control? Control { get; }
-    event EventHandler<NavigationEventArgs>? NavigationRequested;
-    event EventHandler<StatusEventArgs>? StatusUpdated;
-    Task ActivateAsync(CancellationToken cancellationToken);
-    Task DeactivateAsync();
 }
 
-public interface IStatefulView
-{
-    void SaveState(object state);
-    void RestoreState(object state);
-}
-
-public class NavigationEventArgs : EventArgs
-{
-    public string ViewName { get; }
-    public object? Parameter { get; }
-
-    public NavigationEventArgs(string viewName, object? parameter = null)
-    {
-        ViewName = viewName;
-        Parameter = parameter;
-    }
-}
-
-public class StatusEventArgs : EventArgs
-{
-    public string Message { get; }
-    public StatusType Type { get; }
-
-    public StatusEventArgs(string message, StatusType type = StatusType.Info)
-    {
-        Message = message;
-        Type = type;
-    }
-}
-
-public enum StatusType
-{
-    Info,
-    Success,
-    Warning,
-    Error
-}
-
-public enum NotificationType
-{
-    Info,
-    Success,
-    Warning,
-    Error
-}
-    #endregion
-}
-    #endregion
-}
