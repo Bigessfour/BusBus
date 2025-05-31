@@ -1,3 +1,6 @@
+// Suppress warnings for unused fields and variables in this view
+#pragma warning disable CS0169 // Field is never used
+#pragma warning disable CS0414 // Field is assigned but its value is never used
 #nullable enable
 using System;
 using System.Drawing;

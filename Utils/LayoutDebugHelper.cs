@@ -6,7 +6,7 @@ namespace BusBus.Utils
 {
     public static class LayoutDebugHelper
     {
-        private static bool _debugMode = false;
+        private static bool _debugMode;
         private static readonly Random _random = new Random();
 
         public static bool DebugMode

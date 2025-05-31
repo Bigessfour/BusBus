@@ -1,3 +1,8 @@
+// Suppress CA1859 performance suggestion for CreateButtonPanel
+#pragma warning disable CA1859 // Change return type of method for improved performance
+// Suppress unused event and field warnings
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0169 // Field is never used
 // Enable nullable reference types for this file
 #nullable enable
 using BusBus.Models;
@@ -7,6 +12,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.UI.Common;
 using System.Drawing;
 using System.Linq;
@@ -32,7 +38,7 @@ namespace BusBus.UI
         private Label _titleLabel = null!;
 
         // Pagination and state
-        private int _totalDrivers = 0;
+        private int _totalDrivers;
         private int _currentPage = 1;
         private int _pageSize = 20;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -42,6 +48,11 @@ namespace BusBus.UI
         public string Title => "Drivers";
         public Control? Control => this;
 
+        // Required by IView
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
+
+        // Existing events (possibly used internally)
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
@@ -212,7 +223,7 @@ namespace BusBus.UI
         /// <summary>
         /// Creates a Crystal Dark glass-like button with specified text and size
         /// </summary>
-        private Button CreateCrystalDarkButton(string text, Size size)
+        private static Button CreateCrystalDarkButton(string text, Size size)
         {
             var button = new Button
             {
@@ -362,13 +373,13 @@ namespace BusBus.UI
                     _driversGrid.CurrentCell = _driversGrid.Rows[newIndex].Cells[1]; // Select first editable cell
                 }
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs("New driver added successfully.", StatusType.Success));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "New driver added successfully."));
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error adding driver: {ex.Message}", "Add Driver Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error adding driver: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error adding driver: {ex.Message}"));
             }
         }
 
@@ -391,14 +402,14 @@ namespace BusBus.UI
                     // Update driver in service
                     await _driverService.UpdateAsync(driver.ToDriver());
 
-                    StatusUpdated?.Invoke(this, new StatusEventArgs("Driver updated successfully.", StatusType.Success));
+                    StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "Driver updated successfully."));
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error updating driver: {ex.Message}", "Update Driver Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating driver: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error updating driver: {ex.Message}"));
             }
         }
 
@@ -428,13 +439,13 @@ namespace BusBus.UI
                         await _driverService.DeleteAsync(driver.Id);
                         _drivers.RemoveAt(selectedIndex);
 
-                        StatusUpdated?.Invoke(this, new StatusEventArgs("Driver deleted successfully.", StatusType.Success));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "Driver deleted successfully."));
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show($"Error deleting driver: {ex.Message}", "Delete Driver Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting driver: {ex.Message}", StatusType.Error));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error deleting driver: {ex.Message}"));
                     }
                 }
             }
@@ -448,7 +459,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading data: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error loading data: {ex.Message}"));
             }
         }
 
@@ -465,7 +476,7 @@ namespace BusBus.UI
                     _drivers.Add(driver);
                 }
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded {drivers.Count} drivers.", StatusType.Success));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, $"Loaded {drivers.Count} drivers."));
             }
             catch (Exception ex)
             {
@@ -519,7 +530,7 @@ namespace BusBus.UI
                     _drivers.Add(driver);
                 }
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded sample data (service error): {ex.Message}", StatusType.Warning));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Warning, $"Loaded sample data (service error): {ex.Message}"));
             }
         }
 
@@ -528,12 +539,12 @@ namespace BusBus.UI
             await LoadDriversAsync(_currentPage, _pageSize, _cancellationTokenSource.Token);
         }
 
-        public void Show()
+        public new void Show()
         {
             this.Visible = true;
         }
 
-        public void Hide()
+        public new void Hide()
         {
             this.Visible = false;
         }

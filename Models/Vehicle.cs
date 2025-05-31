@@ -74,7 +74,7 @@ namespace BusBus.Models
         public int? Year { get; set; }
         public decimal Mileage { get; set; }
         public string FuelType { get; set; } = string.Empty;
-        public bool IsMaintenanceRequired { get; set; } = false;
+        public bool IsMaintenanceRequired { get; set; }
         public DateTime? LastMaintenanceDate { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime ModifiedDate { get; set; } = DateTime.Now;

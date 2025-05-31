@@ -1,7 +1,11 @@
+// Suppress nullability and unused field warnings
+#pragma warning disable CS8604 // Possible null reference argument
+#pragma warning disable CS0169 // Field is never used
 #pragma warning disable CS0067 // Event is never used
 #nullable enable
 // <auto-added>
-using BusBus.UI;
+// Duplicate using removed: using BusBus.UI;
+using BusBus.UI.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -20,20 +24,29 @@ using System.Diagnostics;
 #pragma warning disable CA2254 // LoggerMessage delegates for logging performance
 #pragma warning disable CS8618 // Non-nullable field is uninitialized. Suppressed because fields are initialized in SetupLayout.
 namespace BusBus.UI
-{    /// <summary>
-     /// Main application hub that manages navigation, state, and view lifecycle.
-     /// This class serves as the primary container/shell for the entire application.
-     /// It contains the header, side panel, content panel, and status bar.
-     /// Different views (like DashboardView) are loaded into the content panel.
-     /// Enhanced with SQL Server Express monitoring and performance tracking.
-     /// </summary>
+{
+    /// <summary>
+    /// Main application hub that manages navigation, state, and view lifecycle.
+    /// This class serves as the primary container/shell for the entire application.
+    /// It contains the header, side panel, content panel, and status bar.
+    /// Different views (like DashboardView) are loaded into the content panel.
+    /// Enhanced with SQL Server Express monitoring and performance tracking.
+    /// </summary>
     public partial class Dashboard : Form, IApplicationHub
     {
+        // ... existing fields ...
+
+        // Stub for missing method
+        private static void LogControlHierarchy() { /* Optionally implement for debugging */ }
+        // ... field declarations ...
+
+        // Required by IView/IApplicationHub
+        // Required by IApplicationHub/IView
         #region Fields
         private readonly IServiceProvider _serviceProvider;
         private readonly IRouteService _routeService;
         private readonly ILogger<Dashboard> _logger;
-        private readonly Dictionary<string, IView> _viewCache = new();
+        private readonly Dictionary<string, BusBus.UI.Interfaces.IView> _viewCache = new();
         private readonly Stack<string> _navigationHistory = new();
         private readonly DashboardState _state = new();
         private readonly AdvancedSqlServerDatabaseManager? _databaseManager;
@@ -66,7 +79,7 @@ namespace BusBus.UI
         // Note: _footerPanel removed as it's not currently used - status bar serves as footer
         private StatusStrip _statusStrip;
         private ToolStripStatusLabel _statusLabel;
-        private ToolStripProgressBar _progressBar; private IView? _currentView;
+        private ToolStripProgressBar _progressBar; private BusBus.UI.Interfaces.IView? _currentView;
         private CancellationTokenSource _cancellationTokenSource = new();
         private readonly List<Task> _backgroundTasks = new(); // Track background tasks
         #endregion
@@ -232,13 +245,13 @@ namespace BusBus.UI
                 Padding = new Padding(0, 15, 0, 15) // Increased vertical padding for better spacing
             }; var navItems = new[]
             {
-                new NavigationItem("�", "New Feature Here", "new-feature", true),
-                new NavigationItem("🚌", "Routes", "routes"),
-                new NavigationItem("👥", "Drivers", "drivers"),
-                new NavigationItem("🚗", "Vehicles", "vehicles"),
-                new NavigationItem("📊", "Reports", "reports"),
-                new NavigationItem("⚙️", "Settings", "settings")
-            };
+                    new NavigationItem("�", "New Feature Here", "new-feature", true),
+                    new NavigationItem("🚌", "Routes", "routes"),
+                    new NavigationItem("👥", "Drivers", "drivers"),
+                    new NavigationItem("🚗", "Vehicles", "vehicles"),
+                    new NavigationItem("📊", "Reports", "reports"),
+                    new NavigationItem("⚙️", "Settings", "settings")
+                };
 
             int yPos = 25; // Increased initial position
             foreach (var item in navItems)
@@ -340,10 +353,10 @@ namespace BusBus.UI
 
             _statusStrip.Items.AddRange(new ToolStripItem[]
             {
-                _statusLabel,
-                _progressBar,
-                new ToolStripSeparator(),
-                connectionLabel
+                    _statusLabel,
+                    _progressBar,
+                    new ToolStripSeparator(),
+                    connectionLabel
             });
         }
         #endregion
@@ -489,7 +502,7 @@ namespace BusBus.UI
         }
         private readonly object _viewLock = new();
 
-        private IView? GetOrCreateView(string viewName)
+        private BusBus.UI.Interfaces.IView? GetOrCreateView(string viewName)
         {
             lock (_viewLock)
             {
@@ -514,7 +527,7 @@ namespace BusBus.UI
                             return cachedView;
                         }
                     }                    // Create view based on name
-                    IView? view = null;
+                    BusBus.UI.Interfaces.IView? view = null;
                     try
                     {
                         view = viewName.ToLower() switch
@@ -586,12 +599,12 @@ namespace BusBus.UI
 
         private void OnViewNavigationRequested(object? sender, NavigationEventArgs e)
         {
-            _ = NavigateToAsync(e.ViewName);
+            _ = NavigateToAsync(e.TargetView);
         }
 
         private void OnViewStatusUpdated(object? sender, StatusEventArgs e)
         {
-            ShowStatus(e.Message, e.Type);
+            ShowStatus(e.Message, e.Status);
         }
         #endregion
 
@@ -744,7 +757,7 @@ namespace BusBus.UI
             LoadState();
             await NavigateToAsync(_state.LastView ?? "routes");
         }
-        private void OnFormClosing(object? sender, FormClosingEventArgs e)
+        private async void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
             Console.WriteLine("[Dashboard] Form closing started");
 
@@ -784,7 +797,7 @@ namespace BusBus.UI
                 GC.WaitForPendingFinalizers();
 
                 // Disconnect event handlers that might prevent proper disposal
-                BusBus.UI.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+                BusBus.UI.ThemeManager.ThemeChanged -= OnThemeChanged;
             }
             catch (ObjectDisposedException ex)
             {
@@ -797,7 +810,7 @@ namespace BusBus.UI
             }
         }
 
-        private bool _isShuttingDown = false;
+        private bool _isShuttingDown;
 
         private async Task PerformShutdownAsync()
         {
@@ -874,61 +887,61 @@ namespace BusBus.UI
                         {
                             _logger?.LogError(ex, "Error scheduling view disposal during shutdown");
                         }
+                    }                // Wait for disposals with short timeout
+                    if (disposeTasks.Count > 0)
+                    {
+                        _logger?.LogInformation($"Waiting for {disposeTasks.Count} view disposal tasks to complete");
+                        try
+                        {
+                            var timeoutTask = Task.Delay(300); // Slightly longer timeout
+                            var completedTask = await Task.WhenAny(Task.WhenAll(disposeTasks), timeoutTask);
+
+                            if (completedTask == timeoutTask)
+                            {
+                                _logger?.LogWarning("Timed out waiting for view disposal tasks");
+
+                                // Count incomplete tasks
+                                int incompleteCount = disposeTasks.Count(t => !t.IsCompleted);
+                                _logger?.LogWarning($"{incompleteCount} disposal tasks still running at timeout");
+                            }
+                            else
+                            {
+                                _logger?.LogInformation("All view disposal tasks completed successfully");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "Error waiting for view disposal tasks");
+                        }
                     }
-                }                // Wait for disposals with short timeout
-                if (disposeTasks.Count > 0)
-                {
-                    _logger?.LogInformation($"Waiting for {disposeTasks.Count} view disposal tasks to complete");
+
+                    // Clear caches
+                    _viewCache.Clear();
+                    _navigationHistory.Clear();                // Signal application to clean up all background tasks
                     try
                     {
-                        var timeoutTask = Task.Delay(300); // Slightly longer timeout
-                        var completedTask = await Task.WhenAny(Task.WhenAll(disposeTasks), timeoutTask);
+                        _logger?.LogInformation("Calling global application shutdown");
+                        // Invoke the static application shutdown method to ensure all background tasks are cleaned up
+                        var shutdownMethod = Type.GetType("BusBus.Program, BusBus")?.GetMethod("ShutdownApplication",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-                        if (completedTask == timeoutTask)
+                        if (shutdownMethod != null)
                         {
-                            _logger?.LogWarning("Timed out waiting for view disposal tasks");
-
-                            // Count incomplete tasks
-                            int incompleteCount = disposeTasks.Count(t => !t.IsCompleted);
-                            _logger?.LogWarning($"{incompleteCount} disposal tasks still running at timeout");
+                            shutdownMethod.Invoke(null, null);
+                            _logger?.LogInformation("Global application shutdown completed");
                         }
                         else
                         {
-                            _logger?.LogInformation("All view disposal tasks completed successfully");
+                            _logger?.LogWarning("Could not find Program.ShutdownApplication method");
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception shutdownEx)
                     {
-                        _logger?.LogError(ex, "Error waiting for view disposal tasks");
+                        _logger?.LogError(shutdownEx, "Error invoking application shutdown");
                     }
-                }
 
-                // Clear caches
-                _viewCache.Clear();
-                _navigationHistory.Clear();                // Signal application to clean up all background tasks
-                try
-                {
-                    _logger?.LogInformation("Calling global application shutdown");
-                    // Invoke the static application shutdown method to ensure all background tasks are cleaned up
-                    var shutdownMethod = Type.GetType("BusBus.Program, BusBus")?.GetMethod("ShutdownApplication",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-                    if (shutdownMethod != null)
-                    {
-                        shutdownMethod.Invoke(null, null);
-                        _logger?.LogInformation("Global application shutdown completed");
-                    }
-                    else
-                    {
-                        _logger?.LogWarning("Could not find Program.ShutdownApplication method");
-                    }
+                    _logger?.LogInformation("Async shutdown process completed");
                 }
-                catch (Exception shutdownEx)
-                {
-                    _logger?.LogError(shutdownEx, "Error invoking application shutdown");
-                }
-
-                _logger?.LogInformation("Async shutdown process completed");
             }
             catch (Exception ex)
             {
@@ -955,8 +968,9 @@ namespace BusBus.UI
 
         public IServiceProvider ServiceProvider => _serviceProvider;
 
-        public IView? CurrentView => _currentView;
+        public BusBus.UI.Interfaces.IView? CurrentView => _currentView;
         public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
 
         public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info)
         {
@@ -1142,62 +1156,8 @@ namespace BusBus.UI
 
         #region Interfaces and Supporting Classes
         // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
-        public interface IView : IDisposable
-        {
-            string ViewName { get; }
-            string Title { get; }
-            Control? Control { get; }
-            event EventHandler<NavigationEventArgs>? NavigationRequested;
-            event EventHandler<StatusEventArgs>? StatusUpdated;
-            Task ActivateAsync(CancellationToken cancellationToken);
-            Task DeactivateAsync();
-        }
+        // Duplicate interfaces removed. Use the definitions from BusBus.UI.Interfaces namespace.
 
-        public interface IStatefulView
-        {
-            void SaveState(object state);
-            void RestoreState(object state);
-        }
-
-        public class NavigationEventArgs : EventArgs
-        {
-            public string ViewName { get; }
-            public object? Parameter { get; }
-
-            public NavigationEventArgs(string viewName, object? parameter = null)
-            {
-                ViewName = viewName;
-                Parameter = parameter;
-            }
-        }
-
-        public class StatusEventArgs : EventArgs
-        {
-            public string Message { get; }
-            public StatusType Type { get; }
-
-            public StatusEventArgs(string message, StatusType type = StatusType.Info)
-            {
-                Message = message;
-                Type = type;
-            }
-        }
-
-        public enum StatusType
-        {
-            Info,
-            Success,
-            Warning,
-            Error
-        }
-
-        public enum NotificationType
-        {
-            Info,
-            Success,
-            Warning,
-            Error
-        }
         #endregion
 
         #endregion

@@ -1,3 +1,6 @@
+// Suppress unused event and field warnings
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0169 // Field is never used
 #nullable enable
 
 using System;
@@ -8,9 +11,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI.Common;
+using BusBus.Models;
+using BusBus.UI.Interfaces;
 
 namespace BusBus.UI
 {
@@ -19,6 +23,16 @@ namespace BusBus.UI
     /// </summary>
     public partial class RouteListPanel : ThemeableControl, IDisplayable, IView
     {
+        // IView required members
+        public string ViewName => "routes";
+        public string Title => "Routes";
+        public Control? Control => this;
+        public event EventHandler<NavigationEventArgs>? NavigationRequested;
+        public event EventHandler<StatusEventArgs>? StatusUpdated;
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
+        public Task ActivateAsync(System.Threading.CancellationToken cancellationToken) => Task.CompletedTask;
+        // IView required members are implemented further below (single definition each)
         private readonly IRouteService _routeService;
         private readonly IDriverService _driverService;
         private readonly IVehicleService _vehicleService;
@@ -39,15 +53,10 @@ namespace BusBus.UI
         private List<Vehicle> _vehicles = new List<Vehicle>();
         private int _currentPage = 1;
         private int _pageSize = 20;
-        private int _totalRoutes = 0;
+        private int _totalRoutes;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        public string ViewName => "routes";
-        public string Title => "Routes";
-        public Control? Control => this;
-
-        public event EventHandler<NavigationEventArgs>? NavigationRequested;
-        public event EventHandler<StatusEventArgs>? StatusUpdated;
+        // NavigationChanged, StatusChanged, and other events are implemented further below if needed.
         public event EventHandler<EntityEventArgs<Route>>? RouteEditRequested;
 
         public RouteListPanel(IRouteService routeService, IDriverService driverService, IVehicleService vehicleService)
@@ -288,7 +297,7 @@ namespace BusBus.UI
         {
             try
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs("Loading routes...", StatusType.Info));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Info, "Loading routes..."));
 
                 // Load drivers and vehicles for display
                 await LoadDriversAsync();
@@ -319,11 +328,11 @@ namespace BusBus.UI
                 _routesGrid.DataSource = _routes;
                 UpdatePaginationControls();
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded {_routes.Count} routes", StatusType.Success));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, $"Loaded {_routes.Count} routes"));
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading routes: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error loading routes: {ex.Message}"));
                 LoadSampleData();
             }
         }
@@ -333,7 +342,7 @@ namespace BusBus.UI
             try
             {
                 var pagedDrivers = await _driverService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
-                _drivers = pagedDrivers.Items.ToList();
+                _drivers = pagedDrivers;
             }
             catch
             {
@@ -346,7 +355,7 @@ namespace BusBus.UI
             try
             {
                 var pagedVehicles = await _vehicleService.GetPagedAsync(1, 1000, _cancellationTokenSource.Token);
-                _vehicles = pagedVehicles.Items.ToList();
+                _vehicles = pagedVehicles;
             }
             catch
             {
@@ -477,13 +486,13 @@ namespace BusBus.UI
                     if (route != null)
                     {
                         await _routeService.DeleteAsync(route.Id, _cancellationTokenSource.Token);
-                        StatusUpdated?.Invoke(this, new StatusEventArgs("Route deleted successfully", StatusType.Success));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "Route deleted successfully"));
                         await LoadDataAsync();
                     }
                 }
                 catch (Exception ex)
                 {
-                    StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting route: {ex.Message}", StatusType.Error));
+                    StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error deleting route: {ex.Message}"));
                 }
             }
         }
@@ -512,7 +521,7 @@ namespace BusBus.UI
             return Task.CompletedTask;
         }
 
-        public void Render(Control parent)
+        public override void Render(Control parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             parent.Controls.Clear();
@@ -566,5 +575,10 @@ namespace BusBus.UI
             base.Dispose(disposing);
         }
         #endregion
+    }
+
+    public partial class Dashboard : Form, IApplicationHub
+    {
+        // ... all fields, methods, and the LogControlHierarchy stub go here ...
     }
 }

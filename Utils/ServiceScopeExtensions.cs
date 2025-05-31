@@ -14,7 +14,7 @@ namespace BusBus.Utils
     public static class ServiceScopeExtensions
     {
         private static readonly object _lockObject = new object();
-        private static int _activeScopesCount = 0;
+        private static int _activeScopesCount;
         private static ILogger? _logger;
 
         // LoggerMessage delegates

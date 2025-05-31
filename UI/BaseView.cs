@@ -1,8 +1,11 @@
+// Suppress unused event warnings
+#pragma warning disable CS0067 // Event is never used
 #nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 
 namespace BusBus.UI
 {
@@ -15,6 +18,8 @@ namespace BusBus.UI
         public Control? Control => this;
 
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         protected BaseView()
@@ -31,7 +36,8 @@ namespace BusBus.UI
         {
             _viewCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             await OnActivateAsync(_viewCancellationTokenSource.Token);
-        }        public virtual async Task DeactivateAsync()
+        }
+        public virtual async Task DeactivateAsync()
         {
             try
             {
@@ -71,7 +77,7 @@ namespace BusBus.UI
 
         protected void UpdateStatus(string message, StatusType type = StatusType.Info)
         {
-            StatusUpdated?.Invoke(this, new StatusEventArgs(message, type));
+            StatusChanged?.Invoke(this, new StatusEventArgs(type, message));
         }
 
         protected override void Dispose(bool disposing)

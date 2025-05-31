@@ -8,7 +8,7 @@ namespace BusBus.UI.Common
     /// </summary>
     public static class TestMessageBoxOverride
     {
-        public static bool SuppressAllDialogs { get; set; } = false;
+        public static bool SuppressAllDialogs { get; set; }
 
         /// <summary>
         /// Intercepts MessageBox.Show calls during tests

@@ -1,8 +1,7 @@
 # PowerShell script to automate GitHub push
-
 # Parameters
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$CommitMessage,
     [string]$Branch = "main"
 )

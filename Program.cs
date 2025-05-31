@@ -412,7 +412,7 @@ namespace BusBus
                 ShutdownApplication();
             }
         }
-        private static bool _isShuttingDown = false;
+        private static bool _isShuttingDown;
 
         public static void ShutdownApplication()
         {

@@ -11,7 +11,7 @@ namespace BusBus.UI.Common
     /// </summary>
     public abstract class BaseForm : Form
     {
-        private bool _themeSubscribed = false;
+        private bool _themeSubscribed;
 
         protected override void OnLoad(EventArgs e)
         {

@@ -1,8 +1,11 @@
+// Suppress unused event warnings
+#pragma warning disable CS0067 // Event is never used
 #nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.Services;
 using BusBus.UI.Common;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,11 +22,13 @@ namespace BusBus.UI
         public string Title => "Vehicle Management";
         public Control? Control => _panel;
 
+        // Required by IView
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
+
+        // Existing events (possibly used internally)
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
-        
-#pragma warning disable CS0067 // The event is never used - required by IView interface
         public event EventHandler<StatusEventArgs>? StatusUpdated;
-#pragma warning restore CS0067
 
         public VehicleListView(IServiceProvider serviceProvider)
         {
@@ -57,6 +62,17 @@ namespace BusBus.UI
         public Task DeactivateAsync()
         {
             return Task.CompletedTask;
+        }
+
+        // Required by IView
+        public void Show()
+        {
+            _panel?.Show();
+        }
+
+        public void Hide()
+        {
+            _panel?.Hide();
         }
 
         public void Dispose()

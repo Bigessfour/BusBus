@@ -11,7 +11,7 @@ namespace BusBus.UI.Common
     /// </summary>
     public abstract class ThemeableControl : UserControl, IDisplayable
     {
-        private bool _themeSubscribed = false;
+        private bool _themeSubscribed;
 
         protected override void OnLoad(EventArgs e)
         {
@@ -78,9 +78,9 @@ namespace BusBus.UI.Common
         {
             this.BackColor = ThemeManager.CurrentTheme.CardBackground;
         }        /// <summary>
-        /// Recursively applies theme to a control and all its children.
-        /// This is the centralized theme application logic.
-        /// </summary>
+                 /// Recursively applies theme to a control and all its children.
+                 /// This is the centralized theme application logic.
+                 /// </summary>
         protected static void ApplyThemeToControl(Control control)
         {
             if (control == null)
@@ -122,10 +122,10 @@ namespace BusBus.UI.Common
                 // This is normal during application shutdown
             }
         }/// <summary>
-        /// Renders the control into the specified container.
-        /// Must be implemented by derived classes.
-        /// </summary>
-        /// <param name="container">The container control to render into</param>
+         /// Renders the control into the specified container.
+         /// Must be implemented by derived classes.
+         /// </summary>
+         /// <param name="container">The container control to render into</param>
         public abstract void Render(Control container);
     }
 }

@@ -20,7 +20,7 @@ namespace BusBus.UI.Templates
         protected readonly ILogger<HighQualityFormTemplate> _logger;
         protected TableLayoutPanel _mainLayout;
         protected bool _useGlassmorphism = true;
-        protected bool _highAccessibilityMode = false;
+        protected bool _highAccessibilityMode;
 
         /// <summary>
         /// Creates a new high-quality form with optimized text rendering

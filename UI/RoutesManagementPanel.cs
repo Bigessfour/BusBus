@@ -1,3 +1,6 @@
+// Suppress unused event and field warnings
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0169 // Field is never used
 // Enable nullable reference types for this file
 #nullable enable
 using BusBus.Models;
@@ -7,6 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.UI.Common;
 using System.Drawing;
 using System.Linq;
@@ -36,7 +40,7 @@ namespace BusBus.UI
         private Label _titleLabel = null!;
 
         // Pagination and state
-        private int _totalRoutes = 0;
+        private int _totalRoutes;
         private int _currentPage = 1;
         private int _pageSize = 20;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -48,6 +52,8 @@ namespace BusBus.UI
 
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
         public event EventHandler<StatusEventArgs>? StatusUpdated;
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
 
         public RoutesManagementPanel(IRouteService routeService, IDriverService? driverService = null, IVehicleService? vehicleService = null)
         {
@@ -260,7 +266,7 @@ namespace BusBus.UI
         /// <summary>
         /// Creates a Crystal Dark glass-like button with specified text and size
         /// </summary>
-        private Button CreateCrystalDarkButton(string text, Size size)
+        private static Button CreateCrystalDarkButton(string text, Size size)
         {
             var button = new Button
             {
@@ -294,7 +300,7 @@ namespace BusBus.UI
             return button;
         }
 
-        private Panel CreateButtonPanel()
+        private TableLayoutPanel CreateButtonPanel()
         {
             var buttonPanel = new TableLayoutPanel
             {
@@ -366,13 +372,13 @@ namespace BusBus.UI
                     _routesGrid.CurrentCell = _routesGrid.Rows[newIndex].Cells[1]; // Select first editable cell
                 }
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs("New route added successfully.", StatusType.Success));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "New route added successfully."));
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error adding route: {ex.Message}", "Add Route Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error adding route: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error adding route: {ex.Message}"));
             }
         }
 
@@ -395,14 +401,14 @@ namespace BusBus.UI
                     // Update route in service
                     await _routeService.UpdateRouteAsync(route.ToRoute());
 
-                    StatusUpdated?.Invoke(this, new StatusEventArgs("Route updated successfully.", StatusType.Success));
+                    StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "Route updated successfully."));
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error updating route: {ex.Message}", "Update Route Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating route: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error updating route: {ex.Message}"));
             }
         }
 
@@ -432,13 +438,13 @@ namespace BusBus.UI
                         await _routeService.DeleteRouteAsync(route.Id);
                         _routes.RemoveAt(selectedIndex);
 
-                        StatusUpdated?.Invoke(this, new StatusEventArgs("Route deleted successfully.", StatusType.Success));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, "Route deleted successfully."));
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show($"Error deleting route: {ex.Message}", "Delete Route Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting route: {ex.Message}", StatusType.Error));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error deleting route: {ex.Message}"));
                     }
                 }
             }
@@ -495,7 +501,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading data: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error loading data: {ex.Message}"));
             }
         }
 
@@ -564,7 +570,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Warning: Could not load ComboBox data: {ex.Message}", StatusType.Warning));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Warning, $"Warning: Could not load ComboBox data: {ex.Message}"));
             }
         }
 
@@ -616,11 +622,11 @@ namespace BusBus.UI
                     _routes.Add(route);
                 }
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded {routes.Count} routes.", StatusType.Success));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Success, $"Loaded {routes.Count} routes."));
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading routes: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(StatusType.Error, $"Error loading routes: {ex.Message}"));
             }
         }
 

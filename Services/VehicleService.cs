@@ -18,6 +18,10 @@ namespace BusBus.Services
     /// </summary>
     public class VehicleService : IVehicleService
     {
+        public async Task<List<Vehicle>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await GetAllVehiclesAsync(cancellationToken);
+        }
         private readonly IServiceProvider _serviceProvider;
 
         public VehicleService(IServiceProvider serviceProvider)
@@ -44,7 +48,7 @@ namespace BusBus.Services
         public async Task<List<Vehicle>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();            return await dbContext.Vehicles
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>(); return await dbContext.Vehicles
                 .AsNoTracking()
                 .OrderBy(v => v.Number)
                 .Skip((page - 1) * pageSize)
@@ -62,7 +66,7 @@ namespace BusBus.Services
         public async Task<List<Vehicle>> GetAllVehiclesAsync(CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();            return await dbContext.Vehicles
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>(); return await dbContext.Vehicles
                 .AsNoTracking()
                 .OrderBy(v => v.Number)
                 .ToListAsync(cancellationToken);
@@ -71,7 +75,7 @@ namespace BusBus.Services
         public async Task<List<Vehicle>> GetVehiclesAsync(int skip, int take, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();            return await dbContext.Vehicles
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>(); return await dbContext.Vehicles
                 .AsNoTracking()
                 .OrderBy(v => v.Number)
                 .Skip(skip)
@@ -109,7 +113,7 @@ namespace BusBus.Services
 
         public (bool IsValid, string ErrorMessage) ValidateEntity(Vehicle entity)
         {
-            ArgumentNullException.ThrowIfNull(entity);            if (string.IsNullOrWhiteSpace(entity.Number))
+            ArgumentNullException.ThrowIfNull(entity); if (string.IsNullOrWhiteSpace(entity.Number))
                 return (false, "Vehicle number is required.");
             if (entity.Capacity <= 0)
                 return (false, "Capacity must be greater than 0.");

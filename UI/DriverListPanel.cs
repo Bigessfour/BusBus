@@ -1,3 +1,6 @@
+// Suppress unused event and nullability warnings
+#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS8604 // Possible null reference argument
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor
 #pragma warning disable CS0169 // The field is never used
 #pragma warning disable CA1416 // Platform compatibility (Windows-only)
@@ -9,6 +12,18 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor
+#pragma warning disable CS0169 // The field is never used
+#pragma warning disable CA1416 // Platform compatibility (Windows-only)
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI;
@@ -16,8 +31,15 @@ using BusBus.UI.Common;
 
 namespace BusBus.UI
 {
-    public partial class DriverListPanel : ThemeableControl, IDisplayable, IStatefulView
+    public partial class DriverListPanel : ThemeableControl, IDisplayable, IStatefulView, IView
     {
+        // IView required members
+        public string ViewName => "DriverListPanel";
+        public string Title => "Driver List";
+        public Control? Control => this;
+        public Task ActivateAsync(System.Threading.CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task DeactivateAsync() => Task.CompletedTask;
+        public event EventHandler<NavigationEventArgs>? NavigationRequested;
         private readonly IDriverService _driverService;
         private DataGridView _driversDataGridView = null!;
         private Button _addButton = null!;
@@ -35,8 +57,9 @@ namespace BusBus.UI
 
         public event EventHandler<EntityEventArgs<Driver>>? DriverEditRequested;
         public event EventHandler<StatusEventArgs>? StatusUpdated;
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
 
-        public static string Title => "Drivers";
 
         public DriverListPanel(IDriverService driverService)
         {
@@ -48,7 +71,7 @@ namespace BusBus.UI
             _ = LoadDriversAsync();
         }
 
-        public void SaveState(object state)
+        public static void SaveState(object state)
         {
             // Optionally implement saving state here
         }
@@ -66,7 +89,8 @@ namespace BusBus.UI
             var mainLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 1,                RowCount = 3,
+                ColumnCount = 1,
+                RowCount = 3,
                 BackColor = Color.Transparent
             };
 
@@ -90,7 +114,7 @@ namespace BusBus.UI
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false,                
+                EnableHeadersVisualStyles = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AutoSize = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
@@ -99,12 +123,12 @@ namespace BusBus.UI
                 ColumnHeadersHeight = 40, // Fixed height for better visibility
                 RowHeadersVisible = false,
                 RowTemplate = { Height = 32 },
-                EditMode = DataGridViewEditMode.EditOnEnter            
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
 
             // Apply consistent theme styling to the grid
             ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
-            
+
             // Enhance header styling for better visibility
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Font = new Font(_driversDataGridView.Font.FontFamily, 9.5F, FontStyle.Bold);
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
@@ -120,7 +144,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
             };
-            
+
             // Add button panel to the middle
             mainLayout.Controls.Add(_buttonPanel, 0, 1);
 
@@ -371,6 +395,11 @@ namespace BusBus.UI
             }
         }
 
+        public void SetState(object? state)
+        {
+            RestoreState(state);
+        }
+
         private class DriverListState
         {
             public int CurrentPage { get; set; }
@@ -393,8 +422,7 @@ namespace BusBus.UI
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs(
-                    $"Error loading drivers: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error loading drivers: {ex.Message}"));
             }
         }
 
@@ -440,11 +468,11 @@ namespace BusBus.UI
                     {
                         await _driverService.DeleteAsync(driver.Id);
                         await LoadDriversAsync();
-                        StatusUpdated?.Invoke(this, new StatusEventArgs("Driver deleted successfully"));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Success, "Driver deleted successfully"));
                     }
                     catch (Exception ex)
                     {
-                        StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting driver: {ex.Message}"));
+                        StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error deleting driver: {ex.Message}"));
                     }
                 }
             }
@@ -474,11 +502,11 @@ namespace BusBus.UI
                 }
 
                 await _driverService.UpdateAsync(driver);
-                StatusUpdated?.Invoke(this, new StatusEventArgs("Driver updated successfully"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Success, "Driver updated successfully"));
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating driver: {ex.Message}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error updating driver: {ex.Message}"));
             }
         }
 

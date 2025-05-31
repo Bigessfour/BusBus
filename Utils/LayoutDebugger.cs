@@ -15,7 +15,7 @@ namespace BusBus.Utils
     public static class LayoutDebugger
     {
         private static readonly Dictionary<Control, DebugOverlay> _activeOverlays = new();
-        private static bool _debugEnabled = false;
+        private static bool _debugEnabled;
         private static ILogger? _logger;
         private static readonly Random _random = new();        // LoggerMessage delegates for performance
         private static readonly Action<ILogger, Exception?> _debugModeEnabled =

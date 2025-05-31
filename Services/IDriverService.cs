@@ -13,6 +13,12 @@ namespace BusBus.Services
     public interface IDriverService : ICrudService<Driver, Guid>
     {
         /// <summary>
+        /// Gets all drivers (alias for GetAllDriversAsync)
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A list of drivers</returns>
+        Task<List<Driver>> GetAllAsync(CancellationToken cancellationToken = default);
+        /// <summary>
         /// Gets all drivers
         /// </summary>
         /// <param name="cancellationToken">Optional cancellation token</param>

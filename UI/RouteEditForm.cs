@@ -226,7 +226,7 @@ namespace BusBus.UI
             try
             {
                 // Load vehicles
-                var vehicles = await _vehicleService.GetAllAsync();
+                var vehicles = await _vehicleService.GetAllAsync(System.Threading.CancellationToken.None);
                 _vehicleComboBox.Items.Clear();
                 _vehicleComboBox.Items.Add(new ComboBoxItem { Text = "Unassigned", Value = null });
                 foreach (var vehicle in vehicles.Where(v => v.IsActive))
@@ -240,7 +240,7 @@ namespace BusBus.UI
                 _vehicleComboBox.SelectedIndex = 0;
 
                 // Load drivers
-                var drivers = await _driverService.GetAllAsync();
+                var drivers = await _driverService.GetAllAsync(System.Threading.CancellationToken.None);
                 _driverComboBox.Items.Clear();
                 _driverComboBox.Items.Add(new ComboBoxItem { Text = "Unassigned", Value = null });
                 foreach (var driver in drivers.Where(d => d.IsActive))
@@ -349,12 +349,12 @@ namespace BusBus.UI
                     route.CreatedDate = DateTime.Now;
                     route.RouteDate = DateTime.Today;
                     route.IsActive = true;
-                    await _routeService.CreateAsync(route);
+                    await _routeService.CreateAsync(route, System.Threading.CancellationToken.None);
                 }
                 else
                 {
                     route.ModifiedDate = DateTime.Now;
-                    await _routeService.UpdateAsync(route);
+                    await _routeService.UpdateAsync(route, System.Threading.CancellationToken.None);
                 }
 
                 DialogResult = DialogResult.OK;

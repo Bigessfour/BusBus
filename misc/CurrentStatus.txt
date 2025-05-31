@@ -1,0 +1,56 @@
+BusBus Project Status — May 30, 2025
+====================================
+
+**Current State:**
+- All logs, scripts, and miscellaneous files have been organized into best-practice folders (`logs/`, `scripts/`, `misc/`, etc.).
+- All source code, including `Program.cs`, is safe and present in the project.
+- Code and documentation references to these files have been updated where possible.
+- No duplicate files remain in the new structure.
+- All major code, models, and services are in their proper folders.
+
+**Current File Structure (Top Level):**
+- .copilot-user-preferences.json, .editorconfig, .env, .git/, .github/, .gitignore, .vscode/
+- AI/, Analytics/, appsettings.json, backups/, bin/, BusBus Info/, BusBus.csproj, BusBus.sln, BusBus.Tests/, Common/, config/, Data/, DataAccess/, DataVisualization/, diagnostics/, docs/, Infrastructure/, LICENSE, logs/, Middleware/, Migrations/, misc/, Models/, Monitoring/, MSTest-Conversion-Summary.md, node_modules/, obj/, package-lock.json, package.json, Program.cs, Properties/, Push-To-GitHub.ps1, README.md, scripts/, Services/, TestResults/, Tests-Standalone, UI/, Utils/
+
+**Key Subfolders:**
+- logs/: AgentActionsLog.txt, BuildErrors.log, DeletionLog.txt, latest-failed-run.txt, output.log, run-failure-15351057095.log
+- scripts/: create-database.sql, fix-dashboard.ps1, fix-database-schema-isactive.sql, fix-database-schema-mismatch.sql, fix-database-schema.sql
+- backups/: Dashboard.cs.backup, Driver.cs.backup
+- misc/: BusBus.csproj, BusBus.sln, CurrentStatus.txt, DatabaseTest.cs, DatabaseTestRunner.cs, GlobalSuppressions.cs, LICENSE, personalpreferences.txt, personalpreferences_merged.txt, Program.cs, README.md, TaskAnalysisReport.txt, TestDbConnection.cs, TextRenderingManager.cs, UserPreferences.txt
+- docs/: advanced-debugging-guide.md, archive/, coverage-workflow.md, critical-issues-resolution-summary.md, ...
+- docs/archive/: FIXES_SUMMARY.md, MSTest-Conversion-Summary.md, README.md
+- docs/templates/: DashboardView_backup.cs, test-template.cs
+
+- UI/Archived/RoutesManagementPanel.cs (duplicate, replaced)
+- UI/Archived/VehiclesManagementPanel.cs (replaced by VehicleListView.cs)
+- UI/Archived/DriversManagementPanel.cs (replaced by DriverListView.cs)
+- UI/Archived/RouteListPanel.cs.bak (obsolete backup)
+- UI/Archived/Dashboard.cs.bak, SampleSidePanelForm.cs, SidePanel.cs, SidePanel.Designer.cs (see DeletionLog.txt)
+- Root directory cleanup: AgentActionsLog.txt, BuildErrors.log, DeletionLog.txt, latest-failed-run.txt, output.log, run-failure-15351057095.log, FIXES_SUMMARY.md, MSTest-Conversion-Summary.md, TaskAnalysisReport.txt, CurrentStatus.txt, personalpreferences.txt, personalpreferences_merged.txt, UserPreferences.txt, create-database.sql, current_schema.sql, fix-dashboard.ps1, fix-database-schema.sql, fix-database-schema-mismatch.sql, fix-database-schema-isactive.sql, DatabaseTest.cs, DatabaseTestRunner.cs, TestDbConnection.cs, TextRenderingManager.cs, GlobalSuppressions.cs (all now in logs/, scripts/, or misc/)
+**Files Deleted (May 30, 2025):**
+- UI/Archived/RoutesManagementPanel.cs (duplicate, replaced)
+- UI/Archived/VehiclesManagementPanel.cs (replaced by VehicleListView.cs)
+- UI/Archived/DriversManagementPanel.cs (replaced by DriverListView.cs)
+- UI/Archived/RouteListPanel.cs.bak (obsolete backup)
+- UI/Archived/Dashboard.cs.bak, SampleSidePanelForm.cs, SidePanel.cs, SidePanel.Designer.cs (see DeletionLog.txt)
+- Root directory cleanup: All obsolete files successfully deleted from the root directory. All logs, scripts, and misc files are now only in their proper subfolders.
+- UI/Archived/RoutesManagementPanel.cs (duplicate, replaced)
+- UI/Archived/VehiclesManagementPanel.cs (replaced by VehicleListView.cs)
+- UI/Archived/DriversManagementPanel.cs (replaced by DriverListView.cs)
+- UI/Archived/RouteListPanel.cs.bak (obsolete backup)
+- UI/Archived/Dashboard.cs.bak, SampleSidePanelForm.cs, SidePanel.cs, SidePanel.Designer.cs (see DeletionLog.txt)
+- Root directory cleanup: AgentActionsLog.txt, BuildErrors.log, DeletionLog.txt, latest-failed-run.txt, output.log, run-failure-15351057095.log, FIXES_SUMMARY.md, MSTest-Conversion-Summary.md, TaskAnalysisReport.txt, CurrentStatus.txt, personalpreferences.txt, personalpreferences_merged.txt, UserPreferences.txt, create-database.sql, current_schema.sql, fix-dashboard.ps1, fix-database-schema.sql, fix-database-schema-mismatch.sql, fix-database-schema-isactive.sql, DatabaseTest.cs, DatabaseTestRunner.cs, TestDbConnection.cs, TextRenderingManager.cs, GlobalSuppressions.cs (all now in logs/, scripts/, or misc/)
+
+**Current Problem List:**
+- RouteListPanel.cs: Severe corruption, 49 build errors (invalid tokens, broken method boundaries, namespace violations)
+- RoutesManagementPanel.cs: 2 syntax errors (missing braces)
+- RouteDisplayDTO.cs: Multiple DTO definitions causing conflicts
+- 80+ compilation errors and warnings, mostly cascading from RouteListPanel.cs corruption
+- See CurrentStatus.txt for full error and warning details
+
+**Next Steps:**
+- Review and update any remaining documentation/manual references to file locations as needed.
+- Continue resolving any outstanding build or interface errors in the codebase.
+- Immediate priorities: Fix RouteListPanel.cs corruption, resolve RouteDisplayDTO conflicts, restore Dashboard integration, test CRUD operations.
+
+**Thank you for your hard work and collaboration!**

@@ -188,20 +188,23 @@ namespace BusBus.Tests.UI
         public async Task TestDashboardViewCreationAndRouteViewLoading()
         {
             // Arrange
+            DashboardView? dashboardView = null;
             var tcs = new TaskCompletionSource<(bool created, bool routeViewLoaded, string details)>();
             Exception? testException = null;
+            bool routeViewLoaded = false;
+            string details = "";
 
             // Act - Create DashboardView on STA thread
-            var thread = new Thread(async () =>
+
+            var thread = new Thread(() =>
             {
                 try
                 {
                     using var scope = _serviceProvider!.CreateScope();
-                    var dashboardView = new DashboardView(scope.ServiceProvider);
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DashboardView>>();
+                    dashboardView = new DashboardView(scope.ServiceProvider, logger);
 
                     var created = false;
-                    var routeViewLoaded = false;
-                    var details = "";
 
                     // Force handle creation and show/hide to trigger Load event
                     var handle = dashboardView.Handle;
@@ -211,13 +214,14 @@ namespace BusBus.Tests.UI
                     if (created)
                     {
                         // Set up event handler for Load event
-                        dashboardView.Load += async (s, e) =>
+                        dashboardView.Load += DashboardView_LoadAsync;
+
+                        async void DashboardView_LoadAsync(object? s, EventArgs e)
                         {
                             try
                             {
                                 details += "Load event fired. ";
 
-                                // Wait for initialization to complete
                                 await Task.Delay(2000);
 
                                 // Check for route view components
@@ -256,7 +260,7 @@ namespace BusBus.Tests.UI
                                 details += $"Load event exception: {loadEx.Message}. ";
                                 tcs.SetResult((created, false, details));
                             }
-                        };
+                        }
 
                         // Show and immediately hide to trigger Load event
                         dashboardView.Show();
@@ -266,7 +270,7 @@ namespace BusBus.Tests.UI
                         Application.DoEvents();
 
                         // If Load event doesn't fire within reasonable time, timeout
-                        await Task.Delay(5000);
+                        Task.Delay(5000).Wait();
                         if (!tcs.Task.IsCompleted)
                         {
                             details += "Load event timeout. ";
@@ -290,23 +294,23 @@ namespace BusBus.Tests.UI
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
 
-            var (created, routeViewLoaded, details) = await tcs.Task;
+            var (created, routeViewLoaded2, details2) = await tcs.Task;
 
             // Assert
-            TestContext?.WriteLine($"Test details: {details}");
+            TestContext?.WriteLine($"Test details: {details2}");
 
             if (testException != null)
             {
                 TestContext?.WriteLine($"DashboardView test failed with exception: {testException}");
             }
 
-            Assert.IsTrue(created, $"DashboardView should be created successfully. Details: {details}");
+            Assert.IsTrue(created, $"DashboardView should be created successfully. Details: {details2}");
             TestContext?.WriteLine($"DashboardView created: {created}");
 
             // Note: Route view loading test is more lenient since it depends on timing
-            if (!routeViewLoaded)
+            if (!routeViewLoaded2)
             {
-                TestContext?.WriteLine($"Route view loading test inconclusive - may need more time or different approach. Details: {details}");
+                TestContext?.WriteLine($"Route view loading test inconclusive - may need more time or different approach. Details: {details2}");
             }
         }
 
@@ -387,7 +391,8 @@ namespace BusBus.Tests.UI
             var tcs = new TaskCompletionSource<bool>();
 
             var thread = new Thread(() =>
-            {                try
+            {
+                try
                 {
                     using var scope = _serviceProvider?.CreateScope();
                     var routeService = scope?.ServiceProvider.GetRequiredService<IRouteService>();
@@ -493,7 +498,7 @@ namespace BusBus.Tests.UI
 
                     // Verify AM/PM structure per BusBus Info
                     Assert.IsTrue(foundRoute.AMStartingMileage > 0, $"{expectedRoute} should have AM starting mileage");
-                    Assert.IsTrue(foundRoute.AMEndingMileage > foundRoute.AMStartingMileage, $"{expectedRoute} AM ending should be > starting");                    Assert.IsTrue(foundRoute.PMStartMileage >= foundRoute.AMEndingMileage, $"{expectedRoute} PM start should be >= AM end");
+                    Assert.IsTrue(foundRoute.AMEndingMileage > foundRoute.AMStartingMileage, $"{expectedRoute} AM ending should be > starting"); Assert.IsTrue(foundRoute.PMStartMileage >= foundRoute.AMEndingMileage, $"{expectedRoute} PM start should be >= AM end");
                     Assert.IsTrue(foundRoute.PMEndingMileage > foundRoute.PMStartMileage, $"{expectedRoute} PM ending should be > PM starting");
                 }
 
@@ -523,146 +528,114 @@ namespace BusBus.Tests.UI
         {
             // Test the complete dashboard startup with BusBus Info compliance
             var tcs = new TaskCompletionSource<(bool success, List<string> details)>();
-            var details = new List<string>();
-
-            var thread = new Thread(async () =>
+            var thread = new Thread(() =>
             {
+                var details = new List<string>();
+                bool loadEventFired = false;
+                bool routeViewVisible = false;
                 try
                 {
                     details.Add("Starting BusBus Info dashboard integration test");
-
                     using var scope = _serviceProvider!.CreateScope();
-                    var dashboardView = new DashboardView(scope.ServiceProvider);
-
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DashboardView>>();
+                    var dashboardView = new DashboardView(scope.ServiceProvider, logger);
                     // Force handle creation
                     var handle = dashboardView.Handle;
                     details.Add($"Dashboard handle created: {handle != IntPtr.Zero}");
-
                     if (handle != IntPtr.Zero)
                     {
-                        var loadEventFired = false;
-                        var routeViewVisible = false;
-
-                        dashboardView.Load += async (s, e) =>
+                        dashboardView.Load += (s, e) =>
                         {
                             try
                             {
                                 loadEventFired = true;
-                                details.Add("Dashboard Load event fired");
-
-                                // Wait for route view initialization
-                                await Task.Delay(3000);
-
-                                // Check for BusBus Info compliant UI elements
-                                await Task.Run(() =>
-                                {
-                                    dashboardView.Invoke(() =>
-                                    {
-                                        // Look for the main layout and route grid
-                                        foreach (Control control in dashboardView.Controls)
-                                        {
-                                            if (control is TableLayoutPanel mainLayout)
-                                            {
-                                                details.Add("Found main TableLayoutPanel");
-
-                                                // Check for side panel with route navigation
-                                                var sidePanelFound = false;
-                                                var contentPanelFound = false;
-                                                var crudPanelFound = false;
-                                                var statsPanelFound = false;
-
-                                                foreach (Control child in mainLayout.Controls)
-                                                {
-                                                    if (child is Panel panel)
-                                                    {
-                                                        // Side panel should be 250px wide per design
-                                                        if (panel.Width == 250 || panel.Bounds.Width == 250)
-                                                        {
-                                                            sidePanelFound = true;
-                                                            details.Add("Found side panel (250px width)");
-
-                                                            // Check for navigation buttons
-                                                            var routeButtonFound = false;
-                                                            var driverButtonFound = false;
-                                                            var vehicleButtonFound = false;
-
-                                                            foreach (Control sideControl in panel.Controls)
-                                                            {
-                                                                if (sideControl is Button btn)
-                                                                {
-                                                                    var btnText = btn.Text?.ToLower() ?? "";
-                                                                    if (btnText.Contains("route")) routeButtonFound = true;
-                                                                    if (btnText.Contains("driver")) driverButtonFound = true;
-                                                                    if (btnText.Contains("vehicle")) vehicleButtonFound = true;
-                                                                }
-                                                            }
-
-                                                            details.Add($"Navigation buttons - Routes: {routeButtonFound}, Drivers: {driverButtonFound}, Vehicles: {vehicleButtonFound}");
-                                                        }
-                                                        else if (panel.Dock == DockStyle.Fill || panel.Width > 250)
-                                                        {
-                                                            contentPanelFound = true;
-                                                            details.Add("Found content panel");
-
-                                                            // Check for data grid in content panel
-                                                            foreach (Control contentControl in panel.Controls)
-                                                            {
-                                                                var controlType = contentControl.GetType().Name;
-                                                                if (controlType.Contains("DataGrid") || controlType.Contains("DynamicDataGridView"))
-                                                                {
-                                                                    routeViewVisible = contentControl.Visible;
-                                                                    details.Add($"Found data grid: {controlType}, Visible: {routeViewVisible}");
-                                                                }
-                                                            }
-                                                        }
-                                                        else if (panel.Height <= 120 && panel.Height > 50)
-                                                        {
-                                                            crudPanelFound = true;
-                                                            details.Add("Found CRUD panel");
-                                                        }
-                                                        else if (panel.Height <= 80)
-                                                        {
-                                                            statsPanelFound = true;
-                                                            details.Add("Found stats panel");
-                                                        }
-                                                    }
-                                                }
-
-                                                details.Add($"UI Layout - Side: {sidePanelFound}, Content: {contentPanelFound}, CRUD: {crudPanelFound}, Stats: {statsPanelFound}");
-                                            }
-                                        }
-                                    });
-                                });
-
-                                var overallSuccess = loadEventFired && routeViewVisible;
-                                tcs.SetResult((overallSuccess, details));
+                                details.Add("Load event fired");
                             }
-                            catch (Exception loadEx)
+                            catch (Exception ex)
                             {
-                                details.Add($"Load event error: {loadEx.Message}");
-                                tcs.SetResult((false, details));
+                                details.Add($"Exception in Load event: {ex.Message}");
                             }
                         };
-
-                        // Trigger Load event
                         dashboardView.Show();
                         dashboardView.Hide();
                         Application.DoEvents();
-
-                        // Wait for load or timeout
-                        await Task.Delay(8000);
-                        if (!tcs.Task.IsCompleted)
+                        Thread.Sleep(3000); // Wait for load event
+                        // Look for the main layout and route grid
+                        foreach (Control control in dashboardView.Controls)
                         {
-                            details.Add("Load event timeout");
-                            tcs.SetResult((false, details));
+                            if (control is TableLayoutPanel mainLayout)
+                            {
+                                details.Add("Found main TableLayoutPanel");
+                                // Check for side panel with route navigation
+                                var sidePanelFound = false;
+                                var contentPanelFound = false;
+                                var crudPanelFound = false;
+                                var statsPanelFound = false;
+                                foreach (Control child in mainLayout.Controls)
+                                {
+                                    if (child is Panel panel)
+                                    {
+                                        // Side panel should be 250px wide per design
+                                        if (panel.Width == 250 || panel.Bounds.Width == 250)
+                                        {
+                                            sidePanelFound = true;
+                                            details.Add("Found side panel (250px width)");
+                                            // Check for navigation buttons
+                                            var routeButtonFound = false;
+                                            var driverButtonFound = false;
+                                            var vehicleButtonFound = false;
+                                            foreach (Control sideControl in panel.Controls)
+                                            {
+                                                if (sideControl is Button btn)
+                                                {
+                                                    var btnText = btn.Text?.ToLower() ?? "";
+                                                    if (btnText.Contains("route")) routeButtonFound = true;
+                                                    if (btnText.Contains("driver")) driverButtonFound = true;
+                                                    if (btnText.Contains("vehicle")) vehicleButtonFound = true;
+                                                }
+                                            }
+                                            details.Add($"Navigation buttons - Routes: {routeButtonFound}, Drivers: {driverButtonFound}, Vehicles: {vehicleButtonFound}");
+                                        }
+                                        else if (panel.Dock == DockStyle.Fill || panel.Width > 250)
+                                        {
+                                            contentPanelFound = true;
+                                            details.Add("Found content panel");
+                                            // Check for data grid in content panel
+                                            foreach (Control contentControl in panel.Controls)
+                                            {
+                                                var controlType = contentControl.GetType().Name;
+                                                if (controlType.Contains("DataGrid") || controlType.Contains("DynamicDataGridView"))
+                                                {
+                                                    routeViewVisible = contentControl.Visible;
+                                                    details.Add($"Found data grid: {controlType}, Visible: {routeViewVisible}");
+                                                }
+                                            }
+                                        }
+                                        else if (panel.Height <= 120 && panel.Height > 50)
+                                        {
+                                            crudPanelFound = true;
+                                            details.Add("Found CRUD panel");
+                                        }
+                                        else if (panel.Height <= 80)
+                                        {
+                                            statsPanelFound = true;
+                                            details.Add("Found stats panel");
+                                        }
+                                    }
+                                }
+                                details.Add($"UI Layout - Side: {sidePanelFound}, Content: {contentPanelFound}, CRUD: {crudPanelFound}, Stats: {statsPanelFound}");
+                            }
                         }
+                        // Wait for load or timeout
+                        Thread.Sleep(5000);
                     }
                     else
                     {
-                        tcs.SetResult((false, details));
+                        details.Add("Dashboard handle not created");
                     }
-
                     dashboardView.Dispose();
+                    var overallSuccess = loadEventFired && routeViewVisible;
+                    tcs.SetResult((overallSuccess, details));
                 }
                 catch (Exception ex)
                 {
@@ -670,23 +643,18 @@ namespace BusBus.Tests.UI
                     tcs.SetResult((false, details));
                 }
             });
-
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
-
             var (success, testDetails) = await tcs.Task;
-
             // Log all details
             foreach (var detail in testDetails)
             {
                 TestContext?.WriteLine(detail);
             }
-
             // Assertions
             Assert.IsTrue(testDetails.Any(d => d.Contains("Dashboard handle created: True")), "Dashboard should be created");
             Assert.IsTrue(testDetails.Any(d => d.Contains("Load event fired")), "Load event should fire");
             Assert.IsTrue(testDetails.Any(d => d.Contains("Found main TableLayoutPanel")), "Main layout should be found");
-
             // Note: Route view visibility test is more lenient due to timing dependencies
             TestContext?.WriteLine($"Overall BusBus Info dashboard integration test: {(success ? "SUCCESS" : "PARTIAL SUCCESS")}");
         }

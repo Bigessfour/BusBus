@@ -32,7 +32,7 @@
     "csharp.inlayHints.enableInlayHintsForParameters": true,
 
     // Language server settings - using modern .NET language server
-    "dotnet.server.useOmnisharp": false,
+    "dotnet.server.useOmnisharp": true,
     "omnisharp.enableRoslynAnalyzers": true,
     "omnisharp.enableEditorConfigSupport": true,
     "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",

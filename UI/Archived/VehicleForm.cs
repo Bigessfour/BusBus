@@ -15,7 +15,7 @@ namespace BusBus
 {
     public partial class VehicleForm : BaseForm
     {
-        public static bool SuppressDialogsForTests { get; set; } = false;
+        public static bool SuppressDialogsForTests { get; set; }
 
         private DatabaseManager dbManager;
         private int? vehicleId;

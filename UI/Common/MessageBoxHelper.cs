@@ -11,7 +11,7 @@ namespace BusBus.UI.Common
         /// <summary>
         /// Controls whether to show message boxes or return default values
         /// </summary>
-        public static bool SuppressAllDialogs { get; set; } = false;
+        public static bool SuppressAllDialogs { get; set; }
 
         /// <summary>
         /// Shows a message box or returns a default value if suppressed

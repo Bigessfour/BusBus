@@ -28,7 +28,7 @@ namespace BusBus.UI
 
         public Vehicle? Vehicle => _vehicle;
         public bool IsSaved { get; private set; }
-        public static bool SuppressDialogsForTests { get; set; } = false;
+        public static bool SuppressDialogsForTests { get; set; }
 
         public VehiclePanel(IVehicleService vehicleService, Vehicle? vehicle = null)
         {

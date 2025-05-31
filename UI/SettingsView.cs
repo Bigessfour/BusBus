@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.Data;
 using BusBus.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,7 @@ namespace BusBus.UI
         private Button _updateDatabaseButton;
         private Button _testConnectionButton;
         private TextBox _statusTextBox;
-        private Label _connectionStatusLabel;        private Label _migrationStatusLabel;
+        private Label _connectionStatusLabel; private Label _migrationStatusLabel;
         private ProgressBar _progressBar;
 
         // LoggerMessage delegates for performance
@@ -36,7 +37,7 @@ namespace BusBus.UI
 
         private static readonly Action<ILogger, Exception?> s_logSchemaFileNotFound =
             LoggerMessage.Define(LogLevel.Warning, new EventId(3, "SchemaFileNotFound"),
-                "Schema file not found at expected location");        private static readonly Action<ILogger, Exception?> s_logSchemaUpdateCancelled =
+                "Schema file not found at expected location"); private static readonly Action<ILogger, Exception?> s_logSchemaUpdateCancelled =
             LoggerMessage.Define(LogLevel.Warning, new EventId(4, "SchemaUpdateCancelled"),
                 "Database schema update was cancelled");
 
@@ -57,6 +58,11 @@ namespace BusBus.UI
         public Control Control => _panel;
 
 #pragma warning disable CS0414, CS0067 // Events are assigned but never used, required by interface
+        // Required by IView
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
+
+        // Existing events (possibly used internally)
         public event EventHandler<NavigationEventArgs> NavigationRequested = null!;
         public event EventHandler<StatusEventArgs> StatusUpdated = null!;
 #pragma warning restore CS0414, CS0067
@@ -99,7 +105,7 @@ namespace BusBus.UI
                 AutoSize = true,
                 Location = new Point(20, 20),
                 BackColor = Color.Transparent
-            };            _connectionStatusLabel = new Label
+            }; _connectionStatusLabel = new Label
             {
                 Text = "Connection Status: Checking...",
                 Font = ThemeManager.CurrentTheme.CardFont,
@@ -107,7 +113,7 @@ namespace BusBus.UI
                 AutoSize = true,
                 Location = new Point(20, 60),
                 BackColor = Color.Transparent
-            };            _migrationStatusLabel = new Label
+            }; _migrationStatusLabel = new Label
             {
                 Text = "Migration Status: Checking...",
                 Font = ThemeManager.CurrentTheme.CardFont,
@@ -115,7 +121,7 @@ namespace BusBus.UI
                 AutoSize = true,
                 Location = new Point(20, 85),
                 BackColor = Color.Transparent
-            };            _testConnectionButton = new Button
+            }; _testConnectionButton = new Button
             {
                 Text = "Test Database Connection",
                 Size = new Size(200, 35),
@@ -125,7 +131,7 @@ namespace BusBus.UI
                 FlatStyle = FlatStyle.Flat,
                 UseVisualStyleBackColor = false
             };
-            _testConnectionButton.Click += TestConnectionButton_Click;            _updateDatabaseButton = new Button
+            _testConnectionButton.Click += TestConnectionButton_Click; _updateDatabaseButton = new Button
             {
                 Text = "Update Database Schema",
                 Size = new Size(200, 35),
@@ -172,7 +178,8 @@ namespace BusBus.UI
                 _progressBar,
                 _statusTextBox
             });
-        }        private static void SetupLayout()
+        }
+        private static void SetupLayout()
         {
             // Additional layout setup if needed
         }
@@ -213,7 +220,8 @@ namespace BusBus.UI
                 }
             }
             catch (Exception ex)
-            {                _connectionStatusLabel.Text = "Connection Status: ✗ Error";
+            {
+                _connectionStatusLabel.Text = "Connection Status: ✗ Error";
                 _connectionStatusLabel.ForeColor = Color.Red;
                 AppendStatus($"✗ Connection test error: {ex.Message}");
                 if (_logger != null)
@@ -239,11 +247,11 @@ namespace BusBus.UI
                 AppendStatus("Starting database schema update...");
 
                 // Read the SQL script
-                var scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fix-database-schema.sql");
+                var scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "scripts", "fix-database-schema.sql");
                 if (!File.Exists(scriptPath))
                 {
                     AppendStatus($"✗ SQL script not found at: {scriptPath}");
-                    MessageBox.Show("Database update script not found. Please ensure fix-database-schema.sql is in the application directory.",
+                    MessageBox.Show("Database update script not found. Please ensure scripts/fix-database-schema.sql is in the application directory.",
                         "Script Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -275,7 +283,8 @@ namespace BusBus.UI
                 await RefreshMigrationStatusAsync();
             }
             catch (Exception ex)
-            {                AppendStatus($"✗ Schema update failed: {ex.Message}");
+            {
+                AppendStatus($"✗ Schema update failed: {ex.Message}");
                 if (_logger != null)
                     s_logSchemaUpdateError(_logger, ex);
 
@@ -348,7 +357,8 @@ namespace BusBus.UI
                 }
             }
             catch (Exception ex)
-            {                _migrationStatusLabel.Text = "Migration Status: Unknown";
+            {
+                _migrationStatusLabel.Text = "Migration Status: Unknown";
                 _migrationStatusLabel.ForeColor = Color.Gray;
                 if (_logger != null)
                     s_logMigrationStatusCheckFailed(_logger, ex);
@@ -382,11 +392,13 @@ namespace BusBus.UI
                     {
                         // Keep status colors as they are
                         continue;
-                    }                    label.Font = control.Name?.Contains("title") == true ?
+                    }
+                    label.Font = control.Name?.Contains("title") == true ?
                         ThemeManager.CurrentTheme.HeadlineFont : ThemeManager.CurrentTheme.CardFont;
                 }
                 else if (control is Button button)
-                {                    if (button == _updateDatabaseButton)
+                {
+                    if (button == _updateDatabaseButton)
                     {
                         button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
                     }
@@ -402,5 +414,16 @@ namespace BusBus.UI
         public Task ActivateAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeactivateAsync() => Task.CompletedTask;
         public void Dispose() => _panel?.Dispose();
+
+        // Required by IView
+        public void Show()
+        {
+            _panel?.Show();
+        }
+
+        public void Hide()
+        {
+            _panel?.Hide();
+        }
     }
 }

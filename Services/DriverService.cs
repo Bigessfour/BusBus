@@ -15,6 +15,10 @@ namespace BusBus.Services
 {
     public class DriverService : IDriverService
     {
+        public async Task<List<Driver>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await GetAllDriversAsync(cancellationToken);
+        }
         private readonly IServiceProvider _serviceProvider;
         public DriverService(IServiceProvider serviceProvider)
         {

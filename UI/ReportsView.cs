@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.Services;
 
 namespace BusBus.UI
@@ -16,6 +17,11 @@ namespace BusBus.UI
         public Control Control => _panel;
 
 #pragma warning disable CS0414, CS0067 // Events are assigned but never used, required by interface
+        // Required by IView
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
+
+        // Existing events (possibly used internally)
         public event EventHandler<NavigationEventArgs> NavigationRequested = null!;
         public event EventHandler<StatusEventArgs> StatusUpdated = null!;
 #pragma warning restore CS0414, CS0067
@@ -37,5 +43,16 @@ namespace BusBus.UI
         public Task ActivateAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeactivateAsync() => Task.CompletedTask;
         public void Dispose() => _panel?.Dispose();
+
+        // Required by IView
+        public void Show()
+        {
+            _panel?.Show();
+        }
+
+        public void Hide()
+        {
+            _panel?.Hide();
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace BusBus.UI
     public static class VisualDebugHelper
     {
         // Whether visual debugging is enabled
-        private static bool _enabled = false;
+        private static bool _enabled;
 
         /// <summary>
         /// Enables or disables visual debugging features

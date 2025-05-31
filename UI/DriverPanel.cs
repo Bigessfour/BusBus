@@ -22,7 +22,7 @@ namespace BusBus.UI
 
         public Driver? Driver => _driver;
         public bool IsSaved { get; private set; }
-        public static bool SuppressDialogsForTests { get; set; } = false;
+        public static bool SuppressDialogsForTests { get; set; }
 
         public DriverPanel(IDriverService driverService, Driver? driver = null)
         {

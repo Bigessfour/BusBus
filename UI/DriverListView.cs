@@ -1,8 +1,13 @@
+// Suppress possible null reference warning for state argument
+#pragma warning disable CS8604 // Possible null reference argument
+// Suppress unused event warnings for this view
+#pragma warning disable CS0067 // Event is never used
 #nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.Services;
 using BusBus.UI.Common;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,8 +24,15 @@ namespace BusBus.UI
         public string Title => "Driver Management";
         public Control? Control => _panel;
 
+        // Required by IView
+        public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        public event EventHandler<StatusEventArgs>? StatusChanged;
+
+        // Existing events (possibly used internally)
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
-        public event EventHandler<StatusEventArgs>? StatusUpdated; public DriverListView(IServiceProvider serviceProvider)
+        public event EventHandler<StatusEventArgs>? StatusUpdated;
+
+        public DriverListView(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
@@ -39,11 +51,16 @@ namespace BusBus.UI
                 _panel = new DriverListPanel(driverService);
 
                 // Forward status events from panel to dashboard
-                _panel.StatusUpdated += (sender, e) => StatusUpdated?.Invoke(this, e);
+                _panel.StatusUpdated += (sender, e) =>
+                {
+                    StatusUpdated?.Invoke(this, e);
+                    StatusChanged?.Invoke(this, e);
+                };
                 _panel.DriverEditRequested += (sender, e) =>
                 {
                     // Could navigate to driver edit view if implemented
                     NavigationRequested?.Invoke(this, new NavigationEventArgs("driver-edit", e.Entity));
+                    NavigationChanged?.Invoke(this, new NavigationEventArgs("driver-edit", e.Entity));
                 };
             }
 
@@ -60,14 +77,40 @@ namespace BusBus.UI
             return _panel?.GetState();
         }
 
-        public void RestoreState(object state)
+
+        // Required by IStatefulView
+        public void SetState(object? state)
         {
             _panel?.RestoreState(state);
         }
 
-        public void SaveState(object state)
+        // Optional: keep existing methods for compatibility
+
+        public void RestoreState(object? state)
         {
-            _panel?.SaveState(state);
+            if (state != null && _panel != null)
+            {
+                _panel.RestoreState(state);
+            }
+        }
+
+        public static void SaveState(object? state)
+        {
+            if (state != null)
+            {
+                DriverListPanel.SaveState(state);
+            }
+        }
+
+        // Required by IView
+        public void Show()
+        {
+            _panel?.Show();
+        }
+
+        public void Hide()
+        {
+            _panel?.Hide();
         }
 
         public void Dispose()

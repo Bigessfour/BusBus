@@ -21,7 +21,7 @@ namespace BusBus.Utils
         private static ILoggerFactory? _loggerFactory;
         private static LogLevel _minimumLogLevel = LogLevel.Information;
         private static bool _enableFileLogging = true;
-        private static bool _initialized = false;
+        private static bool _initialized;
         private static string _logDirectory = string.Empty;
         private static readonly Dictionary<string, List<LogEntry>> _inMemoryLogs = new Dictionary<string, List<LogEntry>>();
         private static readonly List<LogEntry> _recentLogs = new List<LogEntry>();
@@ -161,7 +161,7 @@ namespace BusBus.Utils
             _logProcessorCount(logger, Environment.ProcessorCount, null);
             _logSeparatorLine(logger, null);
         }
-          /// <summary>
+        /// <summary>
         /// Log a UI operation for debugging thread issues
         /// </summary>
         public static void LogUIOperation(ILogger logger, string component, string operation)
@@ -182,7 +182,7 @@ namespace BusBus.Utils
                 _logUIWarning(logger, component, operation, threadId, null);
             }
         }
-          /// <summary>
+        /// <summary>
         /// Get the most recent log entries
         /// </summary>
         public static ReadOnlyCollection<LogEntry> GetRecentLogs(int maxEntries = 100)
@@ -247,7 +247,7 @@ namespace BusBus.Utils
                 Console.WriteLine($"Error saving logs to file: {ex.Message}");
             }
         }
-          /// <summary>
+        /// <summary>
         /// Filter logs by level and category
         /// </summary>
         public static ReadOnlyCollection<LogEntry> FilterLogs(
@@ -352,7 +352,7 @@ namespace BusBus.Utils
                 return logger;
             }
         }
-          /// <summary>
+        /// <summary>
         /// Get or create a logger for a specific type
         /// </summary>
         public static ILogger GetLogger(Type type)
@@ -360,7 +360,7 @@ namespace BusBus.Utils
             ArgumentNullException.ThrowIfNull(type);
             return GetLogger(type.FullName ?? type.Name);
         }
-          /// <summary>
+        /// <summary>
         /// Simple console logger for when the system isn't initialized
         /// </summary>
         private class ConsoleLogger : ILogger

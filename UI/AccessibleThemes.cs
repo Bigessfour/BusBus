@@ -14,7 +14,7 @@ namespace BusBus.UI
         private static readonly Action<ILogger, bool, Exception?> _logHighContrastModeLight =
             LoggerMessage.Define<bool>(LogLevel.Information, new EventId(1, "HighContrastModeLight"),
             "High contrast mode {Enabled} for Light theme");
-        private bool _isHighContrastMode = false;
+        private bool _isHighContrastMode;
         private readonly ILogger? _logger;
 
         public AccessibleLightTheme(ILogger? logger = null)
@@ -85,7 +85,7 @@ namespace BusBus.UI
         private static readonly Action<ILogger, bool, Exception?> _logHighContrastModeDark =
             LoggerMessage.Define<bool>(LogLevel.Information, new EventId(2, "HighContrastModeDark"),
             "High contrast mode {Enabled} for Dark theme");
-        private bool _isHighContrastMode = false;
+        private bool _isHighContrastMode;
         private readonly ILogger? _logger;
 
         public AccessibleDarkTheme(ILogger? logger = null)

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BusBus.UI.Interfaces;
 using BusBus.UI.Common;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +31,7 @@ namespace BusBus.UI.Common
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1;
-        private int _totalRecords = 0;
+        private int _totalRecords;
         private List<T> _currentData = new();
 
         private CancellationTokenSource _cancellationTokenSource = new();
@@ -180,7 +181,7 @@ namespace BusBus.UI.Common
 
                 using var combinedToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cancellationTokenSource.Token);
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loading {_configuration.PluralName}..."));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Info, $"Loading {_configuration.PluralName}..."));
 
                 // Load data and total count in parallel
                 var dataTask = _configuration.LoadDataAsync(_currentPage, _pageSize, combinedToken.Token);
@@ -196,7 +197,7 @@ namespace BusBus.UI.Common
                 _dataGrid.DataSource = _currentData;
                 UpdatePaginationControls();
 
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded {_currentData.Count} {_configuration.PluralName}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Success, $"Loaded {_currentData.Count} {_configuration.PluralName}"));
 
                 _logger.LogDebug("Loaded {Count} {EntityType} records (Page {Page} of {TotalPages})",
                     _currentData.Count, _configuration.PluralName, _currentPage, _totalPages);
@@ -208,7 +209,7 @@ namespace BusBus.UI.Common
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading {EntityType} data", _configuration.PluralName);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading {_configuration.PluralName}: {ex.Message}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error loading {_configuration.PluralName}: {ex.Message}"));
             }
         }
 
@@ -245,13 +246,13 @@ namespace BusBus.UI.Common
             {
                 var entity = _currentData[e.RowIndex];
                 await _configuration.UpdateAsync(entity);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"{_configuration.ViewName} updated successfully"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Success, $"{_configuration.ViewName} updated successfully"));
                 EntityUpdateRequested?.Invoke(this, entity);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating {EntityType}", _configuration.ViewName);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating {_configuration.ViewName}: {ex.Message}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error updating {_configuration.ViewName}: {ex.Message}"));
                 await LoadDataAsync(); // Refresh to revert changes
             }
         }
@@ -301,13 +302,13 @@ namespace BusBus.UI.Common
             try
             {
                 await _configuration.CreateAsync(entity);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"{_configuration.ViewName} created successfully"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Success, $"{_configuration.ViewName} created successfully"));
                 await LoadDataAsync(); // Refresh to show new entity
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating {EntityType}", _configuration.ViewName);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error creating {_configuration.ViewName}: {ex.Message}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error creating {_configuration.ViewName}: {ex.Message}"));
             }
         }
 
@@ -321,20 +322,21 @@ namespace BusBus.UI.Common
                 var success = await _configuration.DeleteAsync(entity);
                 if (success)
                 {
-                    StatusUpdated?.Invoke(this, new StatusEventArgs($"{_configuration.ViewName} deleted successfully"));
+                    StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Success, $"{_configuration.ViewName} deleted successfully"));
                     await LoadDataAsync(); // Refresh to remove deleted entity
                 }
                 else
                 {
-                    StatusUpdated?.Invoke(this, new StatusEventArgs($"Failed to delete {_configuration.ViewName}"));
+                    StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Failed to delete {_configuration.ViewName}"));
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting {EntityType}", _configuration.ViewName);
-                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting {_configuration.ViewName}: {ex.Message}"));
+                StatusUpdated?.Invoke(this, new StatusEventArgs(BusBus.UI.Interfaces.StatusType.Error, $"Error deleting {_configuration.ViewName}: {ex.Message}"));
             }
-        }        protected override void Dispose(bool disposing)
+        }
+        protected override void Dispose(bool disposing)
         {
             if (disposing)
             {

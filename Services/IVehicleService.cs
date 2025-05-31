@@ -13,6 +13,12 @@ namespace BusBus.Services
     public interface IVehicleService : ICrudService<Vehicle, Guid>
     {
         /// <summary>
+        /// Gets all vehicles (alias for GetAllVehiclesAsync)
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token</param>
+        /// <returns>A list of vehicles</returns>
+        Task<List<Vehicle>> GetAllAsync(CancellationToken cancellationToken = default);
+        /// <summary>
         /// Gets all vehicles
         /// </summary>
         /// <param name="cancellationToken">Optional cancellation token</param>

@@ -271,7 +271,7 @@ namespace BusBus.UI
         /// Determines if reduced transparency mode should be used for better accessibility
         /// Can be overridden by user settings or system accessibility preferences
         /// </summary>
-        public virtual bool UseReducedTransparency { get; set; } = false;
+        public virtual bool UseReducedTransparency { get; set; }
 
         /// <summary>
         /// Gets glow color for glassmorphism edge effects and highlights
