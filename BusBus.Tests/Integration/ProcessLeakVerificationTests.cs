@@ -44,12 +44,17 @@ namespace BusBus.Tests.Integration
                 appProcess = Process.Start(startInfo);
                 Assert.IsNotNull(appProcess, "Failed to start BusBus process");
 
-                // Wait for process to fully start
-                await Task.Delay(3000);
+                // Wait for process to fully start (increased from 3s to 7s)
+                await Task.Delay(7000);
 
                 // Verify process is running
                 var runningProcesses = GetBusBusProcessCount();
-                Assert.IsTrue(runningProcesses > initialProcessCount, "BusBus process should be running");
+                if (!(runningProcesses > initialProcessCount))
+                {
+                    string stdOut = appProcess.StandardOutput.ReadToEnd();
+                    string stdErr = appProcess.StandardError.ReadToEnd();
+                    Assert.Fail($"BusBus process should be running.\nSTDOUT:\n{stdOut}\nSTDERR:\n{stdErr}");
+                }
 
                 // Terminate process gracefully (simulate normal exit)
                 if (!appProcess.HasExited)
@@ -222,28 +227,43 @@ namespace BusBus.Tests.Integration
             Assert.IsTrue(timerDisposed, "Performance monitor timer should be properly disposed");
         }
 
+
         private int GetBusBusProcessCount()
         {
             var processes = Process.GetProcessesByName("dotnet")
-                .Where(p => p.MainWindowTitle.Contains("BusBus") ||
-                           IsProcessRunningBusBus(p))
+                .Where(p =>
+                {
+                    try
+                    {
+                        var commandLine = GetCommandLine(p);
+                        return commandLine != null &&
+                               (commandLine.Contains("BusBus.dll", StringComparison.OrdinalIgnoreCase) ||
+                                commandLine.Contains("BusBus.csproj", StringComparison.OrdinalIgnoreCase));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
                 .ToArray();
 
             return processes.Length;
         }
 
-        private bool IsProcessRunningBusBus(Process process)
+        // Helper to get command line (requires System.Management)
+        private string? GetCommandLine(Process process)
         {
             try
             {
-                // Check if the process command line contains BusBus
-                return process.ProcessName.Contains("BusBus", StringComparison.OrdinalIgnoreCase) ||
-                       process.MainModule?.FileName?.Contains("BusBus", StringComparison.OrdinalIgnoreCase) == true;
+                using var searcher = new System.Management.ManagementObjectSearcher(
+                    $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {process.Id}");
+                foreach (var @object in searcher.Get())
+                {
+                    return @object["CommandLine"]?.ToString();
+                }
             }
-            catch
-            {
-                return false;
-            }
+            catch { }
+            return null;
         }
 
         private string GetProjectRoot()

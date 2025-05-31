@@ -208,7 +208,7 @@ namespace BusBus.Utils
         {
             try
             {
-                _logger?.LogInformation("Searching for lingering dotnet processes...");
+                _logger?.LogInformation("[ProcessMonitor] Searching for lingering dotnet processes...");
 
                 var currentProcessId = Environment.ProcessId;
                 var currentProcess = Process.GetCurrentProcess();
@@ -220,23 +220,29 @@ namespace BusBus.Utils
                     .ToList();
 
                 int killedCount = 0;
+                var attemptedProcessIds = new HashSet<int>();
 
                 foreach (var process in dotnetProcesses)
                 {
+                    if (attemptedProcessIds.Contains(process.Id))
+                        continue;
+                    attemptedProcessIds.Add(process.Id);
+
                     try
                     {
                         bool shouldKill = false;
+                        string reason = "";
 
                         if (onlyRelatedToThisApp)
                         {
                             // Try to determine if this process is related to our application
-                            // This is a best-effort approach
                             try
                             {
                                 // Check if started around the same time as our application
                                 if (Math.Abs((process.StartTime - startupTime).TotalMinutes) < 5)
                                 {
                                     shouldKill = true;
+                                    reason += $"StartTime within 5 min; ";
                                 }
 
                                 // Try to get command line (requires admin on some systems)
@@ -245,11 +251,12 @@ namespace BusBus.Utils
                                     (cmdLine.Contains("BusBus") || cmdLine.Contains("busbus")))
                                 {
                                     shouldKill = true;
+                                    reason += $"CmdLine match: {cmdLine}; ";
                                 }
                             }
-                            catch
+                            catch (Exception ex)
                             {
-                                // If we can't determine relation, err on the side of caution
+                                _logger?.LogWarning(ex, "[ProcessMonitor] Could not determine relation for process {ProcessId}", process.Id);
                                 shouldKill = false;
                             }
                         }
@@ -257,27 +264,48 @@ namespace BusBus.Utils
                         {
                             // Kill all dotnet processes except current one
                             shouldKill = true;
+                            reason += "Not filtering by app; ";
                         }
+
                         if (shouldKill && process.Id != Environment.ProcessId)
                         {
-                            _logger?.LogWarning("Killing lingering process: ID={ProcessId}, Started={StartTime}",
-                                process.Id, process.StartTime);
+                            _logger?.LogWarning("[ProcessMonitor] Killing lingering process: ID={ProcessId}, Started={StartTime}, Reason={Reason}",
+                                process.Id, process.StartTime, reason);
 
-                            process.Kill(true); // Kill entire process tree
-                            killedCount++;
+                            if (!process.HasExited)
+                            {
+                                process.Kill(true); // Kill entire process tree
+                                killedCount++;
+                            }
+                            else
+                            {
+                                _logger?.LogInformation("[ProcessMonitor] Process {ProcessId} already exited before kill attempt.", process.Id);
+                            }
                         }
+                        else
+                        {
+                            _logger?.LogInformation("[ProcessMonitor] Skipping process {ProcessId} (not related or already handled).", process.Id);
+                        }
+                    }
+                    catch (System.ComponentModel.Win32Exception ex)
+                    {
+                        _logger?.LogError(ex, "[ProcessMonitor] Win32 error killing process {ProcessId}", process.Id);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        _logger?.LogError(ex, "[ProcessMonitor] Process {ProcessId} may have already exited.", process.Id);
                     }
                     catch (Exception ex)
                     {
-                        _logger?.LogError(ex, "Error killing process {ProcessId}", process.Id);
+                        _logger?.LogError(ex, "[ProcessMonitor] Error killing process {ProcessId}", process.Id);
                     }
                 }
 
-                _logger?.LogInformation("Killed {Count} lingering processes", killedCount);
+                _logger?.LogInformation("[ProcessMonitor] Killed {Count} lingering processes", killedCount);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error in KillLingeringProcesses");
+                _logger?.LogError(ex, "[ProcessMonitor] Error in KillLingeringProcesses");
             }
         }
 
