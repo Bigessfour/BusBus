@@ -138,6 +138,14 @@ All dependencies use compatible open-source licenses:
 - Loading indicator and robust error handling
 - All obsolete designer files removed; codebase streamlined
 
+### Process Management & Testing Improvements (May 2025)
+
+- Refactored process shutdown and cleanup logic to prevent repeated or unnecessary process kills
+- Improved diagnostics and error handling for process management
+- Resolved integration test failures related to process leaks and shutdown
+- All integration and unit tests now pass cleanly
+- Best practices for process monitoring and test isolation documented in code and test suite
+
 ## Build Status
 
 To build and test:
