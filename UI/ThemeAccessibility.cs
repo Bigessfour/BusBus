@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace BusBus.UI
+namespace BusBus.UI.Core
 {
     /// <summary>
     /// Interface for themes that support accessibility features
@@ -158,3 +158,4 @@ namespace BusBus.UI
         }
     }
 }
+// File removed. See UI/Core/ThemeAccessibility.cs for the canonical implementation.

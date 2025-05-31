@@ -17,7 +17,7 @@ namespace BusBus.UI.Common
     /// </summary>
     /// <typeparam name="T">The entity type</typeparam>
     /// <typeparam name="TKey">The primary key type</typeparam>
-    public class GenericDataGridPanel<T, TKey> : ThemeableControl, IDisplayable where T : class
+    public class GenericDataGridPanel<T, TKey> : UserControl, IDisplayable where T : class
     {
         private readonly GenericCrudHelper<T, TKey> _crudHelper;
         private readonly Func<T, TKey> _getIdFunc;
@@ -86,9 +86,9 @@ namespace BusBus.UI.Common
 
         private void InitializeComponents()
         {
-            this.Dock = DockStyle.Fill;
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            this.Padding = new Padding(0);
+            Dock = DockStyle.Fill;
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            Padding = new Padding(0);
 
             // Title
             _titleLabel = new Label
@@ -211,8 +211,8 @@ namespace BusBus.UI.Common
             mainContainer.Controls.Add(_dataGrid, 0, 1);
             mainContainer.Controls.Add(paginationPanel, 0, 2);
 
-            this.Controls.Add(_titleLabel);
-            this.Controls.Add(mainContainer);
+            Controls.Add(_titleLabel);
+            Controls.Add(mainContainer);
         }
 
         private static Button CreateButton(string text, string tooltip)
@@ -357,7 +357,7 @@ namespace BusBus.UI.Common
         {
             try
             {
-                this.Cursor = Cursors.WaitCursor;
+                Cursor = Cursors.WaitCursor;
 
                 // Load total count
                 _totalItems = await _crudHelper.GetEntitiesCountAsync();
@@ -382,12 +382,12 @@ namespace BusBus.UI.Common
             }
             finally
             {
-                this.Cursor = Cursors.Default;
+                Cursor = Cursors.Default;
             }
         }
-        protected override void ApplyTheme()
+        protected virtual void ApplyTheme()
         {
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
             _titleLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
             _pageInfoLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
 
@@ -398,7 +398,7 @@ namespace BusBus.UI.Common
             }
         }
 
-        public override void Render(Control container)
+        public virtual void Render(Control container)
         {
             ArgumentNullException.ThrowIfNull(container);
             container.Controls.Clear();
@@ -414,6 +414,11 @@ namespace BusBus.UI.Common
                 _cancellationTokenSource?.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        void IDisplayable.RefreshTheme()
+        {
+            throw new NotImplementedException();
         }
     }
 }

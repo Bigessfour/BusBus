@@ -15,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using BusBus.DataAccess;
-using BusBus.UI.Common;
+using BusBus.UI.Core;
 using BusBus.Utils;
 using System.Text.RegularExpressions;
 using System.Linq;
@@ -48,14 +48,14 @@ namespace BusBus.UI
 
         private void InitializeComponent()
         {
-            this.SuspendLayout();
+            SuspendLayout();
 
             // Form properties
-            this.Text = "BusBus Debug Console";
-            this.Size = new Size(900, 700); // Increased default size
-            this.MinimumSize = new Size(800, 600); // Increased minimum size
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Icon = SystemIcons.Information;            // Output text box
+            Text = "BusBus Debug Console";
+            Size = new Size(900, 700); // Increased default size
+            MinimumSize = new Size(800, 600); // Increased minimum size
+            StartPosition = FormStartPosition.CenterScreen;
+            Icon = SystemIcons.Information;            // Output text box
             _outputTextBox = new TextBox
             {
                 Multiline = true,
@@ -178,11 +178,11 @@ namespace BusBus.UI
             // Add flow panel to control panel
             controlPanel.Controls.Add(buttonFlow);
 
-            this.Controls.Add(_outputTextBox);
-            this.Controls.Add(controlPanel);
-            this.Controls.Add(_statusLabel);
+            Controls.Add(_outputTextBox);
+            Controls.Add(controlPanel);
+            Controls.Add(_statusLabel);
 
-            this.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         private void InitializeDebugConsole()
@@ -314,7 +314,7 @@ namespace BusBus.UI
                     Task.Delay(1000).Wait(); // Simulate work
 
                     // Write output from background thread
-                    this.Invoke(() =>
+                    Invoke(() =>
                     {
                         WriteOutput($"[UI Thread Test] Background thread ID: {Environment.CurrentManagedThreadId}"); // CA1840
                         WriteOutput($"[UI Thread Test] Is UI thread: {DebugUtils.IsOnUIThread()}");
@@ -330,7 +330,7 @@ namespace BusBus.UI
                     */
 
                     // Correct way - use Invoke
-                    this.Invoke(() =>
+                    Invoke(() =>
                     {
                         WriteOutput("[UI Thread Test] Properly accessing UI from background thread via Invoke");
                     });
@@ -439,6 +439,52 @@ namespace BusBus.UI
 
             // Simple masking of password
             return ConnectionStringMaskRegex().Replace(connectionString, "$1=******");
+        }
+
+        protected override void ApplyTheme()
+        {
+            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = ThemeManager.CurrentTheme.CardText;
+
+            if (_outputTextBox != null)
+            {
+                _outputTextBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
+                _outputTextBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+            }
+
+            if (_statusLabel != null)
+            {
+                _statusLabel.BackColor = ThemeManager.CurrentTheme.HeadlineBackground;
+                _statusLabel.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+            }
+
+            // Apply theme to all buttons
+            foreach (Control control in Controls)
+            {
+                if (control is Panel panel)
+                {
+                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+
+                    foreach (Control panelControl in panel.Controls)
+                    {
+                        if (panelControl is FlowLayoutPanel flowPanel)
+                        {
+                            flowPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+
+                            foreach (Control flowControl in flowPanel.Controls)
+                            {
+                                if (flowControl is Button button)
+                                {
+                                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                                    button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                                    button.FlatStyle = FlatStyle.Flat;
+                                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -48,6 +48,17 @@ csharp_space_around_binary_operators = before_and_after
 csharp_preserve_single_line_statements = true
 csharp_preserve_single_line_blocks = true
 
+# Diagnostic severity settings
+# Change the severity levels to alter how they appear in the Problems panel
+dotnet_diagnostic.CS0169.severity = warning # Field is never used
+dotnet_diagnostic.CS1998.severity = warning # Async method lacks 'await' operator
+dotnet_diagnostic.CA1416.severity = suggestion # Platform compatibility warning
+
+# Treat specific diagnostics as errors, warnings, or info (changes the icon)
+dotnet_analyzer_diagnostic.category-Style.severity = suggestion
+dotnet_analyzer_diagnostic.category-Performance.severity = warning
+dotnet_analyzer_diagnostic.category-Reliability.severity = error
+
 # Enable nullable reference types for all C# files
 dotnet_enable_nullable = true
 

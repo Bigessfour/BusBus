@@ -1,16 +1,15 @@
-// Enable nullable reference types for this file
+
 #nullable enable
-#pragma warning disable CS0169 // Field is never used
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.Models;
 using BusBus.Services;
-using BusBus.UI;
 using BusBus.UI.Common;
+using BusBus.UI.Core;
 
 namespace BusBus.UI
 {
@@ -46,6 +45,11 @@ namespace BusBus.UI
             ThemeManager.ApplyThemeToControl(this);
 
             _ = LoadVehiclesAsync();
+        }
+
+        public override void RefreshTheme()
+        {
+            ApplyTheme();
         }
 
         private void InitializeComponent()
@@ -507,16 +511,15 @@ namespace BusBus.UI
                 await LoadVehiclesAsync();
             }
         }
-        public override void Render(Control container)
+        public void Render(Control container)
         {
             ArgumentNullException.ThrowIfNull(container);
             container.Controls.Add(this);
         }
         protected override void ApplyTheme()
         {
-            base.ApplyTheme();
-
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            // Do not call base.ApplyTheme() to avoid abstract call error
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
             ThemeManager.CurrentTheme.StyleDataGrid(_vehiclesDataGridView);
             _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
         }
@@ -588,6 +591,11 @@ namespace BusBus.UI
             }
             base.Dispose(disposing);
         }
+
+        // Implement IDisposable explicitly to satisfy interface
+        void IDisposable.Dispose()
+        {
+            Dispose();
+        }
     }
 }
-#pragma warning restore CS0169 // Field is never used

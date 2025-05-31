@@ -309,22 +309,22 @@ namespace BusBus.Services
 
         public async Task<List<Route>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return await GetRoutesAsync();
+            return await GetRoutesAsync(cancellationToken);
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
-            await DeleteRouteAsync(id);
+            await DeleteRouteAsync(id, cancellationToken);
         }
 
         public async Task<Route> CreateAsync(Route route, CancellationToken cancellationToken)
         {
-            return await CreateRouteAsync(route);
+            return await CreateRouteAsync(route, cancellationToken);
         }
 
         public async Task<Route> UpdateAsync(Route route, CancellationToken cancellationToken)
         {
-            return await UpdateRouteAsync(route);
+            return await UpdateRouteAsync(route, cancellationToken);
         }
     }
 }

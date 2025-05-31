@@ -97,15 +97,15 @@ namespace BusBus.UI.Common
         }
         private void InitializeComponent(string message, NotificationType type)
         {
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.ShowInTaskbar = false;
-            this.TopMost = true;
-            this.Size = new Size(350, 90); // Increased from 300x80 to accommodate longer messages
-            this.StartPosition = FormStartPosition.Manual;
-            this.Opacity = _opacity;
-            this.MinimumSize = new Size(300, 80); // Set minimum size to prevent excessive shrinking
+            FormBorderStyle = FormBorderStyle.None;
+            ShowInTaskbar = false;
+            TopMost = true;
+            Size = new Size(350, 90); // Increased from 300x80 to accommodate longer messages
+            StartPosition = FormStartPosition.Manual;
+            Opacity = _opacity;
+            MinimumSize = new Size(300, 80); // Set minimum size to prevent excessive shrinking
 
-            this.BackColor = type switch
+            BackColor = type switch
             {
                 NotificationType.Success => ThemeManager.CurrentTheme.ButtonBackground,
                 NotificationType.Warning => ThemeManager.CurrentTheme.ButtonHoverBackground,
@@ -129,11 +129,11 @@ namespace BusBus.UI.Common
             // Adjust toast size based on message label size if needed
             if (messageLabel.PreferredSize.Width > 300)
             {
-                this.Width = Math.Min(messageLabel.PreferredSize.Width + 60, 450); // Cap maximum width
+                Width = Math.Min(messageLabel.PreferredSize.Width + 60, 450); // Cap maximum width
             }
             if (messageLabel.PreferredSize.Height > 40)
             {
-                this.Height = Math.Min(messageLabel.PreferredSize.Height + 50, 120); // Cap maximum height
+                Height = Math.Min(messageLabel.PreferredSize.Height + 50, 120); // Cap maximum height
             }
 
             var closeButton = new Button
@@ -142,18 +142,18 @@ namespace BusBus.UI.Common
                 ForeColor = ThemeManager.CurrentTheme.ButtonText,
                 FlatStyle = FlatStyle.Flat,
                 Size = new Size(25, 25),
-                Location = new Point(this.Width - 35, 5), // Position relative to actual width
+                Location = new Point(Width - 35, 5), // Position relative to actual width
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 TabStop = false // Prevent tab navigation to close button
             };
             closeButton.FlatAppearance.BorderSize = 0;
             closeButton.Click += (s, e) => FadeOut();
 
-            this.Controls.AddRange(new Control[] { messageLabel, closeButton });
+            Controls.AddRange(new Control[] { messageLabel, closeButton });
 
 #if DEBUG
             // Add debug truncation detection in development builds
-            this.Load += (s, e) =>
+            Load += (s, e) =>
             {
                 var truncatedControls = Utils.LayoutDebugger.DetectTextTruncation(this);
                 if (truncatedControls.Count > 0)
@@ -181,11 +181,11 @@ namespace BusBus.UI.Common
             {
                 _fadeTimer.Stop();
                 ToastClosed?.Invoke(this, EventArgs.Empty);
-                this.Close();
+                Close();
             }
             else
             {
-                this.Opacity = _opacity;
+                Opacity = _opacity;
             }
         }
 

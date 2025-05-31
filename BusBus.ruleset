@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="BusBus Rules" Description="Custom rules for BusBus project" ToolsVersion="16.0">
+  <Rules AnalyzerId="Microsoft.CodeQuality.Analyzers" RuleNamespace="Microsoft.CodeQuality.Analyzers">
+    <!-- Errors (Red X) -->
+    <Rule Id="CS0103" Action="Error" /> <!-- The name does not exist -->
+    <Rule Id="CS1061" Action="Error" /> <!-- Does not contain a definition for -->
+    <Rule Id="CS7036" Action="Error" /> <!-- No argument given -->
+    <Rule Id="CS0246" Action="Error" /> <!-- Type or namespace name could not be found -->
+
+    <!-- Warnings (Yellow Triangle) -->
+    <Rule Id="CS0414" Action="Warning" /> <!-- Field is assigned but never used -->
+    <Rule Id="CS0219" Action="Warning" /> <!-- Variable is assigned but never used -->
+    <Rule Id="CS0649" Action="Warning" /> <!-- Field is never assigned to -->
+
+    <!-- Information (Blue i) -->
+    <Rule Id="CS0169" Action="Info" /> <!-- Field is never used -->
+    <Rule Id="CS1998" Action="Info" /> <!-- Async method lacks await -->
+    <Rule Id="CS8618" Action="Info" /> <!-- Non-nullable field must contain a non-null value -->
+    <Rule Id="CA1416" Action="Info" /> <!-- Platform compatibility -->
+    <Rule Id="CS0824" Action="Info" /> <!-- Does not access instance data -->
+
+    <!-- None (Hidden) -->
+    <Rule Id="IDE0001" Action="None" /> <!-- Name can be simplified -->
+  </Rules>
+</RuleSet>

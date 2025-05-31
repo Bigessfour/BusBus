@@ -1,16 +1,28 @@
-#pragma warning disable CS8618 // Non-nullable field/property must contain a non-null value when exiting constructor
-#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate
-#pragma warning disable CS8602 // Dereference of a possibly null reference
 using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Linq;
 using System.ComponentModel;
+using BusBus.UI;
+#pragma warning disable CS8618 // Non-nullable field/property must contain a non-null value when exiting constructor
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate
+#pragma warning disable CS8602 // Dereference of a possibly null reference
 
 namespace BusBus.UI
 {
     public class EnhancedDataGridView : DataGridView
     {
+        private Dashboard? GetDashboardParent()
+        {
+            Control? parent = this.Parent;
+            while (parent != null)
+            {
+                if (parent is Dashboard dashboard)
+                    return dashboard;
+                parent = parent.Parent;
+            }
+            return null;
+        }
         private TextBox filterTextBox;
         private ComboBox filterColumnCombo;
         private Panel filterPanel;
@@ -23,34 +35,34 @@ namespace BusBus.UI
         private void SetupEnhancedFeatures()
         {
             // Modern styling
-            this.BorderStyle = BorderStyle.None;
-            this.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            this.GridColor = Color.FromArgb(224, 224, 224);
-            this.BackgroundColor = Color.White;
-            this.RowHeadersVisible = false;
-            this.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            this.MultiSelect = true;
+            BorderStyle = BorderStyle.None;
+            CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            GridColor = Color.FromArgb(224, 224, 224);
+            BackgroundColor = Color.White;
+            RowHeadersVisible = false;
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            MultiSelect = true;
 
             // Enhanced appearance
-            this.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 120, 215);
-            this.DefaultCellStyle.SelectionForeColor = Color.White;
-            this.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
+            DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 120, 215);
+            DefaultCellStyle.SelectionForeColor = Color.White;
+            AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
 
             // Modern header style
-            this.EnableHeadersVisualStyles = false;
-            this.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240);
-            this.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(68, 68, 68);
-            this.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            this.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(240, 240, 240);
-            this.ColumnHeadersHeight = 40;
+            EnableHeadersVisualStyles = false;
+            ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240);
+            ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(68, 68, 68);
+            ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(240, 240, 240);
+            ColumnHeadersHeight = 40;
 
             // Row styling
-            this.RowTemplate.Height = 35;
-            this.DefaultCellStyle.Font = new Font("Segoe UI", 9.5f);
-            this.DefaultCellStyle.Padding = new Padding(5, 0, 5, 0);
+            RowTemplate.Height = 35;
+            DefaultCellStyle.Font = new Font("Segoe UI", 9.5f);
+            DefaultCellStyle.Padding = new Padding(5, 0, 5, 0);
 
             // Enable sorting
-            this.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
+            ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
 
             // Add context menu
             SetupContextMenu();
@@ -65,7 +77,7 @@ namespace BusBus.UI
             var refreshItem = new ToolStripMenuItem("Refresh", null, (s, e) => RefreshData());
 
             contextMenu.Items.AddRange(new ToolStripItem[] { copyItem, exportItem, new ToolStripSeparator(), refreshItem });
-            this.ContextMenuStrip = contextMenu;
+            ContextMenuStrip = contextMenu;
         }
 
         public Panel CreateFilterPanel()
@@ -123,7 +135,7 @@ namespace BusBus.UI
             base.OnDataSourceChanged(e);
 
             // Auto-size columns intelligently
-            if (this.DataSource != null)
+            if (DataSource != null)
             {
                 AutoSizeColumns();
                 PopulateFilterColumns();
@@ -133,7 +145,7 @@ namespace BusBus.UI
 
         private void AutoSizeColumns()
         {
-            foreach (DataGridViewColumn column in this.Columns)
+            foreach (DataGridViewColumn column in Columns)
             {
                 // Set minimum widths based on data type
                 if (column.ValueType == typeof(DateTime))
@@ -161,7 +173,7 @@ namespace BusBus.UI
                 filterColumnCombo.Items.Clear();
                 filterColumnCombo.Items.Add("All Columns");
 
-                foreach (DataGridViewColumn column in this.Columns)
+                foreach (DataGridViewColumn column in Columns)
                 {
                     if (column.Visible)
                     {
@@ -175,11 +187,11 @@ namespace BusBus.UI
 
         private void ApplyFilter(object sender, EventArgs e)
         {
-            if (this.DataSource == null) return;
+            if (DataSource == null) return;
 
             var filterText = filterTextBox.Text.ToLower();
 
-            foreach (DataGridViewRow row in this.Rows)
+            foreach (DataGridViewRow row in Rows)
             {
                 if (string.IsNullOrEmpty(filterText))
                 {
@@ -218,20 +230,20 @@ namespace BusBus.UI
 
         private void UpdateFilterStatus()
         {
-            var visibleRows = this.Rows.Cast<DataGridViewRow>().Count(r => r.Visible);
-            var totalRows = this.Rows.Count;
+            var visibleRows = Rows.Cast<DataGridViewRow>().Count(r => r.Visible);
+            var totalRows = Rows.Count;
 
-            if (this.Parent != null)
+            var dashboard = GetDashboardParent();
+            if (dashboard != null)
             {
-                var dashboard = this.FindForm() as Dashboard;
-                dashboard?.UpdateStatusMessage($"Showing {visibleRows} of {totalRows} records");
+                dashboard.UpdateStatusMessage($"Showing {visibleRows} of {totalRows} records");
             }
         }
 
         private void ApplyConditionalFormatting()
         {
             // Example: Highlight status columns
-            foreach (DataGridViewRow row in this.Rows)
+            foreach (DataGridViewRow row in Rows)
             {
                 foreach (DataGridViewCell cell in row.Cells)
                 {
@@ -242,7 +254,7 @@ namespace BusBus.UI
                             case "available":
                             case "active":
                                 cell.Style.ForeColor = Color.Green;
-                                cell.Style.Font = new Font(this.Font, FontStyle.Bold);
+                                cell.Style.Font = new Font(Font, FontStyle.Bold);
                                 break;
                             case "maintenance":
                             case "inactive":
@@ -261,11 +273,11 @@ namespace BusBus.UI
         {
             if (e.ColumnIndex < 0) return;
 
-            var column = this.Columns[e.ColumnIndex];
+            var column = Columns[e.ColumnIndex];
             var sortDirection = column.HeaderCell.SortGlyphDirection;
 
             // Clear other columns' sort glyphs
-            foreach (DataGridViewColumn col in this.Columns)
+            foreach (DataGridViewColumn col in Columns)
             {
                 col.HeaderCell.SortGlyphDirection = SortOrder.None;
             }
@@ -273,21 +285,21 @@ namespace BusBus.UI
             // Toggle sort direction
             if (sortDirection == SortOrder.Ascending)
             {
-                this.Sort(column, ListSortDirection.Descending);
+                Sort(column, ListSortDirection.Descending);
                 column.HeaderCell.SortGlyphDirection = SortOrder.Descending;
             }
             else
             {
-                this.Sort(column, ListSortDirection.Ascending);
+                Sort(column, ListSortDirection.Ascending);
                 column.HeaderCell.SortGlyphDirection = SortOrder.Ascending;
             }
         }
 
         private void CopySelectedRows()
         {
-            if (this.SelectedRows.Count > 0)
+            if (SelectedRows.Count > 0)
             {
-                var data = string.Join("\n", this.SelectedRows.Cast<DataGridViewRow>()
+                var data = string.Join("\n", SelectedRows.Cast<DataGridViewRow>()
                     .Select(r => string.Join("\t", r.Cells.Cast<DataGridViewCell>()
                         .Select(c => c.Value?.ToString() ?? ""))));
 
@@ -296,15 +308,18 @@ namespace BusBus.UI
         }
 
         private static void ExportToCSV()
+
         {
             // Implementation for CSV export
-            MessageBox.Show("Export functionality would be implemented here");
         }
 
         private void RefreshData()
         {
-            var dashboard = this.FindForm() as Dashboard;
-            dashboard?.RefreshCurrentView();
+            var dashboard = GetDashboardParent();
+            if (dashboard != null)
+            {
+                dashboard.RefreshCurrentView();
+            }
         }
     }
 }

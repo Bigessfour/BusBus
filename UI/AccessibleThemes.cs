@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 
-namespace BusBus.UI
+namespace BusBus.UI.Core
 {
     /// <summary>
     /// Enhanced implementation of Light and Dark themes with accessibility support
@@ -159,3 +159,4 @@ namespace BusBus.UI
         }
     }
 }
+// File removed. See UI/Core/AccessibleThemes.cs for the canonical implementation.

@@ -5,7 +5,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using BusBus.UI;
+using BusBus.UI.Core;
 using BusBus.Utils;
 
 namespace BusBus.UI.Templates
@@ -34,7 +36,7 @@ namespace BusBus.UI.Templates
 
             // Enable high DPI support
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            this.AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.Dpi;
 
             // Don't call InitializeView here - derived classes will call it
         }
@@ -46,8 +48,9 @@ namespace BusBus.UI.Templates
         {
             base.InitializeView();
 
-            // Fill the parent container
-            this.Dock = DockStyle.Fill;
+
+            // For Form, Dock is not needed. If you want to maximize, use:
+            // this.WindowState = FormWindowState.Maximized; // Optional
 
             // Apply theme
             ThemeManager.ApplyThemeToControl(this);
@@ -62,8 +65,9 @@ namespace BusBus.UI.Templates
                 AutoSize = false
             };
 
-            // Add to controls
-            this.Controls.Add(_mainLayout);
+
+            // Add to controls (Form already has Controls collection)
+            Controls.Add(_mainLayout);
 
             // Apply high-quality text rendering
             TextRenderingManager.RegisterForHighQualityTextRendering(this);
@@ -73,7 +77,7 @@ namespace BusBus.UI.Templates
 
             // Check for text truncation
             LayoutDebugger.EnableDebugMode();
-            LayoutDebugger.MonitorForTruncationOnResize(this.FindForm());
+            LayoutDebugger.MonitorForTruncationOnResize(FindForm());
         }
 
         /// <summary>

@@ -1,0 +1,25 @@
+is_global = true
+
+# Set severity levels for diagnostic IDs to ensure proper severity icons in Problems view
+dotnet_diagnostic.CS0169.severity = suggestion
+dotnet_diagnostic.CS1998.severity = suggestion
+dotnet_diagnostic.CS8618.severity = suggestion
+dotnet_diagnostic.CA1416.severity = suggestion
+
+# The name 'TextRenderingManager' does not exist
+dotnet_diagnostic.CS0103.severity = error
+
+# 'RouteView' does not contain a definition for 'X'
+dotnet_diagnostic.CS1061.severity = error
+
+# No argument given that corresponds to the required parameter
+dotnet_diagnostic.CS7036.severity = error
+
+# 'Theme' does not contain a definition for 'BackgroundColor'
+dotnet_diagnostic.CS1061.severity = error
+
+# 'InitializeComponent' does not access instance data
+dotnet_diagnostic.CS0824.severity = warning
+
+# Type or namespace name 'AccessibleTheme' could not be found
+dotnet_diagnostic.CS0246.severity = error

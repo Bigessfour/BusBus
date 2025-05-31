@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using BusBus.UI.Common;
+using BusBus.UI.Core;
 using System.Drawing;
 using System.Linq;
 using System.ComponentModel;
@@ -34,7 +34,7 @@ namespace BusBus.UI
         private Label _titleLabel = null!;
 
         // Pagination and state
-        private int _totalDrivers = 0;
+        // Removed unused field _totalDrivers to resolve CS0414 warning
         private int _currentPage = 1;
         private int _pageSize = 20;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -44,9 +44,8 @@ namespace BusBus.UI
         public string Title => "Drivers";
         public Control? Control => this;
 
-        public event EventHandler<NavigationEventArgs>? NavigationRequested;
-#pragma warning disable CS0067 // Event is never used
-#pragma warning disable CS0414 // Field is assigned but its value is never used
+        // Required by IView, but not used in this implementation
+        public event EventHandler<NavigationEventArgs>? NavigationRequested { add { } remove { } }
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         public DriversManagementPanel(IDriverService driverService)
@@ -59,11 +58,27 @@ namespace BusBus.UI
             _ = InitializeDataAsync();
         }
 
+        public override void RefreshTheme()
+        {
+            ApplyTheme();
+        }
+
+        protected override void ApplyTheme()
+        {
+            // Example: update colors, fonts, etc. according to the current theme
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            if (_titleLabel != null)
+                _titleLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+            if (_driversGrid != null)
+                ThemeManager.CurrentTheme.StyleDataGrid(_driversGrid);
+            // Add more theme application logic as needed
+        }
+
         private void InitializeComponent()
         {
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            this.Padding = new Padding(10);
-            this.Dock = DockStyle.Fill;
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            Padding = new Padding(10);
+            Dock = DockStyle.Fill;
             ThemeManager.EnforceGlassmorphicTextColor(this);
 
             // Title label
@@ -76,7 +91,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 TextAlign = ContentAlignment.MiddleCenter
             };
-            this.Controls.Add(_titleLabel);
+            Controls.Add(_titleLabel);
 
             // Main container
             var mainContainer = new TableLayoutPanel
@@ -88,7 +103,7 @@ namespace BusBus.UI
             };
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this.Controls.Add(mainContainer);
+            Controls.Add(mainContainer);
 
             // Create DataGridView
             CreateDataGridView();
@@ -534,7 +549,7 @@ namespace BusBus.UI
 
         public new void Show()
         {
-            this.Visible = true;
+            Visible = true;
         }
 
         // CS0108: Hides inherited member 'Control.Hide()'. Use the new keyword if hiding was intended.
@@ -542,7 +557,7 @@ namespace BusBus.UI
 #pragma warning disable CS0067 // Event is never used
 #pragma warning disable CS0414 // Field is assigned but its value is never used
         {
-            this.Visible = false;
+            Visible = false;
         }
 
         protected override void Dispose(bool disposing)
@@ -556,11 +571,11 @@ namespace BusBus.UI
         }
 
         // ThemeableControl implementation
-        public override void Render(Control container)
+        public void Render(Control container)
         {
             if (container != null)
             {
-                this.Dock = DockStyle.Fill;
+                Dock = DockStyle.Fill;
                 container.Controls.Clear();
                 container.Controls.Add(this);
             }
@@ -615,15 +630,15 @@ namespace BusBus.UI
         {
             return new Driver
             {
-                Id = this.Id,
-                FirstName = this.FirstName,
-                LastName = this.LastName,
-                PhoneNumber = this.PhoneNumber,
-                Email = this.Email,
-                LicenseType = this.LicenseType,
-                LicenseNumber = this.LicenseNumber,
-                HireDate = this.HireDate,
-                IsActive = this.Status == "Active"
+                Id = Id,
+                FirstName = FirstName,
+                LastName = LastName,
+                PhoneNumber = PhoneNumber,
+                Email = Email,
+                LicenseType = LicenseType,
+                LicenseNumber = LicenseNumber,
+                HireDate = HireDate,
+                IsActive = Status == "Active"
             };
         }
     }

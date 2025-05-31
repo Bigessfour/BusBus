@@ -1,6 +1,6 @@
 using BusBus.Models;
 using BusBus.Services;
-using BusBus.UI.Common;
+using BusBus.UI.Core;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -53,9 +53,9 @@ namespace BusBus.UI
         private void InitializeComponent()
         {
             // Main panel setup
-            this.Dock = DockStyle.Fill;
-            this.BackColor = Color.FromArgb(32, 32, 36);
-            this.Padding = new Padding(10);
+            Dock = DockStyle.Fill;
+            BackColor = Color.FromArgb(32, 32, 36);
+            Padding = new Padding(10);
 
             // Create main layout
             var mainLayout = new TableLayoutPanel
@@ -114,7 +114,7 @@ namespace BusBus.UI
             // Add components to layout
             mainLayout.Controls.Add(buttonsPanel, 0, 0);
             mainLayout.Controls.Add(_dataGridView, 0, 1);
-            this.Controls.Add(mainLayout);
+            Controls.Add(mainLayout);
 
             // Event handlers
             _dataGridView!.CellBeginEdit += DataGridView_CellBeginEdit;
@@ -237,7 +237,7 @@ namespace BusBus.UI
 
         private void CreateCrystalDarkButtons()
         {
-            var buttonPanel = (Panel)this.Controls[0].Controls[0];
+            var buttonPanel = (Panel)Controls[0].Controls[0];
 
             // Create buttons with Crystal Dark styling
             _addButton = CreateCrystalDarkButton("Add Vehicle", "Add a new vehicle to the fleet");
@@ -302,14 +302,14 @@ namespace BusBus.UI
         {
             try
             {
-                this.Cursor = Cursors.WaitCursor;
+                Cursor = Cursors.WaitCursor;
 
                 var vehicles = await _vehicleService.GetAllVehiclesAsync(cancellationToken);
                 var vehicleDisplayDTOs = vehicles.Select(VehicleDisplayDTO.FromVehicle).ToList();
 
-                if (this.InvokeRequired)
+                if (InvokeRequired)
                 {
-                    this.Invoke(new Action(() =>
+                    Invoke(new Action(() =>
                     {
                         _vehicles.Clear();
                         foreach (var vehicle in vehicleDisplayDTOs)
@@ -331,9 +331,9 @@ namespace BusBus.UI
             {
                 // Fallback to sample data if service is unavailable
                 var sampleVehicles = GetSampleVehicles();
-                if (this.InvokeRequired)
+                if (InvokeRequired)
                 {
-                    this.Invoke(new Action(() =>
+                    Invoke(new Action(() =>
                     {
                         _vehicles.Clear();
                         foreach (var vehicle in sampleVehicles)
@@ -356,13 +356,13 @@ namespace BusBus.UI
             }
             finally
             {
-                if (this.InvokeRequired)
+                if (InvokeRequired)
                 {
-                    this.Invoke(new Action(() => this.Cursor = Cursors.Default));
+                    Invoke(new Action(() => Cursor = Cursors.Default));
                 }
                 else
                 {
-                    this.Cursor = Cursors.Default;
+                    Cursor = Cursors.Default;
                 }
             }
         }
@@ -649,14 +649,12 @@ namespace BusBus.UI
                 _cancellationTokenSource?.Dispose();
             }
             base.Dispose(disposing);
-        }
-
-        // ThemeableControl implementation
-        public override void Render(Control container)
+        }        // ThemeableControl implementation
+        public void Render(Control container)
         {
             if (container != null)
             {
-                this.Dock = DockStyle.Fill;
+                Dock = DockStyle.Fill;
                 container.Controls.Clear();
                 container.Controls.Add(this);
             }
@@ -671,6 +669,38 @@ namespace BusBus.UI
         public async Task DeactivateAsync()
         {
             await Task.CompletedTask;
+        }
+
+        protected override void ApplyTheme()
+        {
+            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = ThemeManager.CurrentTheme.CardText;
+
+            // Apply theme to data grid view
+            if (_dataGridView != null)
+            {
+                _dataGridView.BackgroundColor = ThemeManager.CurrentTheme.CardBackground;
+                _dataGridView.GridColor = ThemeManager.CurrentTheme.BorderColor;
+                _dataGridView.DefaultCellStyle.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                _dataGridView.DefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.CardText;
+                _dataGridView.DefaultCellStyle.SelectionBackColor = Color.FromArgb(51, 153, 255); // Use default selection color
+                _dataGridView.DefaultCellStyle.SelectionForeColor = Color.White; // Use default selection text color
+                _dataGridView.ColumnHeadersDefaultCellStyle.BackColor = ThemeManager.CurrentTheme.HeadlineBackground;
+                _dataGridView.ColumnHeadersDefaultCellStyle.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _dataGridView.EnableHeadersVisualStyles = false;
+            }
+
+            // Style buttons
+            foreach (var button in new Button?[] { _addButton, _editButton, _deleteButton, _refreshButton })
+            {
+                if (button != null)
+                {
+                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                    button.FlatStyle = FlatStyle.Flat;
+                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                }
+            }
         }
     }
 
@@ -711,16 +741,16 @@ namespace BusBus.UI
         {
             return new Vehicle
             {
-                VehicleId = this.VehicleId,
-                BusNumber = this.BusNumber ?? string.Empty,
-                ModelYear = this.ModelYear,
-                Make = this.Make ?? string.Empty,
-                Model = this.Model ?? string.Empty,
-                VINNumber = this.VINNumber ?? string.Empty,
-                Capacity = this.Capacity,
-                LastInspectionDate = this.LastInspectionDate,
-                IsActive = this.Status != "Inactive",
-                Status = this.Status ?? "Active"
+                VehicleId = VehicleId,
+                BusNumber = BusNumber ?? string.Empty,
+                ModelYear = ModelYear,
+                Make = Make ?? string.Empty,
+                Model = Model ?? string.Empty,
+                VINNumber = VINNumber ?? string.Empty,
+                Capacity = Capacity,
+                LastInspectionDate = LastInspectionDate,
+                IsActive = Status != "Inactive",
+                Status = Status ?? "Active"
             };
         }
     }
@@ -752,12 +782,12 @@ namespace BusBus.UI
 
         private void InitializeComponent()
         {
-            this.Text = Vehicle.VehicleId == 0 ? "Add Vehicle" : "Edit Vehicle";
-            this.Size = new Size(400, 350);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            Text = Vehicle.VehicleId == 0 ? "Add Vehicle" : "Edit Vehicle";
+            Size = new Size(400, 350);
+            StartPosition = FormStartPosition.CenterParent;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
 
             var layout = new TableLayoutPanel
             {
@@ -828,9 +858,9 @@ namespace BusBus.UI
             buttonPanel.Controls.AddRange(new Control[] { cancelButton, okButton });
             layout.Controls.Add(buttonPanel, 1, 8);
 
-            this.Controls.Add(layout);
-            this.AcceptButton = okButton;
-            this.CancelButton = cancelButton;
+            Controls.Add(layout);
+            AcceptButton = okButton;
+            CancelButton = cancelButton;
         }
 
         private void PopulateFields()

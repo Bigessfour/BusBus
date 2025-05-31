@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace BusBus.UI
+namespace BusBus.UI.Core
 {
     /// <summary>
     /// Defines centralized color values used across different themes
@@ -215,12 +215,12 @@ namespace BusBus.UI
         /// <summary>
         /// Gets the button hover text color
         /// </summary>
-        public Color ButtonHoverText => this.GetButtonHoverText();
+        public Color ButtonHoverText => ThemeAccessibilityExtensions.GetButtonHoverText(this);
 
         /// <summary>
         /// Gets the glassmorphic secondary text color
         /// </summary>
-        public Color GlassmorphicSecondaryTextColor => this.GetGlassmorphicSecondaryTextColor();
+        public Color GlassmorphicSecondaryTextColor => ThemeAccessibilityExtensions.GetGlassmorphicSecondaryTextColor(this);
 
         /// <summary>
         /// Applies glassmorphic text color to a control and its children
@@ -241,7 +241,7 @@ namespace BusBus.UI
             else if (control is LinkLabel linkLabel)
             {
                 linkLabel.LinkColor = GlassmorphicTextColor;
-                linkLabel.ActiveLinkColor = this.EnsureAccessibleTextColor(GlassmorphicTextColor, CardBackground);
+                linkLabel.ActiveLinkColor = ThemeAccessibilityExtensions.EnsureAccessibleTextColor(this, GlassmorphicTextColor, CardBackground);
             }
 
             // Apply to children recursively
@@ -256,7 +256,7 @@ namespace BusBus.UI
         /// </summary>
         public bool EnsureAccessibleContrast(Color foreground, Color background)
         {
-            double contrast = this.CalculateContrastRatio(foreground, background);
+            double contrast = ThemeAccessibilityExtensions.CalculateContrastRatio(this, foreground, background);
             return contrast >= 4.5;
         }        /// <summary>
                  /// Gets high-contrast background for glassmorphic elements when accessibility mode is enabled
@@ -989,3 +989,4 @@ namespace BusBus.UI
     }
 }
 // NOTE: ThemeManager implementation has been moved to ThemeManager.cs to avoid duplication.
+// File removed. See UI/Core/Theme.cs for the canonical implementation.

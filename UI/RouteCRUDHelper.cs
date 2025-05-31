@@ -16,6 +16,7 @@ namespace BusBus.UI
     public class RouteCRUDHelper
     {
         private readonly IRouteService _routeService;
+        public static bool SuppressDialogsForTests { get; set; }
 
         public RouteCRUDHelper(IRouteService routeService)
         {
@@ -225,10 +226,9 @@ namespace BusBus.UI
         /// <summary>
         /// Shows an error message
         /// </summary>
-        /// <param name="message">The error message</param>
         private static void ShowError(string message)
         {
-            if (RoutePanel.SuppressDialogsForTests)
+            if (SuppressDialogsForTests)
             {
                 Console.WriteLine($"Error: {message}");
             }

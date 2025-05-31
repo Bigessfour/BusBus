@@ -20,10 +20,12 @@
     <DebugSymbols>true</DebugSymbols>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-
-    <!-- Suppress platform-specific warnings where appropriate -->
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>    <!-- Suppress platform-specific warnings where appropriate -->
     <NoWarn>$(NoWarn);CA1416</NoWarn>
+
+    <!-- Use custom ruleset for better diagnostic reporting -->
+    <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)BusBus.ruleset</CodeAnalysisRuleSet>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>

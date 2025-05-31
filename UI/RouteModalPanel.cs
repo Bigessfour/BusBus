@@ -2,7 +2,7 @@
 #nullable enable
 using BusBus.Models;
 using BusBus.Services;
-using BusBus.UI.Common;
+using BusBus.UI.Core;
 using System;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -32,13 +32,13 @@ namespace BusBus.UI
 
         private void InitializeComponent()
         {
-            this.Text = _isNewRoute ? "Add New Route" : "Edit Route";
-            this.Size = new Size(600, 500);
-            this.MinimumSize = new Size(500, 400);
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.BackColor = ThemeManager.CurrentTheme.MainBackground;
+            Text = _isNewRoute ? "Add New Route" : "Edit Route";
+            Size = new Size(600, 500);
+            MinimumSize = new Size(500, 400);
+            MaximizeBox = false;
+            StartPosition = FormStartPosition.CenterParent;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            BackColor = ThemeManager.CurrentTheme.MainBackground;
 
             var mainPanel = new Panel
             {
@@ -68,7 +68,7 @@ namespace BusBus.UI
                 Margin = new Padding(5, 0, 0, 0)
             };
             cancelButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            cancelButton.Click += (s, e) => this.Close(); var saveButton = new Button
+            cancelButton.Click += (s, e) => Close(); var saveButton = new Button
             {
                 Text = "Save",
                 Size = new Size(80, 30),
@@ -84,11 +84,11 @@ namespace BusBus.UI
             buttonPanel.Controls.Add(cancelButton);
             buttonPanel.Controls.Add(saveButton);
 
-            this.Controls.Add(mainPanel);
-            this.Controls.Add(buttonPanel);
+            Controls.Add(mainPanel);
+            Controls.Add(buttonPanel);
 
-            this.AcceptButton = saveButton;
-            this.CancelButton = cancelButton;
+            AcceptButton = saveButton;
+            CancelButton = cancelButton;
         }
 
         private void LoadRoutePanel()
@@ -99,7 +99,7 @@ namespace BusBus.UI
                 _routePanel.Dock = DockStyle.Fill;
 
                 // Find the main panel and add the route panel
-                foreach (Control control in this.Controls)
+                foreach (Control control in Controls)
                 {
                     if (control is Panel mainPanel && mainPanel.Dock == DockStyle.Fill)
                     {
@@ -168,8 +168,8 @@ namespace BusBus.UI
                 await Task.Delay(500); // Simulate save operation
 
                 IsSaved = true;
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {
@@ -183,6 +183,65 @@ namespace BusBus.UI
                 {
                     saveButton.Enabled = true;
                     saveButton.Text = "Save";
+                }
+            }
+        }
+
+        protected override void ApplyTheme()
+        {
+            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = ThemeManager.CurrentTheme.CardText;
+
+            // Apply theme to controls
+            foreach (Control control in Controls)
+            {
+                if (control is Panel panel)
+                {
+                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+
+                    foreach (Control panelControl in panel.Controls)
+                    {
+                        if (panelControl is Button button)
+                        {
+                            // Default button styling
+                            button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                            button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                            button.FlatStyle = FlatStyle.Flat;
+                            button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+
+                            // Special styling for save button
+                            if (button.Text == "Save")
+                            {
+                                button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                button.ForeColor = Color.White;
+                                button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                            }
+                        }
+                        else if (panelControl is FlowLayoutPanel flowPanel)
+                        {
+                            flowPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+
+                            foreach (Control flowControl in flowPanel.Controls)
+                            {
+                                if (flowControl is Button nestedButton)
+                                {
+                                    // Default button styling
+                                    nestedButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                                    nestedButton.ForeColor = ThemeManager.CurrentTheme.CardText;
+                                    nestedButton.FlatStyle = FlatStyle.Flat;
+                                    nestedButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+
+                                    // Special styling for save button
+                                    if (nestedButton.Text == "Save")
+                                    {
+                                        nestedButton.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                        nestedButton.ForeColor = Color.White;
+                                        nestedButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -15,24 +15,30 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using BusBus.Data;
 using System.Diagnostics;
+using BusBus.UI.Core;
 
 #pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
 #pragma warning disable CA2254 // LoggerMessage delegates for logging performance
 #pragma warning disable CS8618 // Non-nullable field is uninitialized. Suppressed because fields are initialized in SetupLayout.
 namespace BusBus.UI
-{    /// <summary>
-     /// Main application hub that manages navigation, state, and view lifecycle.
-     /// This class serves as the primary container/shell for the entire application.
-     /// It contains the header, side panel, content panel, and status bar.
-     /// Different views (like DashboardView) are loaded into the content panel.
-     /// Enhanced with SQL Server Express monitoring and performance tracking.
-     /// </summary>
-    public partial class Dashboard : Form, IApplicationHub
+{
+    using BusBus.UI.Core;
+    /// <summary>
+    /// Main application hub that manages navigation, state, and view lifecycle.
+    /// This class serves as the primary container/shell for the entire application.
+    /// It contains the header, side panel, content panel, and status bar.
+    /// Different views (like DashboardView) are loaded into the content panel.
+    /// Enhanced with SQL Server Express monitoring and performance tracking.
+    /// </summary>
+    using BusBus.UI.Templates;
+    public partial class Dashboard : HighQualityFormTemplate, IApplicationHub
     {
         #region Fields
-        private readonly IServiceProvider _serviceProvider;
+        // Use 'new' to hide inherited members from base Form/HighQualityFormTemplate
+        private new readonly IServiceProvider _serviceProvider;
         private readonly IRouteService _routeService;
-        private readonly ILogger<Dashboard> _logger;
+        private new readonly ILogger<Dashboard> _logger;
+        // Remove _mainLayout from Dashboard; use inherited from HighQualityFormTemplate
         private readonly Dictionary<string, IView> _viewCache = new();
         private readonly Stack<string> _navigationHistory = new();
         private readonly DashboardState _state = new();
@@ -60,7 +66,8 @@ namespace BusBus.UI
                 new EventId(2, "DatabasePerformance"),
                 "Database health check: {Status} - Active connections: {ConnectionCount}");
 
-        private TableLayoutPanel _mainLayout;
+        // Use the base class's _mainLayout; remove this field to avoid CS0108 warning
+        // private TableLayoutPanel _mainLayout;
         private Panel _sidePanel;
         private Panel _contentPanel; private Panel _headerPanel;
         // Note: _footerPanel removed as it's not currently used - status bar serves as footer
@@ -73,6 +80,7 @@ namespace BusBus.UI
 
         #region Constructor
         public Dashboard(IServiceProvider serviceProvider, IRouteService routeService, ILogger<Dashboard> logger)
+            : base(serviceProvider)
         {
             if (serviceProvider == null)
             {
@@ -90,7 +98,6 @@ namespace BusBus.UI
                 System.Diagnostics.Debug.WriteLine("[DEBUG] logger is null in Dashboard constructor");
                 throw new ArgumentNullException(nameof(logger));
             }
-
 
             _serviceProvider = serviceProvider;
             _routeService = routeService;
@@ -112,8 +119,8 @@ namespace BusBus.UI
 
             _logger.LogDebug("[DEBUG] Dashboard constructor called. serviceProvider: {ServiceProvider}, routeService: {RouteService}, logger: {Logger}", serviceProvider, routeService, logger);
 
-            // InitializeComponent(); // Removed to avoid duplicate/hidden controls
-            SetupLayout();
+            // Use the template's layout initialization
+            InitializeView();
             RegisterViews();
             SubscribeToEvents();
 
@@ -125,29 +132,27 @@ namespace BusBus.UI
         #region Layout Setup
         private void SetupLayout()
         {
-            this.SuspendLayout();
+            SuspendLayout();
 
             // Set form properties
-            this.Text = "BusBus - Transport Management System";
+            Text = "BusBus - Transport Management System";
             this.WindowState = FormWindowState.Maximized;
-            this.MinimumSize = new Size(1024, 768);
-            this.StartPosition = FormStartPosition.CenterScreen;            // Create main table layout
-            _mainLayout = new TableLayoutPanel
+            MinimumSize = new Size(1024, 768);
+            ((Form)this).StartPosition = FormStartPosition.CenterScreen;            // Create main table layout
+            // Use the base class's _mainLayout instead of declaring a new one
+            var mainLayout = GetType().BaseType?.GetField("_mainLayout", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(this) as TableLayoutPanel;
+            if (mainLayout == null)
             {
-                Dock = DockStyle.Fill,
-                RowCount = 3,
-                ColumnCount = 2,
-                CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
-                Padding = new Padding(0) // Remove default padding
-            };
+                throw new InvalidOperationException("Base class _mainLayout not found. Ensure HighQualityFormTemplate defines _mainLayout.");
+            }
 
             // Configure layout proportions
-            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 65)); // Header - slightly increased
-            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Content
-            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); // Status - slightly increased
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 65)); // Header - slightly increased
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Content
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); // Status - slightly increased
 
-            _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250)); // Sidebar
-            _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Main content
+            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250)); // Sidebar
+            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Main content
 
             // Create panels
             CreateHeaderPanel();
@@ -156,71 +161,42 @@ namespace BusBus.UI
             CreateStatusBar();
 
             // Add panels to layout
-            _mainLayout.Controls.Add(_headerPanel, 0, 0);
-            _mainLayout.SetColumnSpan(_headerPanel, 2);
+            mainLayout.Controls.Add(_headerPanel, 0, 0);
+            mainLayout.SetColumnSpan(_headerPanel, 2);
 
-            _mainLayout.Controls.Add(_sidePanel, 0, 1);
-            _mainLayout.Controls.Add(_contentPanel, 1, 1);
+            mainLayout.Controls.Add(_sidePanel, 0, 1);
+            mainLayout.Controls.Add(_contentPanel, 1, 1);
 
-            _mainLayout.Controls.Add(_statusStrip, 0, 2);
-            _mainLayout.SetColumnSpan(_statusStrip, 2);
+            mainLayout.Controls.Add(_statusStrip, 0, 2);
+            mainLayout.SetColumnSpan(_statusStrip, 2);
 
-            this.Controls.Add(_mainLayout);            // Apply theme
+            Controls.Add(mainLayout);            // Apply theme
             ThemeManager.ApplyTheme(this, ThemeManager.CurrentTheme);
 
             // Apply high-quality text rendering to the entire form
             TextRenderingManager.RegisterForHighQualityTextRendering(this);
 
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
         private void CreateHeaderPanel()
         {
-            _headerPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Tag = "MainShellHeaderPanel", // Updated tag to clearly identify this is the main shell header
-                Height = 65 // Slightly increased for better spacing
-            };
-
-            var titleLabel = new Label
-            {
-                Text = "BusBus Transport Management",
-                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                Location = new Point(25, 15), // Increased left margin
-                AutoSize = true,
-                Padding = new Padding(2) // Add padding to prevent text from touching borders
-            };
-
-            var userInfoLabel = new Label
-            {
-                Text = $"Welcome, {Environment.UserName}",
-                Font = new Font("Segoe UI", 10.5F), // Slightly increased for better readability
-                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(_headerPanel.Width - 205, 20),
-                AutoSize = true,
-                Padding = new Padding(2) // Add padding to prevent text from touching borders
-            }; var themeToggle = new Button
+            // Use the template's CreateHeaderSection for consistency
+            _headerPanel = CreateHeaderSection("BusBus Transport Management", $"Welcome, {Environment.UserName}");
+            // Add theme toggle button if needed
+            var themeToggle = new Button
             {
                 Text = "🌙",
-                Font = new Font("Segoe UI", 12.5F), // Slightly larger font
-                Size = new Size(45, 45), // Slightly larger for better touch target
+                Font = new Font("Segoe UI", 12.5F),
+                Size = new Size(45, 45),
                 FlatStyle = FlatStyle.Flat,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(_headerPanel.Width - 55, 10), // Adjusted position
                 Tag = "ThemeToggle",
-                Padding = new Padding(0, 2, 0, 0) // Add padding to center the icon vertically
+                Padding = new Padding(0, 2, 0, 0)
             };
-
-            themeToggle.FlatAppearance.BorderSize = 0; // Remove border
+            themeToggle.FlatAppearance.BorderSize = 0;
             themeToggle.Click += (s, e) => ToggleTheme();
-
-            // Register controls for high-quality text rendering
-            TextRenderingManager.RegisterForHighQualityTextRendering(_headerPanel);
-
-            _headerPanel.Controls.AddRange(new Control[] { titleLabel, userInfoLabel, themeToggle });
+            _headerPanel.Controls.Add(themeToggle);
         }
         private void CreateSidePanel()
         {
@@ -573,7 +549,7 @@ namespace BusBus.UI
 
         private void UpdateTitle(string viewTitle)
         {
-            this.Text = $"BusBus - {viewTitle}";
+            Text = $"BusBus - {viewTitle}";
         }
         #endregion
 
@@ -698,13 +674,22 @@ namespace BusBus.UI
         public void RefreshCurrentView()
         {
             // Refresh the current view implementation
-            if (_contentPanel?.Controls.Count > 0)
+            if (_currentView != null)
             {
-                var currentControl = _contentPanel.Controls[0];
-                if (currentControl is IRefreshable refreshable)
+                // Re-activate the current view to refresh its data
+                var refreshTask = Task.Run(async () =>
                 {
-                    refreshable.Refresh();
-                }
+                    await _currentView.DeactivateAsync();
+                    await _currentView.ActivateAsync(_cancellationTokenSource.Token);
+                }, _cancellationTokenSource.Token);
+
+                refreshTask.ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        _logger.LogError(t.Exception, "Error refreshing current view");
+                    }
+                }, TaskScheduler.FromCurrentSynchronizationContext());
             }
         }
         #endregion
@@ -721,8 +706,23 @@ namespace BusBus.UI
         private void SubscribeToEvents()
         {
             ThemeManager.ThemeChanged += OnThemeChanged;
-            this.FormClosing += OnFormClosing;
-            this.Load += OnFormLoad;
+            // Handle parent form closing if this is used as a main form control
+            if (this.ParentForm != null)
+            {
+                this.ParentForm.FormClosing += OnFormClosing;
+            }
+            else
+            {
+                // Subscribe when parent changes
+                this.ParentChanged += (s, e) =>
+                {
+                    if (this.ParentForm != null)
+                    {
+                        this.ParentForm.FormClosing += OnFormClosing;
+                    }
+                };
+            }
+            Load += OnFormLoad;
         }
 
         private void OnThemeChanged(object? sender, EventArgs e)
@@ -799,9 +799,7 @@ namespace BusBus.UI
             }
         }
 
-        private bool _isShuttingDown = false;
-#pragma warning disable CS0414 // Field is assigned but its value is never used
-#pragma warning disable CS0414 // Field is assigned but its value is never used
+        // Removed unused field _isShuttingDown to resolve CS0414 warning
 
         private async Task PerformShutdownAsync()
         {
@@ -960,6 +958,14 @@ namespace BusBus.UI
         public IServiceProvider ServiceProvider => _serviceProvider;
 
         public IView? CurrentView => _currentView;
+
+        public override string ViewName => throw new NotImplementedException();
+
+        public override string Title => throw new NotImplementedException();
+
+        // Remove or rename this property to avoid hiding Form.WindowState
+        // public FormWindowState WindowState { get; private set; }
+
         public event EventHandler<NavigationEventArgs>? NavigationChanged;
 
         public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info)
@@ -1142,6 +1148,16 @@ namespace BusBus.UI
             {
                 return true;
             }
+        }
+
+        protected override Task OnActivateAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Task OnDeactivateAsync()
+        {
+            throw new NotImplementedException();
         }
 
         #region Interfaces and Supporting Classes

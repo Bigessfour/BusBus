@@ -6,12 +6,13 @@ using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public abstract class BaseView : UserControl, IView
+    public abstract class BaseView : Form, IView
     {
         protected CancellationTokenSource? _viewCancellationTokenSource;
 
         public abstract string ViewName { get; }
         public abstract string Title { get; }
+        // For Form, 'this' is already a Control, so this property is redundant or can be kept for interface compatibility
         public Control? Control => this;
 
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
@@ -24,14 +25,15 @@ namespace BusBus.UI
 
         protected virtual void InitializeView()
         {
-            this.Dock = DockStyle.Fill;
+            Dock = DockStyle.Fill;
         }
 
         public virtual async Task ActivateAsync(CancellationToken cancellationToken)
         {
             _viewCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             await OnActivateAsync(_viewCancellationTokenSource.Token);
-        }        public virtual async Task DeactivateAsync()
+        }
+        public virtual async Task DeactivateAsync()
         {
             try
             {

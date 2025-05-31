@@ -36,9 +36,7 @@
     "omnisharp.enableRoslynAnalyzers": true,
     "omnisharp.enableEditorConfigSupport": true,
     "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
-    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
-
-    // Debugging enhancements
+    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",    // Debugging enhancements
     "debug.console.acceptSuggestionOnEnter": "on",
     "debug.console.closeOnEnd": false,
     "debug.console.fontSize": 12,
@@ -47,12 +45,11 @@
     "debug.openDebug": "openOnDebugBreak",
     "debug.showBreakpointsInOverviewRuler": true,
     "debug.showInlineBreakpointCandidates": true,
-    "debug.toolBarLocation": "docked",
-
-    // Problem matching and error detection
+    "debug.toolBarLocation": "docked",    // Problems panel configuration
     "problems.autoReveal": true,
     "problems.decorations.enabled": true,
     "problems.showCurrentInStatus": true,
+    "problems.defaultViewMode": "table",
 
     // File associations and handling
     "files.associations": {

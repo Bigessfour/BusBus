@@ -2,7 +2,8 @@
 #pragma warning disable CS0169 // Field is never used
 using BusBus.Models;
 using BusBus.Services;
-using BusBus.UI.Common;
+using BusBus.UI;
+using BusBus.UI.Core;
 using System;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -36,12 +37,12 @@ namespace BusBus.UI
 
         private void InitializeComponent()
         {
-            this.Text = _isNewDriver ? "Add New Driver" : "Edit Driver";
-            this.Size = new Size(400, 250);
-            this.MinimumSize = new Size(350, 200);
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            Text = _isNewDriver ? "Add New Driver" : "Edit Driver";
+            Size = new Size(400, 250);
+            MinimumSize = new Size(350, 200);
+            MaximizeBox = false;
+            StartPosition = FormStartPosition.CenterParent;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
 
             var mainPanel = new TableLayoutPanel
             {
@@ -135,7 +136,7 @@ namespace BusBus.UI
                 Margin = new Padding(5, 0, 0, 0)
             };
             _cancelButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _cancelButton.Click += (s, e) => this.Close(); _saveButton = new Button
+            _cancelButton.Click += (s, e) => Close(); _saveButton = new Button
             {
                 Text = "Save",
                 Size = new Size(80, 30),
@@ -154,10 +155,10 @@ namespace BusBus.UI
             mainPanel.Controls.Add(buttonPanel, 0, 3);
             mainPanel.SetColumnSpan(buttonPanel, 2);
 
-            this.Controls.Add(mainPanel);
-            this.BackColor = ThemeManager.CurrentTheme.MainBackground;
-            this.AcceptButton = _saveButton;
-            this.CancelButton = _cancelButton;
+            Controls.Add(mainPanel);
+            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            AcceptButton = _saveButton;
+            CancelButton = _cancelButton;
         }
 
         private void LoadDriverData()
@@ -210,8 +211,8 @@ namespace BusBus.UI
                 }
 
                 IsSaved = true;
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {
@@ -261,6 +262,89 @@ namespace BusBus.UI
             }
 
             return true;
+        }
+        protected override void ApplyTheme()
+        {
+            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = ThemeManager.CurrentTheme.CardText;
+
+            // Apply theme to all controls recursively
+            foreach (Control control in Controls)
+            {
+                if (control is Button button)
+                {
+                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    button.FlatStyle = FlatStyle.Flat;
+                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+
+                    // Special styling for save button
+                    if (button.Text == "Save")
+                    {
+                        button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                        button.ForeColor = Color.White;
+                        button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                    }
+                }
+                else if (control is Panel panel)
+                {
+                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                    ApplyThemeToChildControls(panel);
+                }
+                else if (control is GroupBox groupBox)
+                {
+                    groupBox.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                    groupBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    ApplyThemeToChildControls(groupBox);
+                }
+                else if (control is TextBox textBox)
+                {
+                    textBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
+                    textBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    textBox.BorderStyle = BorderStyle.FixedSingle;
+                }
+                else if (control is Label label)
+                {
+                    label.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    label.BackColor = Color.Transparent;
+                }
+            }
+        }
+
+        private static void ApplyThemeToChildControls(Control container)
+        {
+            foreach (Control control in container.Controls)
+            {
+                if (control is Button button)
+                {
+                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    button.FlatStyle = FlatStyle.Flat;
+                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                }
+                else if (control is Panel panel)
+                {
+                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                    ApplyThemeToChildControls(panel);
+                }
+                else if (control is GroupBox groupBox)
+                {
+                    groupBox.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                    groupBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    ApplyThemeToChildControls(groupBox);
+                }
+                else if (control is TextBox textBox)
+                {
+                    textBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
+                    textBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    textBox.BorderStyle = BorderStyle.FixedSingle;
+                }
+                else if (control is Label label)
+                {
+                    label.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    label.BackColor = Color.Transparent;
+                }
+            }
         }
     }
 }

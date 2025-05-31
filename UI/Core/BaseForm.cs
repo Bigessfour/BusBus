@@ -2,7 +2,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace BusBus.UI.Common
+namespace BusBus.UI.Core
 {
     /// <summary>
     /// Base class for forms that support automatic theme management.
@@ -58,26 +58,14 @@ namespace BusBus.UI.Common
                     {
                         Invoke(new MethodInvoker(RefreshTheme));
                     }
-                    else
-                    {
-                        RefreshTheme();
-                    }
                 }
-                catch (ObjectDisposedException)
-                {
-                    // Form was disposed while trying to update theme - ignore
-                }
+                catch (ObjectDisposedException) { }
             }
         }
 
         /// <summary>
-        /// Applies the current theme to this form and all its children.
-        /// Override this method to customize theme application for specific forms.
+        /// Applies the current theme to this form. Override to customize.
         /// </summary>
-        protected virtual void ApplyTheme()
-        {
-            // Apply theme to the form itself
-            ThemeManager.ApplyThemeToControl(this);
-        }
+        protected abstract void ApplyTheme();
     }
 }

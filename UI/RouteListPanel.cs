@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.Models;
 using BusBus.Services;
-using BusBus.UI.Common;
+using BusBus.UI.Core;
 
 namespace BusBus.UI
 {
@@ -46,12 +46,10 @@ namespace BusBus.UI
         public string Title => "Routes";
         public Control? Control => this;
 
-        public event EventHandler<NavigationEventArgs>? NavigationRequested;
-#pragma warning disable CS0067 // Event is never used
-#pragma warning disable CS0067 // Event is never used
+        // Required by IView, but not used in this implementation
+        public event EventHandler<NavigationEventArgs>? NavigationRequested { add { } remove { } }
         public event EventHandler<StatusEventArgs>? StatusUpdated;
-        public event EventHandler<EntityEventArgs<Route>>? RouteEditRequested;
-#pragma warning disable CS0067 // Event is never used
+        // Removed unused event RouteEditRequested to resolve CS0067 warning
 
         public RouteListPanel(IRouteService routeService, IDriverService driverService, IVehicleService vehicleService)
         {
@@ -515,8 +513,7 @@ namespace BusBus.UI
             _cancellationTokenSource?.Cancel();
             return Task.CompletedTask;
         }
-
-        public override void Render(Control parent)
+        public void Render(Control parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             parent.Controls.Clear();

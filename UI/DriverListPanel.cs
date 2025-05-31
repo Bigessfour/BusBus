@@ -16,36 +16,288 @@ using BusBus.UI.Common;
 
 namespace BusBus.UI
 {
-    public partial class DriverListPanel : ThemeableControl, IDisplayable, IStatefulView
+    public class DriverListPanel : BaseCrudView, IDisplayable, IStatefulView
     {
         private readonly IDriverService _driverService;
-        private DataGridView _driversDataGridView = null!;
-        private Button _addButton = null!;
-        private Button _editButton = null!;
-        private Button _deleteButton = null!;
+        // DataGridView and CRUD buttons are now provided by BaseCrudView
         private Button _previousPageButton = null!;
         private Button _nextPageButton = null!;
         private Label _pageInfoLabel = null!;
         private Panel _buttonPanel = null!;
         private Panel _paginationPanel;
+        private DataGridView _driversDataGridView = null!;
+        private Button _addButton = null!;
+        private Button _editButton = null!;
+        private Button _deleteButton = null!;
 
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1; private List<Driver> _currentDrivers = new List<Driver>();
 
         public event EventHandler<EntityEventArgs<Driver>>? DriverEditRequested;
-        public event EventHandler<StatusEventArgs>? StatusUpdated;
-
-        public static string Title => "Drivers";
-
-        public DriverListPanel(IDriverService driverService)
+        public event EventHandler<StatusEventArgs>? StatusUpdated; public static string Title => "Drivers"; public DriverListPanel(IDriverService driverService)
         {
             _driverService = driverService ?? throw new ArgumentNullException(nameof(driverService));
-            InitializeComponent();
+            // Use shared CRUD and grid from BaseCrudView
+            HeaderText = "Driver List";
+            SetupGrid();
+            CrudAddClicked += OnAddClicked;
+            CrudEditClicked += OnEditClicked;
+
+            // Initialize UI asynchronously
+            _ = Task.Run(async () => await LoadDriversAsync());
+        }
+        private void SetupGrid()
+        {
+            if (_driversDataGridView == null)
+            {
+                InitializeComponent();
+                SetupButtons();
+                SetupPagination();
+            }
             SetupDataGridView();
-            SetupButtons();
-            SetupPagination();
-            _ = LoadDriversAsync();
+
+            // Add columns to the CrudDataGrid from BaseCrudView
+            CrudDataGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "FirstName", HeaderText = "First Name", DataPropertyName = "FirstName" });
+            CrudDataGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "LastName", HeaderText = "Last Name", DataPropertyName = "LastName" });
+            CrudDataGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "PhoneNumber", HeaderText = "Phone", DataPropertyName = "PhoneNumber" });
+            CrudDataGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Email", HeaderText = "Email", DataPropertyName = "Email" });
+
+            // Add a ComboBox column for License Type
+            var licenseTypeColumn = new DataGridViewComboBoxColumn
+            {
+                Name = "LicenseType",
+                HeaderText = "License Type",
+                DataPropertyName = "LicenseType",
+                Items = { "CDL", "Passenger" },
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
+            };
+            CrudDataGrid.Columns.Add(licenseTypeColumn);
+
+            CrudDataGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Id", DataPropertyName = "Id", Visible = false });
+        }
+        private async void OnAddClicked(object? sender, EventArgs e)
+        {
+            // Create a form for adding a new driver
+            using var form = new Form
+            {
+                Text = "Add New Driver",
+                Size = new Size(400, 350),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            // Create the input fields
+            var firstNameLabel = new Label { Text = "First Name:", Left = 20, Top = 20, Width = 100 };
+            var firstNameTextBox = new TextBox { Left = 130, Top = 20, Width = 200 };
+
+            var lastNameLabel = new Label { Text = "Last Name:", Left = 20, Top = 50, Width = 100 };
+            var lastNameTextBox = new TextBox { Left = 130, Top = 50, Width = 200 };
+
+            var phoneLabel = new Label { Text = "Phone:", Left = 20, Top = 80, Width = 100 };
+            var phoneTextBox = new TextBox { Left = 130, Top = 80, Width = 200 };
+
+            var emailLabel = new Label { Text = "Email:", Left = 20, Top = 110, Width = 100 };
+            var emailTextBox = new TextBox { Left = 130, Top = 110, Width = 200 };
+
+            var licenseTypeLabel = new Label { Text = "License Type:", Left = 20, Top = 140, Width = 100 };
+            var licenseTypeComboBox = new ComboBox
+            {
+                Left = 130,
+                Top = 140,
+                Width = 200,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            licenseTypeComboBox.Items.AddRange(new object[] { "CDL", "Passenger" });
+            licenseTypeComboBox.SelectedIndex = 0;
+
+            // Add save and cancel buttons
+            var saveButton = new Button
+            {
+                Text = "Save",
+                Left = 130,
+                Top = 200,
+                Width = 80,
+                DialogResult = DialogResult.OK
+            };
+            var cancelButton = new Button
+            {
+                Text = "Cancel",
+                Left = 250,
+                Top = 200,
+                Width = 80,
+                DialogResult = DialogResult.Cancel
+            };
+
+            // Add controls to the form
+            form.Controls.AddRange(new Control[]
+            {
+                firstNameLabel, firstNameTextBox,
+                lastNameLabel, lastNameTextBox,
+                phoneLabel, phoneTextBox,
+                emailLabel, emailTextBox,
+                licenseTypeLabel, licenseTypeComboBox,
+                saveButton, cancelButton
+            });
+
+            form.AcceptButton = saveButton;
+            form.CancelButton = cancelButton;
+
+            // Show the form
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                // Create and save the driver
+                var driver = new Driver
+                {
+                    FirstName = firstNameTextBox.Text.Trim(),
+                    LastName = lastNameTextBox.Text.Trim(),
+                    PhoneNumber = phoneTextBox.Text.Trim(),
+                    Email = emailTextBox.Text.Trim(),
+                    LicenseType = licenseTypeComboBox.SelectedItem?.ToString() ?? "CDL"
+                }; try
+                {
+                    await _driverService.CreateAsync(driver);
+                    await LoadDriversAsync();
+                    StatusUpdated?.Invoke(this, new StatusEventArgs("Driver added successfully"));
+                }
+                catch (Exception ex)
+                {
+                    StatusUpdated?.Invoke(this, new StatusEventArgs($"Error adding driver: {ex.Message}"));
+                }
+            }
+        }
+        private async void OnEditClicked(object? sender, EventArgs e)
+        {
+            // Get the selected driver
+            if (_driversDataGridView.SelectedRows.Count == 0) return;
+
+            var selectedIndex = _driversDataGridView.SelectedRows[0].Index;
+            if (selectedIndex < 0 || selectedIndex >= _currentDrivers.Count) return;
+
+            var driver = _currentDrivers[selectedIndex];
+
+            // Create a form for editing the driver
+            using var form = new Form
+            {
+                Text = $"Edit Driver: {driver.FirstName} {driver.LastName}",
+                Size = new Size(400, 350),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            // Create the input fields
+            var firstNameLabel = new Label { Text = "First Name:", Left = 20, Top = 20, Width = 100 };
+            var firstNameTextBox = new TextBox { Left = 130, Top = 20, Width = 200, Text = driver.FirstName };
+
+            var lastNameLabel = new Label { Text = "Last Name:", Left = 20, Top = 50, Width = 100 };
+            var lastNameTextBox = new TextBox { Left = 130, Top = 50, Width = 200, Text = driver.LastName };
+
+            var phoneLabel = new Label { Text = "Phone:", Left = 20, Top = 80, Width = 100 };
+            var phoneTextBox = new TextBox { Left = 130, Top = 80, Width = 200, Text = driver.PhoneNumber ?? "" };
+
+            var emailLabel = new Label { Text = "Email:", Left = 20, Top = 110, Width = 100 };
+            var emailTextBox = new TextBox { Left = 130, Top = 110, Width = 200, Text = driver.Email ?? "" };
+
+            var licenseTypeLabel = new Label { Text = "License Type:", Left = 20, Top = 140, Width = 100 };
+            var licenseTypeComboBox = new ComboBox
+            {
+                Left = 130,
+                Top = 140,
+                Width = 200,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            licenseTypeComboBox.Items.AddRange(new object[] { "CDL", "Passenger" });
+            licenseTypeComboBox.SelectedItem = driver.LicenseType;
+
+            // Add save and cancel buttons
+            var saveButton = new Button
+            {
+                Text = "Save",
+                Left = 130,
+                Top = 200,
+                Width = 80,
+                DialogResult = DialogResult.OK
+            };
+            var cancelButton = new Button
+            {
+                Text = "Cancel",
+                Left = 250,
+                Top = 200,
+                Width = 80,
+                DialogResult = DialogResult.Cancel
+            };
+
+            // Add controls to the form
+            form.Controls.AddRange(new Control[]
+            {
+                firstNameLabel, firstNameTextBox,
+                lastNameLabel, lastNameTextBox,
+                phoneLabel, phoneTextBox,
+                emailLabel, emailTextBox,
+                licenseTypeLabel, licenseTypeComboBox,
+                saveButton, cancelButton
+            });
+
+            form.AcceptButton = saveButton;
+            form.CancelButton = cancelButton;
+
+            // Show the form
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                // Update the driver
+                driver.FirstName = firstNameTextBox.Text.Trim();
+                driver.LastName = lastNameTextBox.Text.Trim();
+                driver.PhoneNumber = phoneTextBox.Text.Trim();
+                driver.Email = emailTextBox.Text.Trim();
+                driver.LicenseType = licenseTypeComboBox.SelectedItem?.ToString() ?? "CDL";
+
+                try
+                {
+                    await _driverService.UpdateAsync(driver);
+                    await LoadDriversAsync();
+                    StatusUpdated?.Invoke(this, new StatusEventArgs("Driver updated successfully"));
+                }
+                catch (Exception ex)
+                {
+                    StatusUpdated?.Invoke(this, new StatusEventArgs($"Error updating driver: {ex.Message}"));
+                }
+            }
+        }
+        private async void OnDeleteClicked(object? sender, EventArgs e)
+        {
+            // Get the selected driver
+            if (_driversDataGridView.SelectedRows.Count == 0) return;
+
+            var selectedIndex = _driversDataGridView.SelectedRows[0].Index;
+            if (selectedIndex < 0 || selectedIndex >= _currentDrivers.Count) return;
+
+            var driver = _currentDrivers[selectedIndex];
+
+            // Confirm deletion
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete driver {driver.FirstName} {driver.LastName}?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    await _driverService.DeleteAsync(driver.Id);
+                    await LoadDriversAsync();
+                    StatusUpdated?.Invoke(this, new StatusEventArgs("Driver deleted successfully"));
+                }
+                catch (Exception ex)
+                {
+                    StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting driver: {ex.Message}"));
+                }
+            }
         }
 
         public void SaveState(object state)
@@ -66,7 +318,8 @@ namespace BusBus.UI
             var mainLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 1,                RowCount = 3,
+                ColumnCount = 1,
+                RowCount = 3,
                 BackColor = Color.Transparent
             };
 
@@ -90,7 +343,7 @@ namespace BusBus.UI
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                EnableHeadersVisualStyles = false,                
+                EnableHeadersVisualStyles = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AutoSize = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
@@ -99,12 +352,12 @@ namespace BusBus.UI
                 ColumnHeadersHeight = 40, // Fixed height for better visibility
                 RowHeadersVisible = false,
                 RowTemplate = { Height = 32 },
-                EditMode = DataGridViewEditMode.EditOnEnter            
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
 
             // Apply consistent theme styling to the grid
             ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
-            
+
             // Enhance header styling for better visibility
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Font = new Font(_driversDataGridView.Font.FontFamily, 9.5F, FontStyle.Bold);
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
@@ -120,7 +373,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
             };
-            
+
             // Add button panel to the middle
             mainLayout.Controls.Add(_buttonPanel, 0, 1);
 
@@ -163,17 +416,43 @@ namespace BusBus.UI
             };
             _driversDataGridView.Columns.Add(lastNameColumn);
 
-            // LicenseNumber column
-            var licenseColumn = new DataGridViewTextBoxColumn
+            // Phone column
+            var phoneColumn = new DataGridViewTextBoxColumn
             {
-                Name = "LicenseNumber",
-                HeaderText = "License Number",
-                DataPropertyName = "LicenseNumber",
+                Name = "PhoneNumber",
+                HeaderText = "Phone",
+                DataPropertyName = "PhoneNumber",
+                FillWeight = 150,
+                MinimumWidth = 120,
+                ReadOnly = false
+            };
+            _driversDataGridView.Columns.Add(phoneColumn);
+
+            // Email column
+            var emailColumn = new DataGridViewTextBoxColumn
+            {
+                Name = "Email",
+                HeaderText = "Email",
+                DataPropertyName = "Email",
                 FillWeight = 200,
                 MinimumWidth = 150,
                 ReadOnly = false
             };
-            _driversDataGridView.Columns.Add(licenseColumn);
+            _driversDataGridView.Columns.Add(emailColumn);
+
+            // LicenseType column (dropdown)
+            var licenseTypeColumn = new DataGridViewComboBoxColumn
+            {
+                Name = "LicenseType",
+                HeaderText = "License Type",
+                DataPropertyName = "LicenseType",
+                FillWeight = 150,
+                MinimumWidth = 120,
+                Items = { "CDL", "Passenger" },
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
+                ReadOnly = false
+            };
+            _driversDataGridView.Columns.Add(licenseTypeColumn);
 
             // Hidden ID column
             var idColumn = new DataGridViewTextBoxColumn
@@ -196,13 +475,14 @@ namespace BusBus.UI
                 Height = 50,
                 ColumnCount = 3,
                 RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                BackColor = Color.Transparent,
                 Padding = new Padding(5)
             };
             buttonLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             buttonLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             buttonLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
 
+            // Add button
             _addButton = new Button
             {
                 Text = "Add Driver",
@@ -213,17 +493,16 @@ namespace BusBus.UI
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
-                UseVisualStyleBackColor = false,
-                AutoSize = false,
-                MinimumSize = new Size(80, 30)
+                UseVisualStyleBackColor = false
             };
             _addButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
             _addButton.FlatAppearance.BorderSize = 1;
-            _addButton.Click += AddButton_Click;
+            _addButton.Click += (s, e) => OnCrudAddClicked();
 
+            // Edit button
             _editButton = new Button
             {
-                Text = "Edit",
+                Text = "Edit Driver",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
@@ -232,17 +511,16 @@ namespace BusBus.UI
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
-                AutoSize = false,
-                MinimumSize = new Size(80, 30),
-                Enabled = false
+                Enabled = false // Disabled until a row is selected
             };
             _editButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
             _editButton.FlatAppearance.BorderSize = 1;
-            _editButton.Click += EditButton_Click;
+            _editButton.Click += (s, e) => OnCrudEditClicked();
 
+            // Delete button
             _deleteButton = new Button
             {
-                Text = "Delete",
+                Text = "Delete Driver",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
                 BackColor = ThemeManager.CurrentTheme.ButtonBackground,
@@ -251,18 +529,27 @@ namespace BusBus.UI
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
-                AutoSize = false,
-                MinimumSize = new Size(80, 30),
-                Enabled = false
+                Enabled = false // Disabled until a row is selected
             };
             _deleteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
             _deleteButton.FlatAppearance.BorderSize = 1;
-            _deleteButton.Click += DeleteButton_Click;
+            _deleteButton.Click += (s, e) => OnCrudDeleteClicked();
 
+            // Add the buttons to the layout
             buttonLayout.Controls.Add(_addButton, 0, 0);
             buttonLayout.Controls.Add(_editButton, 1, 0);
             buttonLayout.Controls.Add(_deleteButton, 2, 0);
+
+            // Add the button layout to the button panel
             _buttonPanel.Controls.Add(buttonLayout);
+
+            // Wire up selection changed event for enabling/disabling buttons
+            _driversDataGridView.SelectionChanged += (s, e) =>
+            {
+                bool hasSelection = _driversDataGridView.SelectedRows.Count > 0;
+                _editButton.Enabled = hasSelection;
+                _deleteButton.Enabled = hasSelection;
+            };
         }
         private void SetupPagination()
         {
@@ -271,62 +558,68 @@ namespace BusBus.UI
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
                 AutoSize = true,
-                Padding = new Padding(5),
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(5)
             };
 
             // Previous page button
             _previousPageButton = new Button
             {
-                Text = "◀ Previous",
-                Size = new Size(100, 35),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                Text = "← Previous",
+                AutoSize = true,
+                Margin = new Padding(3),
+                Padding = new Padding(5, 2, 5, 2),
                 FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
-                TextAlign = ContentAlignment.MiddleCenter,
-                UseVisualStyleBackColor = false,
-                Enabled = false,
-                Margin = new Padding(3)
+                Enabled = false  // Disabled initially (first page)
             };
-            _previousPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _previousPageButton.FlatAppearance.BorderSize = 1;
-            _previousPageButton.Click += PreviousPageButton_Click;
+            _previousPageButton.FlatAppearance.BorderColor = Color.LightGray;
+            _previousPageButton.Click += async (s, e) =>
+            {
+                if (_currentPage > 1)
+                {
+                    _currentPage--;
+                    await LoadDriversAsync();
+                }
+            };
 
             // Page info label
             _pageInfoLabel = new Label
             {
-                Text = "Page 1",
-                Size = new Size(100, 35),
+                Text = "Page 1 of 1",
+                AutoSize = true,
                 TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
-                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
-                AutoSize = false,
-                Margin = new Padding(10, 3, 10, 3)
+                Margin = new Padding(10, 5, 10, 0),
+                Padding = new Padding(5)
             };
 
             // Next page button
             _nextPageButton = new Button
             {
-                Text = "Next ▶",
-                Size = new Size(100, 35),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                Text = "Next →",
+                AutoSize = true,
+                Margin = new Padding(3),
+                Padding = new Padding(5, 2, 5, 2),
                 FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
-                TextAlign = ContentAlignment.MiddleCenter,
-                UseVisualStyleBackColor = false,
-                Enabled = false,
-                Margin = new Padding(3)
+                Enabled = false  // Disabled initially (no pages)
             };
-            _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
-            _nextPageButton.FlatAppearance.BorderSize = 1;
-            _nextPageButton.Click += NextPageButton_Click;
+            _nextPageButton.FlatAppearance.BorderColor = Color.LightGray;
+            _nextPageButton.Click += async (s, e) =>
+            {
+                if (_currentPage < _totalPages)
+                {
+                    _currentPage++;
+                    await LoadDriversAsync();
+                }
+            };
 
+            // Add controls to the pagination layout
             paginationLayout.Controls.Add(_previousPageButton);
             paginationLayout.Controls.Add(_pageInfoLabel);
             paginationLayout.Controls.Add(_nextPageButton);
+
+            // Add the pagination layout to the pagination panel
             _paginationPanel.Controls.Add(paginationLayout);
         }
 
@@ -377,24 +670,45 @@ namespace BusBus.UI
             public int PageSize { get; set; }
             public Guid? SelectedDriverId { get; set; }
         }
-        #endregion
-
+        #endregion        /// <summary>
+        /// Loads drivers from the service with pagination
+        /// </summary>
         public async Task LoadDriversAsync()
         {
             try
             {
-                var totalCount = await _driverService.GetCountAsync();
-                _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
+                // Show loading state
+                StatusUpdated?.Invoke(this, new StatusEventArgs("Loading drivers..."));
 
+                // Get total count for pagination
+                int totalCount = await _driverService.GetCountAsync();
+                _totalPages = (int)Math.Ceiling(totalCount / (double)_pageSize);
+
+                // Update pagination display
+                if (_pageInfoLabel != null)
+                {
+                    _pageInfoLabel.Text = $"Page {_currentPage} of {_totalPages}";
+                    _previousPageButton.Enabled = _currentPage > 1;
+                    _nextPageButton.Enabled = _currentPage < _totalPages;
+                }
+
+                // Get drivers for current page
                 _currentDrivers = await _driverService.GetPagedAsync(_currentPage, _pageSize);
 
+                // Update grid data source
+                _driversDataGridView.DataSource = null;
                 _driversDataGridView.DataSource = _currentDrivers;
-                UpdatePaginationControls();
+
+                // Also update the CrudDataGrid if it's being used
+                CrudDataGrid.DataSource = null;
+                CrudDataGrid.DataSource = _currentDrivers;
+
+                // Update status
+                StatusUpdated?.Invoke(this, new StatusEventArgs($"Loaded {_currentDrivers.Count} drivers"));
             }
             catch (Exception ex)
             {
-                StatusUpdated?.Invoke(this, new StatusEventArgs(
-                    $"Error loading drivers: {ex.Message}", StatusType.Error));
+                StatusUpdated?.Invoke(this, new StatusEventArgs($"Error loading drivers: {ex.Message}"));
             }
         }
 
@@ -449,7 +763,6 @@ namespace BusBus.UI
                 }
             }
         }
-
         private async void DriversDataGridView_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.RowIndex >= _currentDrivers.Count) return;
@@ -468,8 +781,14 @@ namespace BusBus.UI
                     case "LastName":
                         driver.LastName = newValue;
                         break;
-                    case "LicenseNumber":
-                        driver.LicenseNumber = newValue;
+                    case "PhoneNumber":
+                        driver.PhoneNumber = newValue;
+                        break;
+                    case "Email":
+                        driver.Email = newValue;
+                        break;
+                    case "LicenseType":
+                        driver.LicenseType = newValue;
                         break;
                 }
 
@@ -506,20 +825,18 @@ namespace BusBus.UI
                 await LoadDriversAsync();
             }
         }
-
-        public override void Render(Control container)
+        public void Render(Control container)
         {
             if (container == null) return;
             container.Controls.Clear();
             container.Controls.Add(this);
-            this.Dock = DockStyle.Fill;
+            Dock = DockStyle.Fill;
         }
-        protected override void ApplyTheme()
-        {
-            base.ApplyTheme();
 
+        public void RefreshTheme()
+        {
             // Apply theme to main panel
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
 
             // Apply theme to data grid
             if (_driversDataGridView != null)
@@ -534,7 +851,6 @@ namespace BusBus.UI
                 _addButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
                 _addButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
             }
-
             if (_editButton != null)
             {
                 _editButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
@@ -584,6 +900,35 @@ namespace BusBus.UI
         public async Task RefreshAsync()
         {
             await LoadDriversAsync();
+        }
+
+        void IDisplayable.RefreshTheme()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Wire up the button click events to the CRUD operations
+        /// </summary>
+        private void WireUpButtonEvents()
+        {
+            // Connect UI buttons to BaseCrudView events
+            _addButton.Click += (s, e) => OnCrudAddClicked();
+            _editButton.Click += (s, e) => OnCrudEditClicked();
+            _deleteButton.Click += (s, e) => OnCrudDeleteClicked();
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            // Wire up event handlers
+            CrudAddClicked += OnAddClicked;
+            CrudEditClicked += OnEditClicked;
+            CrudDeleteClicked += OnDeleteClicked;
+
+            // Load data when control is loaded
+            _ = LoadDriversAsync();
         }
     }    // Add missing event args classes
     public class EntityEventArgs<T> : EventArgs

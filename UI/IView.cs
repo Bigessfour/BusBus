@@ -10,6 +10,7 @@ namespace BusBus.UI
     {
         string ViewName { get; }
         string Title { get; }
+        // For Form-based views, this is redundant, but kept for compatibility
         Control? Control { get; }
         event EventHandler<NavigationEventArgs>? NavigationRequested;
         event EventHandler<StatusEventArgs>? StatusUpdated;

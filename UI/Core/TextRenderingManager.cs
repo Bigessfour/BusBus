@@ -6,7 +6,7 @@ using System.Drawing.Text;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 
-namespace BusBus.UI
+namespace BusBus.UI.Core
 {
     /// <summary>
     /// Helper class to ensure consistent text rendering quality across the application
@@ -102,9 +102,11 @@ namespace BusBus.UI
             {
                 RegisterForHighQualityTextRendering(child);
             }
-        }        /// <summary>
-                 /// Configures a DataGridView for optimal text rendering
-                 /// </summary>
+        }
+
+        /// <summary>
+        /// Configures a DataGridView for optimal text rendering
+        /// </summary>
         private static void ConfigureDataGridView(DataGridView grid)
         {
             grid.CellPainting += (sender, e) => { if (e.Graphics != null) ApplyHighQualityTextRendering(e.Graphics); };
@@ -128,9 +130,11 @@ namespace BusBus.UI
             // Prevent column header truncation
             grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             grid.ColumnHeadersHeight = 35; // Minimum height for headers
-        }        /// <summary>
-                 /// Configures a Label for optimal text rendering and truncation prevention
-                 /// </summary>
+        }
+
+        /// <summary>
+        /// Configures a Label for optimal text rendering and truncation prevention
+        /// </summary>
         private static void ConfigureLabel(Label label)
         {
             // Ensure labels are sized properly to prevent truncation
@@ -158,7 +162,8 @@ namespace BusBus.UI
             label.Paint += (sender, e) =>
             {
                 e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-                // Apply pixel offset to prevent blurry text                e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                // Apply pixel offset to prevent blurry text
+                e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
             };
         }
 
@@ -228,9 +233,11 @@ namespace BusBus.UI
 
                 e.DrawFocusRectangle();
             };
-        }        /// <summary>
-                 /// Ensures layout panels properly size their children to prevent truncation
-                 /// </summary>
+        }
+
+        /// <summary>
+        /// Ensures layout panels properly size their children to prevent truncation
+        /// </summary>
         private static void EnsureProperSizingForLayout(Control layoutPanel)
         {
             if (layoutPanel is TableLayoutPanel tableLayout)

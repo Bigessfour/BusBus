@@ -1,10 +1,3 @@
-namespace BusBus.UI.Common
-{
-    /// <summary>
-    /// Interface for views that can be refreshed
-    /// </summary>
-    public interface IRefreshable
-    {
-        void Refresh();
-    }
-}
+
+// File removed. See UI/Core/IRefreshable.cs for the canonical implementation.
+

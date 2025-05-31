@@ -240,15 +240,15 @@ namespace BusBus.UI.Forms
             _mainLayout.SetColumnSpan(bottomPanel, 2);
 
             // Enable layout debugging to detect text truncation
-            LayoutDebugger.DetectTextTruncation(this);
+            // Enable layout debugging to detect text truncation
+            // LayoutDebugger.DetectTextTruncation(this);
 
             // Optimize table layouts to prevent truncation
-            OptimizeTableLayoutForText(detailsLayout);
+            // OptimizeTableLayoutForText(detailsLayout);
 
             // Apply high-quality text rendering again to catch any new controls
-            TextRenderingManager.RegisterForHighQualityTextRendering(this);
+            // TextRenderingManager.RegisterForHighQualityTextRendering(this);
         }
-
         private void AddDetailField(TableLayoutPanel layout, string label, string value, int row)
         {
             var labelControl = CreateStyledLabel(label, false, true);

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using BusBus.UI.Common;
+using BusBus.UI.Core;
 using System.Drawing;
 using System.Linq;
 using System.ComponentModel;
@@ -36,7 +36,6 @@ namespace BusBus.UI
         private Label _titleLabel = null!;
 
         // Pagination and state
-        private int _totalRoutes = 0;
         private int _currentPage = 1;
         private int _pageSize = 20;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -46,11 +45,9 @@ namespace BusBus.UI
         public string Title => "Routes";
         public Control? Control => this;
 
+        // Required by IView, but not used in this implementation
+#pragma warning disable CS0067 // Event is never used
         public event EventHandler<NavigationEventArgs>? NavigationRequested;
-#pragma warning disable CS0067 // Event is never used
-#pragma warning disable CS0414 // Field is assigned but its value is never used
-#pragma warning disable CS0067 // Event is never used
-#pragma warning disable CS0414 // Field is assigned but its value is never used
         public event EventHandler<StatusEventArgs>? StatusUpdated;
 
         public RoutesManagementPanel(IRouteService routeService, IDriverService? driverService = null, IVehicleService? vehicleService = null)
@@ -67,9 +64,9 @@ namespace BusBus.UI
 
         private void InitializeComponent()
         {
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            this.Padding = new Padding(10);
-            this.Dock = DockStyle.Fill;
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            Padding = new Padding(10);
+            Dock = DockStyle.Fill;
             ThemeManager.EnforceGlassmorphicTextColor(this);
 
             // Title label
@@ -82,7 +79,7 @@ namespace BusBus.UI
                 ForeColor = ThemeManager.CurrentTheme.CardText,
                 TextAlign = ContentAlignment.MiddleCenter
             };
-            this.Controls.Add(_titleLabel);
+            Controls.Add(_titleLabel);
 
             // Main container
             var mainContainer = new TableLayoutPanel
@@ -94,7 +91,7 @@ namespace BusBus.UI
             };
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this.Controls.Add(mainContainer);
+            Controls.Add(mainContainer);
 
             // Create DataGridView
             CreateDataGridView();
@@ -634,12 +631,52 @@ namespace BusBus.UI
         }
         public new void Show()
         {
-            this.Visible = true;
+            Visible = true;
         }
 
         public new void Hide()
         {
-            this.Visible = false;
+            Visible = false;
+        }        /// <summary>
+                 /// Applies the current theme to this control and its children
+                 /// </summary>
+        protected override void ApplyTheme()
+        {
+            // Apply theme to the panel
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+
+            // Style any buttons or controls
+            foreach (Control control in Controls)
+            {
+                if (control is Button button)
+                {
+                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                    button.FlatStyle = FlatStyle.Flat;
+                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                }
+                else if (control is DataGridView grid)
+                {
+                    ThemeManager.CurrentTheme.StyleDataGrid(grid);
+                }
+                else if (control is Panel panel)
+                {
+                    panel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Renders this control into the specified container
+        /// </summary>
+        public void Render(Control container)
+        {
+            if (container == null) return;
+
+            container.Controls.Clear();
+            container.Controls.Add(this);
+            Dock = DockStyle.Fill;
         }
 
         // Add IView interface implementation
@@ -652,14 +689,6 @@ namespace BusBus.UI
         {
             _cancellationTokenSource?.Cancel();
             return Task.CompletedTask;
-        }
-
-        public override void Render(Control parent)
-        {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
-            parent.Controls.Clear();
-            parent.Controls.Add(this);
-            Dock = DockStyle.Fill;
         }
 
         #region IDisposable Support

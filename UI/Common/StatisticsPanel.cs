@@ -43,7 +43,7 @@ namespace BusBus.UI.Common
             Console.WriteLine("[StatisticsPanel] Component initialized");
 
             // Start timer after handle is created (control is ready)
-            this.HandleCreated += async (s, e) =>
+            HandleCreated += async (s, e) =>
             {
                 Console.WriteLine("[StatisticsPanel] Handle created, refreshing statistics");
                 await RefreshStatisticsAsync();
@@ -52,9 +52,9 @@ namespace BusBus.UI.Common
         }
         private void InitializeComponent()
         {
-            this.Dock = DockStyle.Fill;
-            this.Padding = new Padding(20, 15, 20, 15); // Enhanced padding for better text spacing
-            this.MinimumSize = new Size(800, 100); // Minimum size to prevent truncation
+            Dock = DockStyle.Fill;
+            Padding = new Padding(20, 15, 20, 15); // Enhanced padding for better text spacing
+            MinimumSize = new Size(800, 100); // Minimum size to prevent truncation
 
             // Create main layout
             _statisticsLayout = new TableLayoutPanel
@@ -96,7 +96,7 @@ namespace BusBus.UI.Common
 
 #if DEBUG
             // Add debug truncation detection in development builds
-            this.HandleCreated += (s, e) =>
+            HandleCreated += (s, e) =>
             {
                 var truncatedControls = Utils.LayoutDebugger.DetectTextTruncation(this);
                 if (truncatedControls.Count > 0)
@@ -110,8 +110,8 @@ namespace BusBus.UI.Common
             };
 #endif
 
-            this.Controls.Add(_statisticsLayout);
-            this.Controls.Add(_lastUpdatedLabel);
+            Controls.Add(_statisticsLayout);
+            Controls.Add(_lastUpdatedLabel);
         }
         private void CreateStatisticPair(string value, string label, int columnIndex, out Label valueLabel)
         {
@@ -147,7 +147,7 @@ namespace BusBus.UI.Common
         private void ApplyTheme()
         {
             // Apply modern theme colors for better integration
-            this.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = ThemeManager.CurrentTheme.CardBackground;
             _statisticsLayout.BackColor = ThemeManager.CurrentTheme.CardBackground;
 
             // Apply theme to all labels
@@ -173,9 +173,9 @@ namespace BusBus.UI.Common
                 var statistics = await _statisticsService.GetDashboardStatisticsAsync();
 
                 // Update UI on the UI thread
-                if (this.InvokeRequired)
+                if (InvokeRequired)
                 {
-                    this.Invoke(new Action(() => UpdateStatisticsDisplay(statistics)));
+                    Invoke(new Action(() => UpdateStatisticsDisplay(statistics)));
                 }
                 else
                 {
@@ -187,9 +187,9 @@ namespace BusBus.UI.Common
                 Console.WriteLine($"[StatisticsPanel] Error refreshing statistics: {ex.Message}");
 
                 // Update UI on the UI thread to show error state
-                if (this.InvokeRequired)
+                if (InvokeRequired)
                 {
-                    this.Invoke(new Action(() => ShowErrorState()));
+                    Invoke(new Action(() => ShowErrorState()));
                 }
                 else
                 {

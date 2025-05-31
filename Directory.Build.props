@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Common build properties -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <!-- Configure warning levels -->
+    <!-- NoWarn format is semicolon-separated list of warning numbers -->
+    <!-- CS8618: Non-nullable field must contain non-null value when exiting constructor -->
+    <!-- CS0169: The field is never used -->
+    <NoWarn>$(NoWarn);CS8618;CS0169</NoWarn>    <!-- Control specific diagnostic severities -->
+    <!-- This makes these diagnostics show as errors (red X) -->
+    <WarningsAsErrors>
+      NU1605;CS1591;CS0103;CS1061;CS7036;CS0246
+    </WarningsAsErrors>
+
+    <!-- This makes these diagnostics show as info (blue i) -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CA1416;CS0169;CS1998;CS8618;CS0824</WarningsNotAsErrors>
+
+    <!-- Enable analyzer package with minimal verbosity -->
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>AllDisabledByDefault</AnalysisMode>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+
+    <!-- Customize the information displayed in the Problems panel -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Configure code analyzers -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Custom properties for diagnostics -->
+  <PropertyGroup>
+    <ErrorReport>prompt</ErrorReport>
+    <ReportAnalyzer>true</ReportAnalyzer>
+  </PropertyGroup>
+</Project>
