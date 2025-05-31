@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,23 +19,45 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore BusBus.sln
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies with retry
+        run: |
+          for ($i = 1; $i -le 3; $i++) {
+            try {
+              Write-Host "Restore attempt $i"
+              dotnet restore BusBus.sln --verbosity normal
+              break
+            }
+            catch {
+              if ($i -eq 3) { throw }
+              Write-Host "Restore failed, retrying in 10 seconds..."
+              Start-Sleep 10
+            }
+          }
 
       - name: Build
         run: dotnet build BusBus.sln --no-restore --configuration Release
 
       - name: Test with coverage
-        run: dotnet test BusBus.Tests/BusBus.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test BusBus.Tests/BusBus.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx" --results-directory TestResults
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-report
-          path: BusBus.Tests/TestResults/**/*.xml
+          path: TestResults/**/*.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: test-results
-          path: BusBus.Tests/TestResults/**/*.trx
+          path: TestResults/**/*.trx
