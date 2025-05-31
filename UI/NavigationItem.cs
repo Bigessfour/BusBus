@@ -2,6 +2,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using BusBus.UI.Core;
 
 namespace BusBus.UI
 {
@@ -58,13 +59,13 @@ namespace BusBus.UI
                 // Apply theme-appropriate styling
                 if (isActive)
                 {
-                    Button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
-                    Button.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                    Button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
+                    Button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonText;
                 }
                 else
                 {
-                    Button.BackColor = ThemeManager.CurrentTheme.SidePanelBackground;
-                    Button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    Button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.SidePanelBackground;
+                    Button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                 }
             }
         }

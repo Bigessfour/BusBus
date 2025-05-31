@@ -55,10 +55,9 @@ namespace BusBus.Models
 
         public Guid? VehicleId { get; set; }
         public Vehicle? Vehicle { get; set; }
-
         public string StartLocation { get; set; } = string.Empty;
         public string EndLocation { get; set; } = string.Empty;
-        public DateTime ScheduledTime { get; set; }
+        public DateTime ScheduledTime { get; set; } = DateTime.Today.AddHours(8); // Default to 8 AM
 
         public int RouteID { get; set; }
         public string RouteName { get; set; }
@@ -84,26 +83,24 @@ namespace BusBus.Models
             get => string.IsNullOrEmpty(_stopsJson) ? new List<BusStop>() :
                    JsonSerializer.Deserialize<List<BusStop>>(_stopsJson);
             set => _stopsJson = JsonSerializer.Serialize(value);
-        }
-
-        // JSON-backed schedule information
-        private string _scheduleJson;
+        }        // JSON-backed schedule information
+        private string _scheduleJson = "{}"; // Default empty JSON object
         public string ScheduleJson
         {
             get => _scheduleJson;
-            set => _scheduleJson = value;
+            set => _scheduleJson = value ?? "{}";
         }
 
         public RouteSchedule Schedule
         {
-            get => string.IsNullOrEmpty(_scheduleJson) ? new RouteSchedule() :
+            get => string.IsNullOrEmpty(_scheduleJson) || _scheduleJson == "{}" ? new RouteSchedule() :
                    JsonSerializer.Deserialize<RouteSchedule>(_scheduleJson);
             set => _scheduleJson = JsonSerializer.Serialize(value);
         }
 
         // Calculated properties
         public int NumberOfStops => Stops?.Count ?? 0;
-        public TimeSpan EstimatedDuration => Schedule?.EstimatedTripTime ?? TimeSpan.Zero;
+        // public TimeSpan EstimatedDuration => Schedule?.EstimatedTripTime ?? TimeSpan.Zero; // Removed for schedule scrub
 
         // Additional computed properties for tests
         public double TotalMiles => (AMEndingMileage - AMStartingMileage) + (PMEndingMileage - PMStartMileage);

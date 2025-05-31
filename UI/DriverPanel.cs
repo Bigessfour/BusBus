@@ -50,7 +50,7 @@ namespace BusBus.UI
                 RowCount = 4,
                 ColumnCount = 2,
                 Padding = new Padding(15),
-                BackColor = ThemeManager.CurrentTheme.MainBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground
             };
 
             mainPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
@@ -67,15 +67,15 @@ namespace BusBus.UI
                 Text = "First Name:",
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont
             };
             mainPanel.Controls.Add(firstNameLabel, 0, 0); _firstNameTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
-                BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 Margin = new Padding(5, 3, 0, 3)
             };
             mainPanel.Controls.Add(_firstNameTextBox, 1, 0);
@@ -86,15 +86,15 @@ namespace BusBus.UI
                 Text = "Last Name:",
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont
             };
             mainPanel.Controls.Add(lastNameLabel, 0, 1); _lastNameTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
-                BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 Margin = new Padding(5, 3, 0, 3)
             };
             mainPanel.Controls.Add(_lastNameTextBox, 1, 1);
@@ -105,15 +105,15 @@ namespace BusBus.UI
                 Text = "License #:",
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont
             };
             mainPanel.Controls.Add(licenseLabel, 0, 2); _licenseNumberTextBox = new TextBox
             {
                 Dock = DockStyle.Fill,
-                BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 Margin = new Padding(5, 3, 0, 3)
             };
             mainPanel.Controls.Add(_licenseNumberTextBox, 1, 2);
@@ -128,25 +128,25 @@ namespace BusBus.UI
             {
                 Text = "Cancel",
                 Size = new Size(80, 30),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 FlatStyle = FlatStyle.Flat,
                 DialogResult = DialogResult.Cancel,
                 Margin = new Padding(5, 0, 0, 0)
             };
-            _cancelButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _cancelButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             _cancelButton.Click += (s, e) => Close(); _saveButton = new Button
             {
                 Text = "Save",
                 Size = new Size(80, 30),
-                BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground,
                 ForeColor = Color.White,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 FlatStyle = FlatStyle.Flat,
                 Margin = new Padding(5, 0, 0, 0)
             };
-            _saveButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+            _saveButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
             _saveButton.Click += SaveButton_Click;
 
             buttonPanel.Controls.Add(_cancelButton);
@@ -156,7 +156,7 @@ namespace BusBus.UI
             mainPanel.SetColumnSpan(buttonPanel, 2);
 
             Controls.Add(mainPanel);
-            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
             AcceptButton = _saveButton;
             CancelButton = _cancelButton;
         }
@@ -265,47 +265,47 @@ namespace BusBus.UI
         }
         protected override void ApplyTheme()
         {
-            BackColor = ThemeManager.CurrentTheme.MainBackground;
-            ForeColor = ThemeManager.CurrentTheme.CardText;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
 
             // Apply theme to all controls recursively
             foreach (Control control in Controls)
             {
                 if (control is Button button)
                 {
-                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                    button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     button.FlatStyle = FlatStyle.Flat;
-                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                    button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
 
                     // Special styling for save button
                     if (button.Text == "Save")
                     {
-                        button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                        button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
                         button.ForeColor = Color.White;
-                        button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                        button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
                     }
                 }
                 else if (control is Panel panel)
                 {
-                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                    panel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
                     ApplyThemeToChildControls(panel);
                 }
                 else if (control is GroupBox groupBox)
                 {
-                    groupBox.BackColor = ThemeManager.CurrentTheme.CardBackground;
-                    groupBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    groupBox.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+                    groupBox.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     ApplyThemeToChildControls(groupBox);
                 }
                 else if (control is TextBox textBox)
                 {
-                    textBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
-                    textBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    textBox.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground;
+                    textBox.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     textBox.BorderStyle = BorderStyle.FixedSingle;
                 }
                 else if (control is Label label)
                 {
-                    label.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    label.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     label.BackColor = Color.Transparent;
                 }
             }
@@ -317,31 +317,31 @@ namespace BusBus.UI
             {
                 if (control is Button button)
                 {
-                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                    button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     button.FlatStyle = FlatStyle.Flat;
-                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                    button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
                 }
                 else if (control is Panel panel)
                 {
-                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                    panel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
                     ApplyThemeToChildControls(panel);
                 }
                 else if (control is GroupBox groupBox)
                 {
-                    groupBox.BackColor = ThemeManager.CurrentTheme.CardBackground;
-                    groupBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    groupBox.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+                    groupBox.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     ApplyThemeToChildControls(groupBox);
                 }
                 else if (control is TextBox textBox)
                 {
-                    textBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
-                    textBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    textBox.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground;
+                    textBox.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     textBox.BorderStyle = BorderStyle.FixedSingle;
                 }
                 else if (control is Label label)
                 {
-                    label.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    label.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                     label.BackColor = Color.Transparent;
                 }
             }

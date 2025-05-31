@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using BusBus.UI.Core;
 
 namespace BusBus.UI.Common
 {
@@ -107,17 +108,17 @@ namespace BusBus.UI.Common
 
             BackColor = type switch
             {
-                NotificationType.Success => ThemeManager.CurrentTheme.ButtonBackground,
-                NotificationType.Warning => ThemeManager.CurrentTheme.ButtonHoverBackground,
-                NotificationType.Error => ThemeManager.CurrentTheme.ButtonPressedBackground,
-                _ => ThemeManager.CurrentTheme.CardBackground
+                NotificationType.Success => BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                NotificationType.Warning => BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground,
+                NotificationType.Error => BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonPressedBackground,
+                _ => BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground
             };
 
             // Enhanced message label with better text handling
             var messageLabel = new Label
             {
                 Text = message,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 Font = new Font("Segoe UI", 10F),
                 Location = new Point(15, 20), // Adjusted Y position for better centering
                 MaximumSize = new Size(300, 60), // Maximum size to constrain text area
@@ -139,7 +140,7 @@ namespace BusBus.UI.Common
             var closeButton = new Button
             {
                 Text = "✕",
-                ForeColor = ThemeManager.CurrentTheme.ButtonText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonText,
                 FlatStyle = FlatStyle.Flat,
                 Size = new Size(25, 25),
                 Location = new Point(Width - 35, 5), // Position relative to actual width

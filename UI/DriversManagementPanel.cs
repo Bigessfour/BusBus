@@ -66,20 +66,20 @@ namespace BusBus.UI
         protected override void ApplyTheme()
         {
             // Example: update colors, fonts, etc. according to the current theme
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             if (_titleLabel != null)
-                _titleLabel.ForeColor = ThemeManager.CurrentTheme.CardText;
+                _titleLabel.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
             if (_driversGrid != null)
-                ThemeManager.CurrentTheme.StyleDataGrid(_driversGrid);
+                BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_driversGrid);
             // Add more theme application logic as needed
         }
 
         private void InitializeComponent()
         {
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             Padding = new Padding(10);
             Dock = DockStyle.Fill;
-            ThemeManager.EnforceGlassmorphicTextColor(this);
+            BusBus.UI.Core.ThemeManager.EnforceGlassmorphicTextColor(this);
 
             // Title label
             _titleLabel = new Label
@@ -88,7 +88,7 @@ namespace BusBus.UI
                 Font = new Font("Segoe UI", 14F, FontStyle.Bold),
                 Dock = DockStyle.Top,
                 Height = 40,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 TextAlign = ContentAlignment.MiddleCenter
             };
             Controls.Add(_titleLabel);
@@ -99,7 +99,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 2,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground
             };
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -141,7 +141,7 @@ namespace BusBus.UI
             };
 
             // Apply theme styling
-            ThemeManager.CurrentTheme.StyleDataGrid(_driversGrid);
+            BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_driversGrid);
 
             // Enhance header styling
             _driversGrid.ColumnHeadersDefaultCellStyle.Font = new Font(_driversGrid.Font.FontFamily, 9.5F, FontStyle.Bold);
@@ -273,7 +273,7 @@ namespace BusBus.UI
                 Height = 50,
                 ColumnCount = 3,
                 RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground,
                 Padding = new Padding(5)
             };
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));

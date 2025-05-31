@@ -1,3 +1,4 @@
+
 #pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
 // Enable nullable reference types for this file
 #nullable enable
@@ -25,6 +26,9 @@ namespace BusBus
 {
     internal static partial class Program // Added partial modifier
     {
+        // Guard to prevent duplicate shutdowns
+        private static bool _shutdownInProgress = false;
+        public static bool ShutdownInProgress => _shutdownInProgress;
         private static readonly int[] SqlRetryErrorNumbers = new[] { 1205, 10054 };
         private static readonly List<Task> _backgroundTasks = new List<Task>();
         private static readonly CancellationTokenSource _appCancellationTokenSource = new CancellationTokenSource();
@@ -179,15 +183,15 @@ namespace BusBus
                 if (startWithLightTheme)
                 {
                     Console.WriteLine("[Program] Starting with light theme...");
-                    ThemeManager.SwitchTheme("Light");
+                    BusBus.UI.Core.ThemeManager.SwitchTheme("Light");
                 }
                 else
                 {
                     Console.WriteLine("[Program] Starting with dark theme (default)...");
-                    ThemeManager.SwitchTheme("Dark");
+                    BusBus.UI.Core.ThemeManager.SwitchTheme("Dark");
                 }
-                Console.WriteLine($"[Program] Current theme: {ThemeManager.CurrentTheme.Name}");
-                Console.WriteLine($"[Program] Available themes: {string.Join(", ", ThemeManager.AvailableThemes)}");
+                Console.WriteLine($"[Program] Current theme: {BusBus.UI.Core.ThemeManager.CurrentTheme.Name}");
+                Console.WriteLine($"[Program] Available themes: {string.Join(", ", BusBus.UI.Core.ThemeManager.AvailableThemes)}");
             }
             catch (Exception ex)
             {
@@ -217,9 +221,20 @@ namespace BusBus
                                     if (process.Id != Environment.ProcessId &&
                                         process.MainWindowTitle.Contains("BusBus"))
                                     {
-                                        process.Kill();
-                                        Console.WriteLine($"[Program] Killed child process: {process.Id}");
+                                        if (!process.HasExited)
+                                        {
+                                            process.Kill();
+                                            Console.WriteLine($"[Program] Killed child process: {process.Id}");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine($"[Program] Child process {process.Id} already exited.");
+                                        }
                                     }
+                                }
+                                catch (InvalidOperationException)
+                                {
+                                    // Process already exited, ignore
                                 }
                                 catch (Exception ex)
                                 {
@@ -258,9 +273,20 @@ namespace BusBus
                             if (process.Id != Environment.ProcessId &&
                                 process.MainWindowTitle.Contains("BusBus"))
                             {
-                                process.Kill();
-                                Console.WriteLine($"[Program] Killed child process during ProcessExit: {process.Id}");
+                                if (!process.HasExited)
+                                {
+                                    process.Kill();
+                                    Console.WriteLine($"[Program] Killed child process during ProcessExit: {process.Id}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"[Program] Child process {process.Id} already exited during ProcessExit.");
+                                }
                             }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Process already exited, ignore
                         }
                         catch (Exception) { /* Ignore exceptions during final cleanup */ }
                     }
@@ -440,8 +466,19 @@ namespace BusBus
                     {
                         try
                         {
-                            Console.WriteLine($"[Program] Force killing dotnet process {process.Id}");
-                            process.Kill(entireProcessTree: true);
+                            if (!process.HasExited)
+                            {
+                                Console.WriteLine($"[Program] Force killing dotnet process {process.Id}");
+                                process.Kill(entireProcessTree: true);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[Program] Dotnet process {process.Id} already exited.");
+                            }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Process already exited, ignore
                         }
                         catch (Exception ex)
                         {
@@ -491,8 +528,19 @@ namespace BusBus
                         {
                             try
                             {
-                                Console.WriteLine($"[Program] Emergency killing dotnet process {process.Id}");
-                                process.Kill(entireProcessTree: true);
+                                if (!process.HasExited)
+                                {
+                                    Console.WriteLine($"[Program] Emergency killing dotnet process {process.Id}");
+                                    process.Kill(entireProcessTree: true);
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"[Program] Dotnet process {process.Id} already exited (emergency).");
+                                }
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                // Process already exited, ignore
                             }
                             catch (Exception killEx)
                             {
@@ -1018,7 +1066,16 @@ namespace BusBus
             }
         }
 
-        public static CancellationToken AppCancellationToken => _appCancellationTokenSource.Token;
+        // Pro-level: Prevent access after disposal
+        public static CancellationToken AppCancellationToken
+        {
+            get
+            {
+                if (_appCancellationTokenSource == null)
+                    throw new ObjectDisposedException(nameof(_appCancellationTokenSource));
+                return _appCancellationTokenSource.Token;
+            }
+        }
 
         // Nested class for LoggerMessage.Define
         static partial class Log
@@ -1040,12 +1097,28 @@ namespace BusBus
         /// </summary>
         public static void EmergencyShutdown()
         {
+            if (_shutdownInProgress)
+            {
+                Console.WriteLine("[Program] Shutdown already in progress, ignoring duplicate request");
+                return;
+            }
+            _shutdownInProgress = true;
             Console.WriteLine("[Program] EMERGENCY SHUTDOWN INITIATED - IMMEDIATE TERMINATION");
 
             try
             {
                 // Cancel all operations immediately
                 _appCancellationTokenSource?.Cancel();
+
+                // Wait for all background tasks to finish
+                try
+                {
+                    Task.WaitAll(_backgroundTasks.ToArray(), 2000); // Wait up to 2 seconds for background tasks
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Program] Error waiting for background tasks: {ex.Message}");
+                }
 
                 // AGGRESSIVE: Kill ALL dotnet processes immediately
                 try
@@ -1099,7 +1172,8 @@ namespace BusBus
             catch (Exception ex)
             {
                 Console.WriteLine($"[Program] Emergency shutdown error: {ex.Message}");
-            }            // FINAL: Force terminate this process immediately
+            }
+            // FINAL: Force terminate this process immediately
             Console.WriteLine("[Program] TERMINATING PROCESS IMMEDIATELY");
             Environment.Exit(1);
         }

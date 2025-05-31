@@ -13,6 +13,7 @@ using BusBus.Models;
 using BusBus.Services;
 using BusBus.UI;
 using BusBus.UI.Common;
+using BusBus.UI.Core;
 
 namespace BusBus.UI
 {
@@ -356,7 +357,7 @@ namespace BusBus.UI
             };
 
             // Apply consistent theme styling to the grid
-            ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
+            BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
 
             // Enhance header styling for better visibility
             _driversDataGridView.ColumnHeadersDefaultCellStyle.Font = new Font(_driversDataGridView.Font.FontFamily, 9.5F, FontStyle.Bold);
@@ -488,14 +489,14 @@ namespace BusBus.UI
                 Text = "Add Driver",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false
             };
-            _addButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _addButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             _addButton.FlatAppearance.BorderSize = 1;
             _addButton.Click += (s, e) => OnCrudAddClicked();
 
@@ -505,15 +506,15 @@ namespace BusBus.UI
                 Text = "Edit Driver",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
                 Enabled = false // Disabled until a row is selected
             };
-            _editButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _editButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             _editButton.FlatAppearance.BorderSize = 1;
             _editButton.Click += (s, e) => OnCrudEditClicked();
 
@@ -523,15 +524,15 @@ namespace BusBus.UI
                 Text = "Delete Driver",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 FlatStyle = FlatStyle.Flat,
                 Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 UseVisualStyleBackColor = false,
                 Enabled = false // Disabled until a row is selected
             };
-            _deleteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            _deleteButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             _deleteButton.FlatAppearance.BorderSize = 1;
             _deleteButton.Click += (s, e) => OnCrudDeleteClicked();
 
@@ -836,64 +837,64 @@ namespace BusBus.UI
         public void RefreshTheme()
         {
             // Apply theme to main panel
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
 
             // Apply theme to data grid
             if (_driversDataGridView != null)
             {
-                ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
+                BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_driversDataGridView);
             }
 
             // Apply theme to buttons
             if (_addButton != null)
             {
-                _addButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                _addButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
-                _addButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                _addButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                _addButton.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
+                _addButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             }
             if (_editButton != null)
             {
-                _editButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                _editButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
-                _editButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                _editButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                _editButton.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
+                _editButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             }
 
             if (_deleteButton != null)
             {
-                _deleteButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                _deleteButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
-                _deleteButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                _deleteButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                _deleteButton.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
+                _deleteButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             }
 
             if (_previousPageButton != null)
             {
-                _previousPageButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                _previousPageButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
-                _previousPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                _previousPageButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                _previousPageButton.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
+                _previousPageButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             }
 
             if (_nextPageButton != null)
             {
-                _nextPageButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                _nextPageButton.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
-                _nextPageButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                _nextPageButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                _nextPageButton.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
+                _nextPageButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             }
 
             // Apply theme to labels
             if (_pageInfoLabel != null)
             {
-                _pageInfoLabel.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _pageInfoLabel.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
             }
 
             // Apply theme to panels
             if (_buttonPanel != null)
             {
-                _buttonPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                _buttonPanel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             }
 
             if (_paginationPanel != null)
             {
-                _paginationPanel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                _paginationPanel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             }
         }
 

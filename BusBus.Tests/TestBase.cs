@@ -275,7 +275,7 @@ namespace BusBus.Tests
                 RouteDate = DateTime.Today.AddDays(1),
                 StartLocation = $"Test Start Location {suffix}",
                 EndLocation = $"Test End Location {suffix}",
-                ScheduledTime = DateTime.Today.AddDays(1).AddHours(8),
+                // ScheduledTime removed for schedule scrub
                 AMStartingMileage = 1000,
                 AMEndingMileage = 1025,
                 AMRiders = 25,
@@ -291,8 +291,8 @@ namespace BusBus.Tests
                 RouteName = $"TestRouteName{suffix}",
                 RouteCode = $"RT{suffix.Substring(0, 4)}",
                 IsActive = true,
-                StopsJson = "[]",
-                ScheduleJson = "{}"
+                StopsJson = "[]"
+                // ScheduleJson removed for schedule scrub
             };
         }        /// <summary>
                  /// Creates a test driver with default values for testing

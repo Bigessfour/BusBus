@@ -64,10 +64,10 @@ namespace BusBus.UI
 
         private void InitializeComponent()
         {
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             Padding = new Padding(10);
             Dock = DockStyle.Fill;
-            ThemeManager.EnforceGlassmorphicTextColor(this);
+            BusBus.UI.Core.ThemeManager.EnforceGlassmorphicTextColor(this);
 
             // Title label
             _titleLabel = new Label
@@ -76,7 +76,7 @@ namespace BusBus.UI
                 Font = new Font("Segoe UI", 14F, FontStyle.Bold),
                 Dock = DockStyle.Top,
                 Height = 40,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 TextAlign = ContentAlignment.MiddleCenter
             };
             Controls.Add(_titleLabel);
@@ -87,7 +87,7 @@ namespace BusBus.UI
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 2,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground
             };
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -129,7 +129,7 @@ namespace BusBus.UI
             };
 
             // Apply theme styling
-            ThemeManager.CurrentTheme.StyleDataGrid(_routesGrid);
+            BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_routesGrid);
 
             // Enhance header styling
             _routesGrid.ColumnHeadersDefaultCellStyle.Font = new Font(_routesGrid.Font.FontFamily, 9.5F, FontStyle.Bold);
@@ -303,7 +303,7 @@ namespace BusBus.UI
                 Height = 50,
                 ColumnCount = 3,
                 RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground,
                 Padding = new Padding(5)
             };
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
@@ -643,26 +643,26 @@ namespace BusBus.UI
         protected override void ApplyTheme()
         {
             // Apply theme to the panel
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
-            ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+            ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
 
             // Style any buttons or controls
             foreach (Control control in Controls)
             {
                 if (control is Button button)
                 {
-                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                    button.ForeColor = ThemeManager.CurrentTheme.ButtonText;
+                    button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                    button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonText;
                     button.FlatStyle = FlatStyle.Flat;
-                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                    button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
                 }
                 else if (control is DataGridView grid)
                 {
-                    ThemeManager.CurrentTheme.StyleDataGrid(grid);
+                    BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(grid);
                 }
                 else if (control is Panel panel)
                 {
-                    panel.BackColor = ThemeManager.CurrentTheme.CardBackground;
+                    panel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
                 }
             }
         }

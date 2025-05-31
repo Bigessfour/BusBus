@@ -43,11 +43,9 @@ namespace BusBus.UI.Core
         public virtual void RefreshTheme()
         {
             ApplyTheme();
-        }
-
-        /// <summary>
-        /// Event handler for theme changes. Automatically refreshes the theme.
-        /// </summary>
+        }        /// <summary>
+                 /// Event handler for theme changes. Automatically refreshes the theme.
+                 /// </summary>
         private void OnThemeChanged(object? sender, EventArgs e)
         {
             if (!IsDisposed && IsHandleCreated)
@@ -57,6 +55,10 @@ namespace BusBus.UI.Core
                     if (InvokeRequired)
                     {
                         Invoke(new MethodInvoker(RefreshTheme));
+                    }
+                    else
+                    {
+                        RefreshTheme();
                     }
                 }
                 catch (ObjectDisposedException) { }

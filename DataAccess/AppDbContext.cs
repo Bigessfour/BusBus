@@ -42,7 +42,7 @@ namespace BusBus.DataAccess
                 entity.HasOne(e => e.Driver).WithMany().OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(e => e.Vehicle).WithMany().OnDelete(DeleteBehavior.SetNull);                // Ignore the JSON-deserialized properties that are not database columns
                 entity.Ignore(e => e.Stops);
-                entity.Ignore(e => e.Schedule);
+                // entity.Ignore(e => e.Schedule); // Schedule property removed
             });
 
             modelBuilder.Entity<Driver>(entity =>

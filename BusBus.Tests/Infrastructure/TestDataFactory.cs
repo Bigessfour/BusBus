@@ -35,7 +35,7 @@ namespace BusBus.Tests.Infrastructure
                 VehicleId = TestVehicleId1,
                 StartLocation = "Start Location",
                 EndLocation = "End Location",
-                ScheduledTime = DateTime.Today.AddHours(8),
+                // ScheduledTime removed for schedule scrub
                 AMStartingMileage = 1000,
                 AMEndingMileage = 1050,
                 AMRiders = 25,
@@ -56,22 +56,14 @@ namespace BusBus.Tests.Infrastructure
                     Address = "123 Main St",
                     Latitude = 40.7128,
                     Longitude = -74.0060,
-                    ScheduledArrival = TimeSpan.FromHours(8),
-                    ScheduledDeparture = TimeSpan.FromHours(8).Add(TimeSpan.FromMinutes(2)),
+                    // ScheduledArrival = TimeSpan.FromHours(8),
+                    // ScheduledDeparture = TimeSpan.FromHours(8).Add(TimeSpan.FromMinutes(2)),
                     IsAccessible = true,
                     Amenities = new List<string> { "Bench", "Shelter" }
                 }
             };
 
-            route.Schedule = new RouteSchedule
-            {
-                StartTime = TimeSpan.FromHours(6),
-                EndTime = TimeSpan.FromHours(22),
-                FrequencyMinutes = 30,
-                OperatingDays = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" },
-                EstimatedTripTime = TimeSpan.FromMinutes(45),
-                Notes = "Regular weekday service"
-            };
+            // route.Schedule = new RouteSchedule { ... } // Schedule scrubbed
 
             return route;
         }
@@ -131,8 +123,8 @@ namespace BusBus.Tests.Infrastructure
                 RouteName = null, // Invalid - required
                 CreatedBy = null, // Invalid - required
                 RouteCode = null, // Invalid - required
-                StopsJson = null, // Invalid - required
-                ScheduleJson = null // Invalid - required
+                StopsJson = null // Invalid - required
+                // ScheduleJson removed for schedule scrub
             };
         }
 
@@ -169,7 +161,7 @@ namespace BusBus.Tests.Infrastructure
 
             // Set minimal JSON data
             route.StopsJson = "[]";
-            route.ScheduleJson = "{}";
+            // route.ScheduleJson = "{}"; // Schedule scrubbed
 
             return route;
         }

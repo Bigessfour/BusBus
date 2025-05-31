@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.UI.Common;
+using BusBus.UI.Core;
 
 namespace BusBus.UI.Common
 {
@@ -87,7 +88,7 @@ namespace BusBus.UI.Common
         private void InitializeComponents()
         {
             Dock = DockStyle.Fill;
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             Padding = new Padding(0);
 
             // Title
@@ -97,7 +98,7 @@ namespace BusBus.UI.Common
                 Font = new Font("Segoe UI", 14F, FontStyle.Bold),
                 Dock = DockStyle.Top,
                 Height = 40,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
@@ -107,7 +108,7 @@ namespace BusBus.UI.Common
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 3,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground
             };
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F)); // Buttons
             mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Grid
@@ -120,7 +121,7 @@ namespace BusBus.UI.Common
                 Height = 60,
                 ColumnCount = 4,
                 RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground,
                 Padding = new Padding(10)
             };
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
@@ -154,13 +155,13 @@ namespace BusBus.UI.Common
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 CellBorderStyle = DataGridViewCellBorderStyle.Single,
                 GridColor = Color.FromArgb(200, 200, 200),
-                BackgroundColor = ThemeManager.CurrentTheme.GridBackground,
+                BackgroundColor = BusBus.UI.Core.ThemeManager.CurrentTheme.GridBackground,
                 DefaultCellStyle = new DataGridViewCellStyle
                 {
                     Font = new Font("Segoe UI", 10F),
-                    BackColor = ThemeManager.CurrentTheme.CardBackground,
-                    ForeColor = ThemeManager.CurrentTheme.CardText,
-                    SelectionBackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                    BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground,
+                    ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                    SelectionBackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
                     SelectionForeColor = Color.White,
                     Padding = new Padding(4),
                     Alignment = DataGridViewContentAlignment.MiddleLeft
@@ -168,8 +169,8 @@ namespace BusBus.UI.Common
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
                     Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    BackColor = ThemeManager.CurrentTheme.HeadlineBackground,
-                    ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                    BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineBackground,
+                    ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                     Alignment = DataGridViewContentAlignment.MiddleCenter,
                     Padding = new Padding(4)
                 },
@@ -185,7 +186,7 @@ namespace BusBus.UI.Common
                 Height = 50,
                 ColumnCount = 3,
                 RowCount = 1,
-                BackColor = ThemeManager.CurrentTheme.CardBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground
             };
             paginationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
             paginationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -198,7 +199,7 @@ namespace BusBus.UI.Common
                 Text = "Page 1 of 1",
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 Font = new Font("Segoe UI", 10F)
             };
 
@@ -221,7 +222,7 @@ namespace BusBus.UI.Common
             {
                 Text = text,
                 Dock = DockStyle.Fill,
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 10F),
@@ -387,14 +388,14 @@ namespace BusBus.UI.Common
         }
         protected virtual void ApplyTheme()
         {
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _titleLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
-            _pageInfoLabel!.ForeColor = ThemeManager.CurrentTheme.CardText;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+            _titleLabel!.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
+            _pageInfoLabel!.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
 
             // Apply consistent data grid styling
             if (_dataGrid != null)
             {
-                ThemeManager.CurrentTheme.StyleDataGrid(_dataGrid);
+                BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_dataGrid);
             }
         }
 

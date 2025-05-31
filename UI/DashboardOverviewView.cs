@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using BusBus.UI.Common;
 using BusBus.Services;
+using BusBus.UI.Core;
 
 namespace BusBus.UI
 {
@@ -59,7 +60,7 @@ namespace BusBus.UI
 
             // Set the form properties
             Size = new Size(800, 600);
-            BackColor = ThemeManager.CurrentTheme.MainBackground; CreateWelcomeSection();
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground; CreateWelcomeSection();
             CreateStatsSection();
             CreateSummarySection();
 
@@ -80,7 +81,7 @@ namespace BusBus.UI
             {
                 Text = $"Welcome to BusBus Dashboard",
                 Font = new Font("Segoe UI", 18, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 Location = new Point(30, 30),
                 AutoSize = true
             };
@@ -89,7 +90,7 @@ namespace BusBus.UI
             {
                 Text = $"Today is {DateTime.Now.ToString("dddd, MMMM dd, yyyy")}",
                 Font = new Font("Segoe UI", 12),
-                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.SecondaryText,
                 Location = new Point(30, 70),
                 AutoSize = true
             };
@@ -103,7 +104,7 @@ namespace BusBus.UI
             {
                 Text = "Today's Overview",
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 Location = new Point(30, 120),
                 AutoSize = true
             };
@@ -112,7 +113,7 @@ namespace BusBus.UI
             {
                 Location = new Point(30, 160),
                 Size = new Size(740, 120),
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground,
                 BorderStyle = BorderStyle.FixedSingle
             };
 
@@ -131,7 +132,7 @@ namespace BusBus.UI
             {
                 Location = new Point(x, y),
                 Size = new Size(150, 80),
-                BackColor = ThemeManager.CurrentTheme.MainBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground,
                 BorderStyle = BorderStyle.FixedSingle
             };
 
@@ -139,7 +140,7 @@ namespace BusBus.UI
             {
                 Text = title,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.SecondaryText,
                 Location = new Point(10, 10),
                 Size = new Size(130, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -149,7 +150,7 @@ namespace BusBus.UI
             {
                 Text = value,
                 Font = new Font("Segoe UI", 16, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.PrimaryText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.PrimaryText,
                 Location = new Point(10, 35),
                 Size = new Size(130, 30),
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -166,7 +167,7 @@ namespace BusBus.UI
             {
                 Text = "Quick Actions",
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 Location = new Point(30, 300),
                 AutoSize = true
             };
@@ -175,7 +176,7 @@ namespace BusBus.UI
             {
                 Location = new Point(30, 340),
                 Size = new Size(740, 200),
-                BackColor = ThemeManager.CurrentTheme.CardBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground,
                 BorderStyle = BorderStyle.FixedSingle
             };
 
@@ -194,7 +195,7 @@ namespace BusBus.UI
             {
                 Location = new Point(x, y),
                 Size = new Size(160, 80),
-                BackColor = ThemeManager.CurrentTheme.MainBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground,
                 BorderStyle = BorderStyle.FixedSingle,
                 Cursor = Cursors.Hand
             };
@@ -203,7 +204,7 @@ namespace BusBus.UI
             {
                 Text = title,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = ThemeManager.CurrentTheme.PrimaryText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.PrimaryText,
                 Location = new Point(10, 10),
                 Size = new Size(140, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -213,7 +214,7 @@ namespace BusBus.UI
             {
                 Text = description,
                 Font = new Font("Segoe UI", 8),
-                ForeColor = ThemeManager.CurrentTheme.SecondaryText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.SecondaryText,
                 Location = new Point(10, 35),
                 Size = new Size(140, 40),
                 TextAlign = ContentAlignment.MiddleCenter

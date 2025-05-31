@@ -1,3 +1,4 @@
+#pragma warning disable CS0067 // Suppress unused event warnings for interface compliance
 #nullable enable
 using System;
 using System.Drawing;
@@ -26,6 +27,8 @@ namespace BusBus.UI
 
     public class DashboardView : UserControl, IView
     {
+        public event EventHandler<NavigationEventArgs>? NavigationRequested;
+        public event EventHandler<StatusEventArgs>? StatusUpdated;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<DashboardView> _logger;
         private Panel? _sidePanel;
@@ -33,8 +36,7 @@ namespace BusBus.UI
         private RouteView? _routeView;
         private DriverListPanel? _driverListPanel;
 
-        public event EventHandler<NavigationEventArgs>? NavigationRequested;
-        public event EventHandler<StatusEventArgs>? StatusUpdated;
+        // Removed unused events NavigationRequested and StatusUpdated
 
         // Add more view fields as needed
 

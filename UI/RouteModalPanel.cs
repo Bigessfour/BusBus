@@ -38,13 +38,13 @@ namespace BusBus.UI
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            BackColor = ThemeManager.CurrentTheme.MainBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
 
             var mainPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(15),
-                BackColor = ThemeManager.CurrentTheme.MainBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground
             };
 
             var buttonPanel = new FlowLayoutPanel
@@ -53,32 +53,32 @@ namespace BusBus.UI
                 Height = 50,
                 FlowDirection = FlowDirection.RightToLeft,
                 Padding = new Padding(0, 10, 0, 0),
-                BackColor = ThemeManager.CurrentTheme.MainBackground
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground
             };
 
             var cancelButton = new Button
             {
                 Text = "Cancel",
                 Size = new Size(80, 30),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 FlatStyle = FlatStyle.Flat,
                 DialogResult = DialogResult.Cancel,
                 Margin = new Padding(5, 0, 0, 0)
             };
-            cancelButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+            cancelButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
             cancelButton.Click += (s, e) => Close(); var saveButton = new Button
             {
                 Text = "Save",
                 Size = new Size(80, 30),
-                BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground,
                 ForeColor = Color.White,
-                Font = ThemeManager.CurrentTheme.SmallButtonFont,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.SmallButtonFont,
                 FlatStyle = FlatStyle.Flat,
                 Margin = new Padding(5, 0, 0, 0)
             };
-            saveButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+            saveButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
             saveButton.Click += SaveButton_Click;
 
             buttonPanel.Controls.Add(cancelButton);
@@ -118,7 +118,7 @@ namespace BusBus.UI
                         Name = _routeDto.Name,
                         StartLocation = _routeDto.StartLocation,
                         EndLocation = _routeDto.EndLocation,
-                        ScheduledTime = _routeDto.ScheduledTime,
+                        // ScheduledTime = _routeDto.ScheduledTime, // Schedule scrubbed
                         RouteDate = _routeDto.TripDate,
                         AMStartingMileage = _routeDto.AMStartingMileage,
                         AMEndingMileage = _routeDto.AMEndingMileage,
@@ -189,54 +189,54 @@ namespace BusBus.UI
 
         protected override void ApplyTheme()
         {
-            BackColor = ThemeManager.CurrentTheme.MainBackground;
-            ForeColor = ThemeManager.CurrentTheme.CardText;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
 
             // Apply theme to controls
             foreach (Control control in Controls)
             {
                 if (control is Panel panel)
                 {
-                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                    panel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
 
                     foreach (Control panelControl in panel.Controls)
                     {
                         if (panelControl is Button button)
                         {
                             // Default button styling
-                            button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                            button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                            button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                            button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                             button.FlatStyle = FlatStyle.Flat;
-                            button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                            button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
 
                             // Special styling for save button
                             if (button.Text == "Save")
                             {
-                                button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
                                 button.ForeColor = Color.White;
-                                button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
                             }
                         }
                         else if (panelControl is FlowLayoutPanel flowPanel)
                         {
-                            flowPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                            flowPanel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
 
                             foreach (Control flowControl in flowPanel.Controls)
                             {
                                 if (flowControl is Button nestedButton)
                                 {
                                     // Default button styling
-                                    nestedButton.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                                    nestedButton.ForeColor = ThemeManager.CurrentTheme.CardText;
+                                    nestedButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                                    nestedButton.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                                     nestedButton.FlatStyle = FlatStyle.Flat;
-                                    nestedButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                                    nestedButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
 
                                     // Special styling for save button
                                     if (nestedButton.Text == "Save")
                                     {
-                                        nestedButton.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                        nestedButton.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
                                         nestedButton.ForeColor = Color.White;
-                                        nestedButton.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                                        nestedButton.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
                                     }
                                 }
                             }

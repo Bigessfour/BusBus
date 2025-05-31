@@ -62,8 +62,8 @@ namespace BusBus.UI
                 ReadOnly = true,
                 Dock = DockStyle.Fill,
                 ScrollBars = ScrollBars.Vertical,
-                BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 Font = new Font("Consolas", 10F)
             };
 
@@ -88,8 +88,8 @@ namespace BusBus.UI
             {
                 Dock = DockStyle.Bottom,
                 Height = 25,
-                BackColor = ThemeManager.CurrentTheme.HeadlineBackground,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(10, 0, 0, 0),
                 Text = "Ready"
@@ -443,19 +443,19 @@ namespace BusBus.UI
 
         protected override void ApplyTheme()
         {
-            BackColor = ThemeManager.CurrentTheme.MainBackground;
-            ForeColor = ThemeManager.CurrentTheme.CardText;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
+            ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
 
             if (_outputTextBox != null)
             {
-                _outputTextBox.BackColor = ThemeManager.CurrentTheme.TextBoxBackground;
-                _outputTextBox.ForeColor = ThemeManager.CurrentTheme.CardText;
+                _outputTextBox.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground;
+                _outputTextBox.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
             }
 
             if (_statusLabel != null)
             {
-                _statusLabel.BackColor = ThemeManager.CurrentTheme.HeadlineBackground;
-                _statusLabel.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                _statusLabel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineBackground;
+                _statusLabel.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
             }
 
             // Apply theme to all buttons
@@ -463,22 +463,22 @@ namespace BusBus.UI
             {
                 if (control is Panel panel)
                 {
-                    panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                    panel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
 
                     foreach (Control panelControl in panel.Controls)
                     {
                         if (panelControl is FlowLayoutPanel flowPanel)
                         {
-                            flowPanel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+                            flowPanel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
 
                             foreach (Control flowControl in flowPanel.Controls)
                             {
                                 if (flowControl is Button button)
                                 {
-                                    button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
-                                    button.ForeColor = ThemeManager.CurrentTheme.CardText;
+                                    button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
+                                    button.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                                     button.FlatStyle = FlatStyle.Flat;
-                                    button.FlatAppearance.BorderColor = ThemeManager.CurrentTheme.BorderColor;
+                                    button.FlatAppearance.BorderColor = BusBus.UI.Core.ThemeManager.CurrentTheme.BorderColor;
                                 }
                             }
                         }

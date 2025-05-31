@@ -12,7 +12,6 @@ namespace BusBus.Services
     public interface IMaintenanceService
     {
         Task<List<Maintenance>> GetMaintenanceHistoryAsync(Guid vehicleId, CancellationToken cancellationToken = default);
-        Task<Maintenance> ScheduleMaintenanceAsync(Maintenance maintenance, CancellationToken cancellationToken = default);
         Task<List<Maintenance>> GetUpcomingMaintenanceAsync(int days = 30, CancellationToken cancellationToken = default);
         Task<Maintenance> CompleteMaintenanceAsync(int maintenanceId, CancellationToken cancellationToken = default);
         Task<decimal> GetMaintenanceCostAsync(Guid vehicleId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);

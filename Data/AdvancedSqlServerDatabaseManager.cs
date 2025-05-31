@@ -91,7 +91,8 @@ namespace BusBus.Data
         /// </summary>
         private static string EnhanceConnectionString(string baseConnectionString)
         {
-            var builder = new SqlConnectionStringBuilder(baseConnectionString)            {
+            var builder = new SqlConnectionStringBuilder(baseConnectionString)
+            {
                 ConnectTimeout = 30,
                 CommandTimeout = 30,
                 Pooling = true,
@@ -102,8 +103,8 @@ namespace BusBus.Data
             };
             return builder.ConnectionString;
         }        /// <summary>
-        /// Creates a retry policy for database operations
-        /// </summary>
+                 /// Creates a retry policy for database operations
+                 /// </summary>
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance - IAsyncPolicy provides flexibility
         private IAsyncPolicy CreateRetryPolicy()
 #pragma warning restore CA1859
@@ -113,7 +114,7 @@ namespace BusBus.Data
                 .Or<TimeoutException>()
                 .WaitAndRetryAsync(
                     retryCount: 3,
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),                    onRetry: (outcome, timespan, retryCount, context) =>
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), onRetry: (outcome, timespan, retryCount, context) =>
                     {
                         var operationName = context.GetValueOrDefault("OperationName", "Unknown");
                         if (_logger != null)
@@ -152,7 +153,7 @@ namespace BusBus.Data
             Func<SqlConnection, Task<T>> operation,
             CancellationToken cancellationToken = default)
         {
-            var stopwatch = Stopwatch.StartNew();            await _connectionSemaphore.WaitAsync(cancellationToken);
+            var stopwatch = Stopwatch.StartNew(); await _connectionSemaphore.WaitAsync(cancellationToken);
             if (_logger != null)
                 _logConnectionPooling(_logger, $"Acquired connection for {operationName}", null);
 
@@ -168,13 +169,15 @@ namespace BusBus.Data
                 }, context);
             }
             finally
-            {                _connectionSemaphore.Release();
+            {
+                _connectionSemaphore.Release();
                 stopwatch.Stop();
 
                 if (_logger != null)
                 {
                     _logQueryPerformance(_logger, operationName, stopwatch.ElapsedMilliseconds, null);
-                }                lock (_metricsLock)
+                }
+                lock (_metricsLock)
                 {
                     _queryPerformanceMetrics[operationName] = stopwatch.ElapsedMilliseconds;
                 }
@@ -234,7 +237,7 @@ namespace BusBus.Data
         public static void AddMaintenance(int vehicleId, string maintenanceType, DateTime date, decimal cost, string description) { throw new NotImplementedException("AddMaintenance(int, ...) needs implementation."); }
         public static void UpdateMaintenance(int id, int vehicleId, string maintenanceType, DateTime date, decimal cost, string description) { throw new NotImplementedException("UpdateMaintenance(int, ...) needs implementation."); }
         public static void DeleteMaintenance(int maintenanceId) { throw new NotImplementedException("DeleteMaintenance(int) needs implementation."); }
-        public static List<Schedule> GetAllSchedules() { throw new NotImplementedException("GetAllSchedules() needs implementation."); }
+        // public static List<Schedule> GetAllSchedules() { throw new NotImplementedException("GetAllSchedules() needs implementation."); }
         public System.Data.DataTable GetTableDataDynamic(string tableName) { throw new NotImplementedException("GetTableDataDynamic(string) needs implementation."); }
         public List<string> GetTableColumns(string tableName) { throw new NotImplementedException("GetTableColumns(string) needs implementation."); }
         public void SaveDynamicRecord(string tableName, Dictionary<string, object> values) { throw new NotImplementedException("SaveDynamicRecord(string, ...) needs implementation."); }
@@ -305,7 +308,8 @@ namespace BusBus.Data
                         LastName = reader.GetString(reader.GetOrdinal("LastName")),
                         PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
                         Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
-                        LicenseNumber = reader.GetString(reader.GetOrdinal("LicenseNumber"))                    });
+                        LicenseNumber = reader.GetString(reader.GetOrdinal("LicenseNumber"))
+                    });
                 }
 
                 return result;
@@ -621,6 +625,7 @@ namespace BusBus.Data
         }
 
         // Schedule Management
+        /* // Commenting out Schedule Management as it's not currently needed
         public async Task<List<Schedule>> GetSchedulesAsync()
         {
             var schedules = new List<Schedule>();
@@ -674,7 +679,9 @@ namespace BusBus.Data
 
             var result = await command.ExecuteScalarAsync();
             return Convert.ToInt32(result);
-        }        // Database Management
+        }
+        */
+        // Database Management
         public async Task<bool> TestConnectionAsync()
         {
             try
@@ -928,7 +935,7 @@ namespace BusBus.Data
 
         private static readonly Action<ILogger, Exception?> s_databaseSchemaInitialized =
             LoggerMessage.Define(LogLevel.Information, new EventId(203, "DatabaseSchemaInitialized"),
-                "Database schema initialized successfully");        public void Dispose()
+                "Database schema initialized successfully"); public void Dispose()
         {
             _connectionSemaphore?.Dispose();            // Log performance metrics summary            if (_logger != null && _queryPerformanceMetrics.Count > 0)
             {
@@ -936,7 +943,8 @@ namespace BusBus.Data
                 _logger?.LogInformation("Database Manager Performance Summary:");
 #pragma warning restore CA1848
                 lock (_metricsLock)
-                {                    foreach (var metric in _queryPerformanceMetrics)
+                {
+                    foreach (var metric in _queryPerformanceMetrics)
                     {
 #pragma warning disable CA1848 // Use LoggerMessage delegates for performance - minimal impact in this context
                         _logger?.LogInformation("  {Operation}: {ElapsedMs}ms", metric.Key, metric.Value);

@@ -20,7 +20,7 @@ namespace BusBus.UI.Core
             {
                 ApplyTheme();
                 // Subscribe to theme changes for automatic updates
-                ThemeManager.ThemeChanged += OnThemeChanged;
+                BusBus.UI.Core.ThemeManager.ThemeChanged += OnThemeChanged;
                 _themeSubscribed = true;
             }
         }
@@ -30,7 +30,7 @@ namespace BusBus.UI.Core
             if (disposing && _themeSubscribed)
             {
                 // Unsubscribe from theme changes to prevent memory leaks
-                ThemeManager.ThemeChanged -= OnThemeChanged;
+                BusBus.UI.Core.ThemeManager.ThemeChanged -= OnThemeChanged;
                 _themeSubscribed = false;
             }
             base.Dispose(disposing);

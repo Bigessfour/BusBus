@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.Data;
 using BusBus.Services;
+using BusBus.UI.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +23,7 @@ namespace BusBus.UI
         private Button _updateDatabaseButton;
         private Button _testConnectionButton;
         private TextBox _statusTextBox;
-        private Label _connectionStatusLabel;        private Label _migrationStatusLabel;
+        private Label _connectionStatusLabel; private Label _migrationStatusLabel;
         private ProgressBar _progressBar;
 
         // LoggerMessage delegates for performance
@@ -36,7 +37,7 @@ namespace BusBus.UI
 
         private static readonly Action<ILogger, Exception?> s_logSchemaFileNotFound =
             LoggerMessage.Define(LogLevel.Warning, new EventId(3, "SchemaFileNotFound"),
-                "Schema file not found at expected location");        private static readonly Action<ILogger, Exception?> s_logSchemaUpdateCancelled =
+                "Schema file not found at expected location"); private static readonly Action<ILogger, Exception?> s_logSchemaUpdateCancelled =
             LoggerMessage.Define(LogLevel.Warning, new EventId(4, "SchemaUpdateCancelled"),
                 "Database schema update was cancelled");
 
@@ -74,7 +75,7 @@ namespace BusBus.UI
             SetupLayout();
 
             // Apply theme when theme changes
-            ThemeManager.ThemeChanged += (s, e) => ApplyTheme();
+            BusBus.UI.Core.ThemeManager.ThemeChanged += (s, e) => ApplyTheme();
             ApplyTheme();
 
             // Initialize status on load
@@ -85,7 +86,7 @@ namespace BusBus.UI
         {
             _panel = new Panel
             {
-                BackColor = ThemeManager.CurrentTheme.MainBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground,
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
                 Padding = new Padding(20)
@@ -94,43 +95,43 @@ namespace BusBus.UI
             var titleLabel = new Label
             {
                 Text = "Database Settings",
-                Font = ThemeManager.CurrentTheme.HeadlineFont,
-                ForeColor = ThemeManager.CurrentTheme.HeadlineText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineFont,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText,
                 AutoSize = true,
                 Location = new Point(20, 20),
                 BackColor = Color.Transparent
-            };            _connectionStatusLabel = new Label
+            }; _connectionStatusLabel = new Label
             {
                 Text = "Connection Status: Checking...",
-                Font = ThemeManager.CurrentTheme.CardFont,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.CardFont,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 AutoSize = true,
                 Location = new Point(20, 60),
                 BackColor = Color.Transparent
-            };            _migrationStatusLabel = new Label
+            }; _migrationStatusLabel = new Label
             {
                 Text = "Migration Status: Checking...",
-                Font = ThemeManager.CurrentTheme.CardFont,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.CardFont,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 AutoSize = true,
                 Location = new Point(20, 85),
                 BackColor = Color.Transparent
-            };            _testConnectionButton = new Button
+            }; _testConnectionButton = new Button
             {
                 Text = "Test Database Connection",
                 Size = new Size(200, 35),
                 Location = new Point(20, 120),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 UseVisualStyleBackColor = false
             };
-            _testConnectionButton.Click += TestConnectionButton_Click;            _updateDatabaseButton = new Button
+            _testConnectionButton.Click += TestConnectionButton_Click; _updateDatabaseButton = new Button
             {
                 Text = "Update Database Schema",
                 Size = new Size(200, 35),
                 Location = new Point(240, 120),
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 UseVisualStyleBackColor = false
@@ -172,7 +173,8 @@ namespace BusBus.UI
                 _progressBar,
                 _statusTextBox
             });
-        }        private static void SetupLayout()
+        }
+        private static void SetupLayout()
         {
             // Additional layout setup if needed
         }
@@ -213,7 +215,8 @@ namespace BusBus.UI
                 }
             }
             catch (Exception ex)
-            {                _connectionStatusLabel.Text = "Connection Status: ✗ Error";
+            {
+                _connectionStatusLabel.Text = "Connection Status: ✗ Error";
                 _connectionStatusLabel.ForeColor = Color.Red;
                 AppendStatus($"✗ Connection test error: {ex.Message}");
                 if (_logger != null)
@@ -275,7 +278,8 @@ namespace BusBus.UI
                 await RefreshMigrationStatusAsync();
             }
             catch (Exception ex)
-            {                AppendStatus($"✗ Schema update failed: {ex.Message}");
+            {
+                AppendStatus($"✗ Schema update failed: {ex.Message}");
                 if (_logger != null)
                     s_logSchemaUpdateError(_logger, ex);
 
@@ -348,7 +352,8 @@ namespace BusBus.UI
                 }
             }
             catch (Exception ex)
-            {                _migrationStatusLabel.Text = "Migration Status: Unknown";
+            {
+                _migrationStatusLabel.Text = "Migration Status: Unknown";
                 _migrationStatusLabel.ForeColor = Color.Gray;
                 if (_logger != null)
                     s_logMigrationStatusCheckFailed(_logger, ex);
@@ -371,28 +376,30 @@ namespace BusBus.UI
 
         private void ApplyTheme()
         {
-            _panel.BackColor = ThemeManager.CurrentTheme.MainBackground;
+            _panel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground;
 
             foreach (Control control in _panel.Controls)
             {
                 if (control is Label label)
                 {
-                    label.ForeColor = ThemeManager.CurrentTheme.HeadlineText;
+                    label.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineText;
                     if (label == _connectionStatusLabel || label == _migrationStatusLabel)
                     {
                         // Keep status colors as they are
                         continue;
-                    }                    label.Font = control.Name?.Contains("title") == true ?
-                        ThemeManager.CurrentTheme.HeadlineFont : ThemeManager.CurrentTheme.CardFont;
+                    }
+                    label.Font = control.Name?.Contains("title") == true ?
+                        BusBus.UI.Core.ThemeManager.CurrentTheme.HeadlineFont : BusBus.UI.Core.ThemeManager.CurrentTheme.CardFont;
                 }
                 else if (control is Button button)
-                {                    if (button == _updateDatabaseButton)
+                {
+                    if (button == _updateDatabaseButton)
                     {
-                        button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                        button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
                     }
                     else if (button == _testConnectionButton)
                     {
-                        button.BackColor = ThemeManager.CurrentTheme.ButtonBackground;
+                        button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground;
                     }
                     button.ForeColor = Color.White;
                 }

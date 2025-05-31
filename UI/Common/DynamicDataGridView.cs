@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BusBus.UI.Common;
+using BusBus.UI.Core;
 using Microsoft.Extensions.Logging;
 
 namespace BusBus.UI.Common
@@ -60,7 +61,7 @@ namespace BusBus.UI.Common
             SuspendLayout();
 
             Size = new Size(800, 600);
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             Padding = new Padding(10);
 
             // Main layout
@@ -114,7 +115,7 @@ namespace BusBus.UI.Common
             _configuration.ConfigureColumns(_dataGrid);
 
             // Apply consistent theme styling
-            ThemeManager.CurrentTheme.StyleDataGrid(_dataGrid);
+            BusBus.UI.Core.ThemeManager.CurrentTheme.StyleDataGrid(_dataGrid);
 
             // Event handlers
             _dataGrid.CellEndEdit += DataGrid_CellEndEdit;
@@ -140,8 +141,8 @@ namespace BusBus.UI.Common
                 Size = new Size(80, 30),
                 Enabled = false,
                 FlatStyle = FlatStyle.Flat,
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.ButtonText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonText,
                 Margin = new Padding(5)
             };
             _previousPageButton.Click += PreviousPageButton_Click;
@@ -151,7 +152,7 @@ namespace BusBus.UI.Common
                 Text = "Page 1 of 1 (0 records)",
                 Size = new Size(200, 30),
                 TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = ThemeManager.CurrentTheme.CardText,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText,
                 Margin = new Padding(10, 5, 10, 5)
             };
 
@@ -161,8 +162,8 @@ namespace BusBus.UI.Common
                 Size = new Size(80, 30),
                 Enabled = false,
                 FlatStyle = FlatStyle.Flat,
-                BackColor = ThemeManager.CurrentTheme.ButtonBackground,
-                ForeColor = ThemeManager.CurrentTheme.ButtonText,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonText,
                 Margin = new Padding(5)
             };
             _nextPageButton.Click += NextPageButton_Click;
@@ -334,7 +335,8 @@ namespace BusBus.UI.Common
                 _logger.LogError(ex, "Error deleting {EntityType}", _configuration.ViewName);
                 StatusUpdated?.Invoke(this, new StatusEventArgs($"Error deleting {_configuration.ViewName}: {ex.Message}"));
             }
-        }        protected override void Dispose(bool disposing)
+        }
+        protected override void Dispose(bool disposing)
         {
             if (disposing)
             {

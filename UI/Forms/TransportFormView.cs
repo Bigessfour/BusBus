@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using BusBus.UI.Templates;
 using BusBus.Utils;
+using BusBus.UI.Core;
 
 namespace BusBus.UI.Forms
 {
@@ -46,7 +47,7 @@ namespace BusBus.UI.Forms
             // Create header that spans both columns
             var header = CreateHeaderSection(
                 "Transport Management",
-                "View and manage transportation routes and schedules");
+                "View and manage transportation routes"); // Schedule scrubbed
             _mainLayout.Controls.Add(header, 0, 0);
             _mainLayout.SetColumnSpan(header, 2);
 
@@ -84,9 +85,9 @@ namespace BusBus.UI.Forms
             {
                 Dock = DockStyle.Fill,
                 PlaceholderText = "Search routes...",
-                Font = ThemeManager.CurrentTheme.CardFont,
-                BackColor = ThemeManager.CurrentTheme.TextBoxBackground,
-                ForeColor = ThemeManager.CurrentTheme.CardText
+                Font = BusBus.UI.Core.ThemeManager.CurrentTheme.CardFont,
+                BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.TextBoxBackground,
+                ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText
             };
 
             var searchButton = CreateStyledButton("Search", (s, e) =>
@@ -161,7 +162,7 @@ namespace BusBus.UI.Forms
             AddDetailField(detailsLayout, "Route ID:", "R-1001", 0);
             AddDetailField(detailsLayout, "Name:", "Downtown Express", 1);
             AddDetailField(detailsLayout, "Description:", "Express service connecting downtown area with business district and residential zones", 2);
-            AddDetailField(detailsLayout, "Schedule:", "Weekdays: 6:00 AM - 11:00 PM\nWeekends: 7:00 AM - 10:00 PM", 3);
+            // AddDetailField(detailsLayout, "Schedule:", "Weekdays: 6:00 AM - 11:00 PM\nWeekends: 7:00 AM - 10:00 PM", 3); // Schedule scrubbed
             AddDetailField(detailsLayout, "Status:", "Active", 4);
 
             // Add action buttons

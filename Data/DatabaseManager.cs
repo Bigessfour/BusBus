@@ -152,10 +152,12 @@ namespace BusBus
             AdvancedSqlServerDatabaseManager.DeleteMaintenance(id);
         }
 
+        /* // Commenting out GetAllSchedules as it's not currently needed
         public static List<Schedule> GetAllSchedules()
         {
             return AdvancedSqlServerDatabaseManager.GetAllSchedules();
         }
+        */
 
         // Instance methods that use advancedManager
         public DataTable GetTableDataDynamic(string tableName)

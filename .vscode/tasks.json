@@ -1,5 +1,4 @@
-{
-    "version": "2.0.0",
+{    "version": "2.0.0",
     "tasks": [
         {
             "label": "build BusBus solution",
@@ -33,6 +32,28 @@
                     "message": 6
                 }
             }
+        },
+        {
+            "label": "generate test scaffolds",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/TestScaffoldGenerator.ps1",
+                "-Command",
+                "Invoke-TestGeneration -SolutionPath \"${workspaceFolder}/BusBus.sln\""
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
         }
     ]
 }

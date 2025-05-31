@@ -59,7 +59,7 @@ namespace BusBus.Services
                             Name = "Route 1",
                             StartLocation = "Downtown",
                             EndLocation = "Airport",
-                            ScheduledTime = DateTime.Now.AddHours(1),
+                            // ScheduledTime = DateTime.Now.AddHours(1), // Schedule scrubbed
                             DriverId = _drivers.First().Id,
                             VehicleId = _vehicles.First().Id
                         },
@@ -69,7 +69,7 @@ namespace BusBus.Services
                             Name = "Route 2",
                             StartLocation = "Mall",
                             EndLocation = "University",
-                            ScheduledTime = DateTime.Now.AddHours(2),
+                            // ScheduledTime = DateTime.Now.AddHours(2), // Schedule scrubbed
                             DriverId = _drivers.Last().Id,
                             VehicleId = _vehicles.Last().Id
                         }
@@ -151,7 +151,7 @@ namespace BusBus.Services
         public async Task<List<Route>> GetRoutesByDateAsync(DateTime routeDate, CancellationToken cancellationToken = default)
         {
             return await Task.Run(() =>
-                _routes.Where(r => r.ScheduledTime.Date == routeDate.Date).ToList(),
+                _routes.ToList(), // Schedule scrubbed
                 cancellationToken);
         }
 

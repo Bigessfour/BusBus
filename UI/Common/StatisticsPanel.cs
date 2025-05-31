@@ -1,6 +1,7 @@
 #pragma warning disable CS8618 // Non-nullable field/property must contain a non-null value when exiting constructor
 using BusBus.Services;
 using BusBus.UI;
+using BusBus.UI.Core;
 using System;
 using System.Drawing;
 using System.Threading;
@@ -147,21 +148,21 @@ namespace BusBus.UI.Common
         private void ApplyTheme()
         {
             // Apply modern theme colors for better integration
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _statisticsLayout.BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+            _statisticsLayout.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
 
             // Apply theme to all labels
             foreach (Control control in _statisticsLayout.Controls)
             {
                 if (control is Label label)
                 {
-                    label.BackColor = ThemeManager.CurrentTheme.CardBackground;
-                    label.ForeColor = ThemeManager.CurrentTheme.CardText;
+                    label.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+                    label.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardText;
                 }
             }
 
-            _lastUpdatedLabel.BackColor = ThemeManager.CurrentTheme.CardBackground;
-            _lastUpdatedLabel.ForeColor = ThemeManager.CurrentTheme.SecondaryText;
+            _lastUpdatedLabel.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
+            _lastUpdatedLabel.ForeColor = BusBus.UI.Core.ThemeManager.CurrentTheme.SecondaryText;
         }
 
         public async Task RefreshStatisticsAsync()

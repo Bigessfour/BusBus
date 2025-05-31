@@ -40,7 +40,7 @@ namespace BusBus.Models
         public Guid? PMDriverId { get; set; } // Maps to Route.PMDriverId
 
         // Additional properties required by UI
-        public DateTime ScheduledTime { get; set; } // Maps to Route.ScheduledTime
+        // public DateTime ScheduledTime { get; set; } // Removed for schedule scrub
         public DateTime TripDate { get; set; } // Maps to Route.RouteDate
         public Guid? DriverId { get; set; } // Maps to Route.DriverId (main driver for the route)
 
@@ -72,7 +72,7 @@ namespace BusBus.Models
                 PMEndingMileage = route.PMEndingMileage,
                 PMRiders = route.PMRiders,
                 PMDriverId = route.PMDriverId,
-                ScheduledTime = route.ScheduledTime,
+                // ScheduledTime = route.ScheduledTime, // Removed for schedule scrub
                 TripDate = route.RouteDate,
                 DriverId = route.DriverId
             };
@@ -106,7 +106,7 @@ namespace BusBus.Models
                 PMEndingMileage = PMEndingMileage,
                 PMRiders = PMRiders,
                 PMDriverId = PMDriverId,
-                ScheduledTime = ScheduledTime,
+                // ScheduledTime = ScheduledTime, // Removed for schedule scrub
                 // RouteDate is already set. TripDate from DTO maps to Route.RouteDate.
                 // If DriverId on DTO is the primary one, ensure it's mapped to Route.DriverId
             };

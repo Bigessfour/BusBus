@@ -271,9 +271,9 @@ namespace BusBus.UI
             _endLocationTextBox.Text = _route.EndLocation;
             _distanceNumeric.Value = (decimal)_route.TotalMiles;
 
-            var duration = _route.EstimatedDuration;
-            _durationHoursNumeric.Value = duration.Hours;
-            _durationMinutesNumeric.Value = duration.Minutes;
+            // var duration = _route.EstimatedDuration; // Schedule scrubbed
+            _durationHoursNumeric.Value = 0;
+            _durationMinutesNumeric.Value = 0;
 
             // Select vehicle
             if (_route.VehicleId.HasValue)
@@ -338,8 +338,7 @@ namespace BusBus.UI
                 route.StartLocation = _startLocationTextBox.Text;
                 route.EndLocation = _endLocationTextBox.Text;
                 route.Distance = (int)_distanceNumeric.Value;
-                route.ScheduledTime = DateTime.Today.AddHours((double)_durationHoursNumeric.Value)
-                    .AddMinutes((double)_durationMinutesNumeric.Value);
+                // Schedule fields scrubbed: removed ScheduledTime and AddMinutes
 
                 route.VehicleId = (_vehicleComboBox.SelectedItem as ComboBoxItem)?.Value as Guid?;
                 route.DriverId = (_driverComboBox.SelectedItem as ComboBoxItem)?.Value as Guid?;

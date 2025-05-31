@@ -13,9 +13,8 @@ using BusBus.Services;
 // using BusBus.UI; // Removed duplicate
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using BusBus.Data;
-using System.Diagnostics;
 using BusBus.UI.Core;
+using BusBus.Data;
 
 #pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
 #pragma warning disable CA2254 // LoggerMessage delegates for logging performance
@@ -171,7 +170,7 @@ namespace BusBus.UI
             mainLayout.SetColumnSpan(_statusStrip, 2);
 
             Controls.Add(mainLayout);            // Apply theme
-            ThemeManager.ApplyTheme(this, ThemeManager.CurrentTheme);
+            BusBus.UI.Core.ThemeManager.ApplyTheme(this, BusBus.UI.Core.ThemeManager.CurrentTheme);
 
             // Apply high-quality text rendering to the entire form
             TextRenderingManager.RegisterForHighQualityTextRendering(this);
@@ -263,7 +262,7 @@ namespace BusBus.UI
 
             if (item.IsActive)
             {
-                button.BackColor = ThemeManager.CurrentTheme.ButtonHoverBackground;
+                button.BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground;
             }
 
             return button;
@@ -353,6 +352,16 @@ namespace BusBus.UI
                     return;
                 }
 
+                // Robust null check for _contentPanel
+                if (_contentPanel == null)
+                {
+                    var errMsg = $"Critical error: Content panel is not initialized when navigating to '{viewName}'.";
+                    _logger.LogError(errMsg);
+                    ShowStatus(errMsg, StatusType.Error);
+                    HideProgress();
+                    return;
+                }
+
                 // Optionally use parameter for view activation if needed (not currently used)                // Load view with proper overlap prevention
                 try
                 {
@@ -361,14 +370,13 @@ namespace BusBus.UI
                     {
                         Invoke(new Action(() =>
                         {
-                            _contentPanel.Controls.Clear();
-                            // LogControlHierarchy(); // Removed: method does not exist
+                            if (_contentPanel != null)
+                                _contentPanel.Controls.Clear();
                         }));
                     }
                     else
                     {
                         _contentPanel.Controls.Clear();
-                        // LogControlHierarchy(); // Removed: method does not exist
                     }
                 }
                 catch (Exception controlEx)
@@ -541,8 +549,8 @@ namespace BusBus.UI
                 if (control is Button button && button.Tag is string viewName)
                 {
                     button.BackColor = viewName.Equals(activeView, StringComparison.OrdinalIgnoreCase)
-                        ? ThemeManager.CurrentTheme.ButtonHoverBackground
-                        : ThemeManager.CurrentTheme.SidePanelBackground;
+                        ? BusBus.UI.Core.ThemeManager.CurrentTheme.ButtonHoverBackground
+                        : BusBus.UI.Core.ThemeManager.CurrentTheme.SidePanelBackground;
                 }
             }
         }
@@ -627,14 +635,18 @@ namespace BusBus.UI
                 return;
             }
 
-            _statusLabel.Text = message;
-            _statusLabel.ForeColor = type switch
+
+            if (_statusLabel != null)
             {
-                StatusType.Success => Color.Green,
-                StatusType.Warning => Color.Orange,
-                StatusType.Error => Color.Red,
-                _ => SystemColors.ControlText
-            };
+                _statusLabel.Text = message;
+                _statusLabel.ForeColor = type switch
+                {
+                    StatusType.Success => Color.Green,
+                    StatusType.Warning => Color.Orange,
+                    StatusType.Error => Color.Red,
+                    _ => SystemColors.ControlText
+                };
+            }
 
             _logger.LogInformation($"Status: {message} [{type}]");
             // pragma disables above
@@ -648,8 +660,10 @@ namespace BusBus.UI
                 return;
             }
 
-            _statusLabel.Text = message;
-            _progressBar.Visible = true;
+            if (_statusLabel != null)
+                _statusLabel.Text = message;
+            if (_progressBar != null)
+                _progressBar.Visible = true;
         }
 
         public void HideProgress()
@@ -660,7 +674,8 @@ namespace BusBus.UI
                 return;
             }
 
-            _progressBar.Visible = false;
+            if (_progressBar != null)
+                _progressBar.Visible = false;
         }
 
         public void UpdateStatusMessage(string message)
@@ -689,7 +704,7 @@ namespace BusBus.UI
                     {
                         _logger.LogError(t.Exception, "Error refreshing current view");
                     }
-                }, TaskScheduler.FromCurrentSynchronizationContext());
+                }); // Schedule scrubbed
             }
         }
         #endregion
@@ -697,15 +712,15 @@ namespace BusBus.UI
         #region Theme Management
         private void ToggleTheme()
         {
-            var newTheme = ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark";
-            ThemeManager.SwitchTheme(newTheme);
+            var newTheme = BusBus.UI.Core.ThemeManager.CurrentTheme.Name == "Dark" ? "Light" : "Dark";
+            BusBus.UI.Core.ThemeManager.SwitchTheme(newTheme);
             _state.CurrentTheme = newTheme;
             SaveState();
         }
 
         private void SubscribeToEvents()
         {
-            ThemeManager.ThemeChanged += OnThemeChanged;
+            BusBus.UI.Core.ThemeManager.ThemeChanged += OnThemeChanged;
             // Handle parent form closing if this is used as a main form control
             if (this.ParentForm != null)
             {
@@ -724,16 +739,18 @@ namespace BusBus.UI
             }
             Load += OnFormLoad;
         }
-
         private void OnThemeChanged(object? sender, EventArgs e)
         {
-            // Update theme toggle button
-            var themeButton = _headerPanel.Controls.OfType<Button>()
-                .FirstOrDefault(b => b.Tag?.ToString() == "ThemeToggle");
-
-            if (themeButton != null)
+            // Update theme toggle button only if _headerPanel is initialized
+            if (_headerPanel != null)
             {
-                themeButton.Text = ThemeManager.CurrentTheme.Name == "Dark" ? "☀️" : "🌙";
+                var themeButton = _headerPanel.Controls.OfType<Button>()
+                    .FirstOrDefault(b => b.Tag?.ToString() == "ThemeToggle");
+
+                if (themeButton != null)
+                {
+                    themeButton.Text = BusBus.UI.Core.ThemeManager.CurrentTheme.Name == "Dark" ? "☀️" : "🌙";
+                }
             }
         }
         #endregion
@@ -785,8 +802,8 @@ namespace BusBus.UI
                 GC.WaitForPendingFinalizers();
 
                 // Disconnect event handlers that might prevent proper disposal
-                // BusBus.UI.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged; // CS0120: An object reference is required for the non-static field, method, or property 'Dashboard.OnThemeChanged(object?, EventArgs)'
-                ThemeManager.ThemeChanged -= OnThemeChanged; // Corrected: Use instance method
+                // BusBus.UI.BusBus.UI.Core.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged; // CS0120: An object reference is required for the non-static field, method, or property 'Dashboard.OnThemeChanged(object?, EventArgs)'
+                BusBus.UI.Core.ThemeManager.ThemeChanged -= OnThemeChanged; // Corrected: Use instance method
             }
             catch (ObjectDisposedException ex)
             {

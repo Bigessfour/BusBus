@@ -38,7 +38,7 @@ namespace BusBus.UI
         protected override void ApplyTheme()
         {
             // Example: update colors, fonts, etc. according to the current theme
-            BackColor = ThemeManager.CurrentTheme.CardBackground;
+            BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.CardBackground;
             // Add more theme application logic as needed
         }
         public void Render(Control container)

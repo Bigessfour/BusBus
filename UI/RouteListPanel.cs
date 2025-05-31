@@ -310,7 +310,7 @@ namespace BusBus.UI
                         StartLocation = route.StartLocation,
                         EndLocation = route.EndLocation,
                         Distance = (decimal)route.TotalMiles,
-                        Duration = route.EstimatedDuration,
+                        // Duration = route.EstimatedDuration, // Schedule scrubbed
                         VehicleId = route.VehicleId,
                         VehicleAssignment = GetVehicleDisplay(route.VehicleId)
                     };

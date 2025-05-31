@@ -46,16 +46,19 @@ namespace BusBus.Services
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             if (await dbContext.Routes.AnyAsync(cancellationToken))
-                return;
-
-            var driver1 = new Driver
-            {
-                Id = Guid.NewGuid(),
-                FirstName = "John",
-                LastName = "Doe",
-                Name = "John Doe",
-                LicenseNumber = "DL001"
-            };
+                return; var driver1 = new Driver
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = "John",
+                    LastName = "Doe",
+                    Name = "John Doe",
+                    LicenseNumber = "DL001",
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    ModifiedDate = DateTime.UtcNow,
+                    IsActive = true,
+                    RowVersion = new byte[8]
+                };
 
             var driver2 = new Driver
             {
@@ -63,21 +66,38 @@ namespace BusBus.Services
                 FirstName = "Jane",
                 LastName = "Smith",
                 Name = "Jane Smith",
-                LicenseNumber = "DL002"
+                LicenseNumber = "DL002",
+                CreatedBy = "System",
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                IsActive = true,
+                RowVersion = new byte[8]
             };
 
             var vehicle1 = new Vehicle
             {
                 Id = Guid.NewGuid(),
                 Number = "BUS001",
-                Capacity = 50
+                BusNumber = "BUS001",
+                Name = "Bus 001",
+                Capacity = 50,
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                IsActive = true,
+                RowVersion = new byte[8]
             };
 
             var vehicle2 = new Vehicle
             {
                 Id = Guid.NewGuid(),
                 Number = "BUS002",
-                Capacity = 40
+                BusNumber = "BUS002",
+                Name = "Bus 002",
+                Capacity = 40,
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                IsActive = true,
+                RowVersion = new byte[8]
             }; var route1 = new Route
             {
                 Id = Guid.NewGuid(),
@@ -87,7 +107,7 @@ namespace BusBus.Services
                 RouteDate = DateTime.Today,
                 StartLocation = "Downtown",
                 EndLocation = "Airport",
-                ScheduledTime = DateTime.Today.AddHours(9),
+                // ScheduledTime = DateTime.Today.AddHours(9), // Removed for schedule scrub
                 AMStartingMileage = 1000,
                 AMEndingMileage = 1050,
                 PMStartMileage = 1050,
@@ -102,7 +122,7 @@ namespace BusBus.Services
                 IsActive = true,
                 RowVersion = new byte[8],
                 StopsJson = "[]",
-                ScheduleJson = "{\"EstimatedTripTime\":\"00:30:00\"}"
+                // ScheduleJson = "{\"EstimatedTripTime\":\"00:30:00\"}", // Removed for schedule scrub
             };
 
             var route2 = new Route
@@ -114,7 +134,7 @@ namespace BusBus.Services
                 RouteDate = DateTime.Today,
                 StartLocation = "Mall",
                 EndLocation = "University",
-                ScheduledTime = DateTime.Today.AddHours(14),
+                // ScheduledTime = DateTime.Today.AddHours(14), // Removed for schedule scrub
                 AMStartingMileage = 1100,
                 AMEndingMileage = 1150,
                 PMStartMileage = 1150,
@@ -129,7 +149,7 @@ namespace BusBus.Services
                 IsActive = true,
                 RowVersion = new byte[8],
                 StopsJson = "[]",
-                ScheduleJson = "{\"EstimatedTripTime\":\"00:45:00\"}"
+                // ScheduleJson = "{\"EstimatedTripTime\":\"00:45:00\"}", // Removed for schedule scrub
             };
 
             dbContext.Drivers.AddRange(driver1, driver2);
@@ -158,8 +178,8 @@ namespace BusBus.Services
             if (string.IsNullOrEmpty(route.StopsJson))
                 route.StopsJson = "[]";
 
-            if (string.IsNullOrEmpty(route.ScheduleJson))
-                route.ScheduleJson = "{\"EstimatedTripTime\":\"00:30:00\"}";
+            // if (string.IsNullOrEmpty(route.ScheduleJson))
+            //     route.ScheduleJson = "{\"EstimatedTripTime\":\"00:30:00\"}"; // Removed for schedule scrub
 
             if (route.RowVersion == null || route.RowVersion.Length == 0)
                 route.RowVersion = new byte[8];
