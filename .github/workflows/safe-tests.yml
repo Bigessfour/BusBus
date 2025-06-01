@@ -1,4 +1,4 @@
-name: Agentic Safe Test Execution
+name: Enhanced Agentic Safe Test Execution
 
 on:
   workflow_dispatch:
@@ -11,18 +11,28 @@ on:
         description: 'Job timeout in minutes (default 15)'
         required: false
         default: '15'
+      enable_sonarqube:
+        description: 'Enable SonarQube analysis'
+        required: false
+        default: false
+        type: boolean
+      parallel_tests:
+        description: 'Enable parallel test execution'
+        required: false
+        default: true
+        type: boolean
   push:
     branches: [ main, develop, maximize-dashboard ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  agentic-safe-tests:
+  enhanced-agentic-tests:
     runs-on: self-hosted
     timeout-minutes: ${{ github.event.inputs.timeout_minutes || 15 }}
 
     steps:
-    - name: Checkout code
+    - name: Initialize Environment
       uses: actions/checkout@v4
 
     - name: Setup .NET
@@ -30,95 +40,346 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Debug Environment
-      shell: bash
-      run: |
-        echo "OS: $(uname -a)"
-        echo "Current directory: $(pwd)"
-        ls -la
-        dotnet --version
-        echo "Checking runner resources..."
-        free -m
-        df -h
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
 
-    - name: Initial Cleanup
-      shell: bash
+    - name: Environment Resource Check
+      shell: pwsh
       run: |
-        echo "Killing existing test-related processes..."
-        pkill -9 -f "dotnet" || true
-        pkill -9 -f "testhost" || true
-        pkill -9 -f "vstest" || true
-        sleep 3
-
-    - name: Restore .NET dependencies
-      shell: bash
-      run: |
-        echo "Restoring dependencies..."
-        dotnet restore BusBus.sln || {
-          echo "Restore failed. Retrying once..."
-          sleep 5
-          dotnet restore BusBus.sln
+        Write-Host "=== Environment Initialization ==="
+        Write-Host "OS: $([System.Environment]::OSVersion)"
+        Write-Host "Current directory: $(Get-Location)"
+        Write-Host ".NET version: $(dotnet --version)"
+        Write-Host "Runner: ${{ runner.name }}"
+        Write-Host "Repository: ${{ github.repository }}"
+        Write-Host "Commit: ${{ github.sha }}"
+        
+        Write-Host "`n=== Resource Assessment ==="
+        if ($IsLinux -or $IsMacOS) {
+          $memory = free -m 2>/dev/null | grep "Mem:" | awk '{print $2 " MB total, " $7 " MB available"}'
+          $disk = df -h . 2>/dev/null | tail -1 | awk '{print $2 " total, " $4 " available"}'
+          Write-Host "Memory: $memory"
+          Write-Host "Disk: $disk"
+          
+          # Check if we have sufficient resources
+          $availMem = free -m 2>/dev/null | grep "Mem:" | awk '{print $7}'
+          if ([int]$availMem -lt 1024) {
+            Write-Warning "Low memory detected: $availMem MB available. Tests may be unreliable."
+          }
+        } else {
+          $memory = Get-ComputerInfo | Select-Object TotalPhysicalMemory, AvailablePhysicalMemory -ErrorAction SilentlyContinue
+          $disk = Get-WmiObject -Class Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} | Select-Object DeviceID, Size, FreeSpace -ErrorAction SilentlyContinue
+          Write-Host "Memory: $($memory.TotalPhysicalMemory / 1GB) GB total, $($memory.AvailablePhysicalMemory / 1GB) GB available"
+          Write-Host "Disk space:"
+          $disk | ForEach-Object { Write-Host "  $($_.DeviceID) $([math]::Round($_.Size / 1GB, 2)) GB total, $([math]::Round($_.FreeSpace / 1GB, 2)) GB free" }
+        }
+        
+        # CPU info
+        $cpuCount = [Environment]::ProcessorCount
+        Write-Host "CPU cores: $cpuCount"
+        if ($cpuCount -ge 4) {
+          Write-Host "✓ Sufficient cores for parallel testing"
         }
 
-    - name: Build solution
-      shell: bash
-      run: dotnet build BusBus.sln --no-restore --configuration Release
-
-    - name: Run tests with adaptive retries
-      shell: bash
+    - name: Pre-Execution Cleanup
+      shell: pwsh
       run: |
-        echo "Running tests with adaptive timeout..."
-        FILTER_ARG=""
-        if [ -n "${{ github.event.inputs.test_filter }}" ]; then
-          FILTER_ARG="--filter \"${{ github.event.inputs.test_filter }}\""
-        fi
-        TIMEOUT_SECONDS=$(( ${{ github.event.inputs.timeout_minutes || 15 }} * 60 - 120 )) # 2 min buffer
-        ATTEMPT=1
-        MAX_ATTEMPTS=3
-        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-          echo "Test attempt $ATTEMPT of $MAX_ATTEMPTS..."
-          timeout $TIMEOUT_SECONDS dotnet test BusBus.sln --logger "console;verbosity=normal" --no-build --blame $FILTER_ARG && break
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 124 ]; then
-            echo "Tests timed out. Increasing timeout by 2 minutes for next attempt."
-            TIMEOUT_SECONDS=$(( TIMEOUT_SECONDS + 120 ))
-          elif [ $EXIT_CODE -ne 0 ]; then
-            echo "Tests failed. Checking for flaky tests in logs..."
-            grep "Failed.*Test" test_output.log || true
-          fi
-          echo "Cleaning up before retry..."
-          pkill -9 -f "dotnet" || true
-          pkill -9 -f "testhost" || true
-          pkill -9 -f "vstest" || true
-          sleep 5
-          ATTEMPT=$(( ATTEMPT + 1 ))
-          if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
-            echo "All attempts failed."
-            exit 1
-          fi
-        done
-      env:
-        DOTNET_TEST_LOGFILE: test_output.log
+        Write-Host "=== Pre-Execution Cleanup ==="
+        $retryCount = 0
+        $maxRetries = 2
+        
+        do {
+          if ($retryCount -gt 0) {
+            Write-Host "Retry attempt $retryCount..."
+            Start-Sleep -Seconds 5
+          }
+          
+          if ($IsLinux -or $IsMacOS) {
+            $processes = pkill -9 -f "dotnet|testhost|vstest" 2>/dev/null || $true
+            Write-Host "Terminated Linux/Mac test processes"
+          } else {
+            $processes = Get-Process | Where-Object {$_.ProcessName -match "(dotnet|testhost|vstest)"} -ErrorAction SilentlyContinue
+            if ($processes) {
+              $processes | Stop-Process -Force -ErrorAction SilentlyContinue
+              Write-Host "Terminated $($processes.Count) Windows test processes"
+            } else {
+              Write-Host "No test processes found to terminate"
+            }
+          }
+          $retryCount++
+        } while ($retryCount -le $maxRetries)
 
-    - name: Analyze test failures
-      if: failure()
-      shell: bash
+    - name: Restore Dependencies with Retry
+      shell: pwsh
       run: |
-        echo "Analyzing test failures..."
-        if [ -f test_output.log ]; then
-          echo "Failed tests:"
-          grep "Failed.*Test" test_output.log || echo "No specific test failures found."
-          echo "Error messages:"
-          grep -i "error" test_output.log || echo "No errors found."
-        else
-          echo "No test output log found."
-        fi
+        Write-Host "=== Dependency Restoration ==="
+        $startTime = Get-Date
+        
+        try {
+          Write-Host "Restoring dependencies for BusBus.sln..."
+          dotnet restore BusBus.sln --verbosity normal
+          if ($LASTEXITCODE -ne 0) {
+            throw "Initial restore failed"
+          }
+        } catch {
+          Write-Warning "Restore failed: $($_.Exception.Message)"
+          Write-Host "Retrying after 5 seconds..."
+          Start-Sleep -Seconds 5
+          
+          dotnet restore BusBus.sln --verbosity normal --force
+          if ($LASTEXITCODE -ne 0) {
+            throw "Dependency restore failed after retry"
+          }
+        }
+        
+        $duration = (Get-Date) - $startTime
+        Write-Host "✓ Dependencies restored in $($duration.TotalSeconds) seconds"
 
-    - name: Final Cleanup
+    - name: Build Solution with Analysis
+      shell: pwsh
+      run: |
+        Write-Host "=== Solution Build ==="
+        $startTime = Get-Date
+        
+        dotnet build BusBus.sln --no-restore --configuration Release --verbosity normal
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Build failed. Common issues to check:"
+          Write-Error "- Missing dependencies (run dotnet restore)"
+          Write-Error "- Compilation errors in C# code"
+          Write-Error "- Target framework compatibility"
+          throw "Build failed"
+        }
+        
+        $duration = (Get-Date) - $startTime
+        Write-Host "✓ Solution built successfully in $($duration.TotalSeconds) seconds"
+
+    - name: SonarQube Analysis
+      if: ${{ github.event.inputs.enable_sonarqube == 'true' || github.event.inputs.enable_sonarqube == true }}
+      shell: pwsh
+      run: |
+        Write-Host "=== SonarQube Analysis ==="
+        try {
+          # Check if SonarQube scanner is available
+          $scannerPath = Get-Command "dotnet-sonarscanner" -ErrorAction SilentlyContinue
+          if (-not $scannerPath) {
+            Write-Warning "SonarQube scanner not found. Installing..."
+            dotnet tool install --global dotnet-sonarscanner --version 5.0.4
+          }
+          
+          # Run SonarQube analysis (placeholder - requires actual SonarQube configuration)
+          Write-Host "Starting SonarQube analysis..."
+          # dotnet sonarscanner begin /k:"BusBus" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          # dotnet build BusBus.sln --no-restore
+          # dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          Write-Host "✓ SonarQube analysis completed (placeholder)"
+        } catch {
+          Write-Warning "SonarQube analysis failed: $($_.Exception.Message)"
+          Write-Warning "Continuing with tests to avoid blocking CI..."
+        }
+
+    - name: Execute Tests with Adaptive Intelligence
+      shell: pwsh
+      run: |
+        Write-Host "=== Intelligent Test Execution ==="
+        
+        # Configure test arguments
+        $testArgs = @("test", "BusBus.sln")
+        $testArgs += "--no-build"
+        $testArgs += "--configuration", "Release"
+        $testArgs += "--logger", "trx;LogFileName=TestResults.trx"
+        $testArgs += "--logger", "console;verbosity=normal"
+        $testArgs += "--blame-hang-timeout", "5m"
+        $testArgs += "--results-directory", "TestResults"
+        
+        # Add test filter if specified
+        if ("${{ github.event.inputs.test_filter }}" -ne "") {
+          $testArgs += "--filter", "${{ github.event.inputs.test_filter }}"
+          Write-Host "Applied test filter: ${{ github.event.inputs.test_filter }}"
+        }
+        
+        # Enable parallel execution if requested and sufficient resources
+        $cpuCount = [Environment]::ProcessorCount
+        if (("${{ github.event.inputs.parallel_tests }}" -eq "true" -or ${{ github.event.inputs.parallel_tests }} -eq $true) -and $cpuCount -ge 4) {
+          $testArgs += "--parallel"
+          Write-Host "✓ Parallel test execution enabled ($cpuCount cores available)"
+        }
+        
+        # Calculate timeout with buffer
+        $baseTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes || 15 }}"
+        $timeoutSeconds = $baseTimeoutMinutes * 60 - 120  # 2 min buffer for cleanup
+        Write-Host "Test timeout: $timeoutSeconds seconds (base: $baseTimeoutMinutes minutes)"
+        
+        # Adaptive retry logic
+        $attempt = 1
+        $maxAttempts = 3
+        $success = $false
+        
+        while ($attempt -le $maxAttempts -and -not $success) {
+          Write-Host "`n--- Test Attempt $attempt of $maxAttempts ---"
+          $testStartTime = Get-Date
+          
+          try {
+            # Create test results directory
+            New-Item -ItemType Directory -Path "TestResults" -Force | Out-Null
+            
+            # Start test execution with timeout
+            $job = Start-Job -ScriptBlock {
+              param($args)
+              Set-Location $using:PWD
+              & dotnet @args
+              return $LASTEXITCODE
+            } -ArgumentList $testArgs
+            
+            # Wait for completion or timeout
+            $completed = Wait-Job $job -Timeout $timeoutSeconds
+            
+            if ($completed) {
+              $exitCode = Receive-Job $job
+              Remove-Job $job
+              
+              if ($exitCode -eq 0) {
+                $success = $true
+                $duration = (Get-Date) - $testStartTime
+                Write-Host "✓ Tests completed successfully in $($duration.TotalMinutes.ToString('F2')) minutes"
+                break
+              } else {
+                Write-Warning "Tests failed with exit code: $exitCode"
+              }
+            } else {
+              Write-Warning "Tests timed out after $timeoutSeconds seconds"
+              Stop-Job $job -ErrorAction SilentlyContinue
+              Remove-Job $job -ErrorAction SilentlyContinue
+              
+              # Increase timeout for next attempt
+              $timeoutSeconds += 120
+              Write-Host "Increasing timeout to $timeoutSeconds seconds for next attempt"
+            }
+          } catch {
+            Write-Error "Test execution error: $($_.Exception.Message)"
+          }
+          
+          # Cleanup between attempts
+          if ($attempt -lt $maxAttempts) {
+            Write-Host "Cleaning up before retry..."
+            if ($IsLinux -or $IsMacOS) {
+              pkill -9 -f "dotnet|testhost|vstest" 2>/dev/null || $true
+            } else {
+              Get-Process | Where-Object {$_.ProcessName -match "(dotnet|testhost|vstest)"} | Stop-Process -Force -ErrorAction SilentlyContinue
+            }
+            Start-Sleep -Seconds 5
+          }
+          
+          $attempt++
+        }
+        
+        if (-not $success) {
+          Write-Error "All test attempts failed after $maxAttempts tries"
+          exit 1
+        }
+
+    - name: Analyze Test Results
       if: always()
-      shell: bash
+      shell: pwsh
       run: |
-        echo "Performing final cleanup..."
-        pkill -9 -f "dotnet" || true
-        pkill -9 -f "testhost" || true
-        pkill -9 -f "vstest" || true
+        Write-Host "=== Test Results Analysis ==="
+        
+        $trxFiles = Get-ChildItem -Path "TestResults" -Filter "*.trx" -ErrorAction SilentlyContinue
+        if ($trxFiles) {
+          Write-Host "Found $($trxFiles.Count) TRX result file(s)"
+          
+          foreach ($trxFile in $trxFiles) {
+            Write-Host "Analyzing: $($trxFile.Name)"
+            
+            # Parse TRX for basic stats (simplified XML parsing)
+            $content = Get-Content $trxFile.FullName -Raw
+            if ($content -match 'total="(\d+)".*passed="(\d+)".*failed="(\d+)"') {
+              $total = $matches[1]
+              $passed = $matches[2]
+              $failed = $matches[3]
+              
+              Write-Host "  Total: $total, Passed: $passed, Failed: $failed"
+              
+              if ([int]$failed -gt 0) {
+                Write-Warning "  ⚠️  $failed test(s) failed"
+                
+                # Extract failed test names (simplified)
+                $failedTests = [regex]::Matches($content, 'testName="([^"]+)"[^>]*outcome="Failed"')
+                if ($failedTests.Count -gt 0) {
+                  Write-Host "  Failed tests:"
+                  $failedTests | ForEach-Object { Write-Host "    - $($_.Groups[1].Value)" }
+                }
+              } else {
+                Write-Host "  ✓ All tests passed"
+              }
+            }
+          }
+        } else {
+          Write-Warning "No TRX files found in TestResults directory"
+        }
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ github.run_number }}
+        path: |
+          TestResults/*.trx
+          TestResults/*.xml
+        retention-days: 30
+
+    - name: Update GitHub Status
+      if: always()
+      shell: pwsh
+      run: |
+        Write-Host "=== GitHub Status Update ==="
+        
+        # Determine overall status
+        $status = if (${{ job.status }} -eq "success") { "success" } else { "failure" }
+        $description = if ($status -eq "success") { 
+          "All tests passed successfully" 
+        } else { 
+          "Tests failed - check artifacts for details" 
+        }
+        
+        Write-Host "Workflow status: $status"
+        Write-Host "Description: $description"
+        
+        # GitHub automatically updates commit status based on workflow result
+        # Additional custom status updates could be added here using GitHub API
+        
+        Write-Host "✓ Status will be updated automatically by GitHub Actions"
+
+    - name: Final Cleanup and Summary
+      if: always()
+      shell: pwsh
+      run: |
+        Write-Host "=== Final Cleanup ==="
+        
+        # Cleanup processes
+        if ($IsLinux -or $IsMacOS) {
+          pkill -9 -f "dotnet|testhost|vstest" 2>/dev/null || $true
+          Write-Host "Cleaned up Linux/Mac processes"
+        } else {
+          Get-Process | Where-Object {$_.ProcessName -match "(dotnet|testhost|vstest)"} | Stop-Process -Force -ErrorAction SilentlyContinue
+          Write-Host "Cleaned up Windows processes"
+        }
+        
+        Write-Host "`n=== Execution Summary ==="
+        Write-Host "Repository: ${{ github.repository }}"
+        Write-Host "Branch: ${{ github.ref_name }}"
+        Write-Host "Commit: ${{ github.sha }}"
+        Write-Host "Workflow: ${{ github.workflow }}"
+        Write-Host "Run ID: ${{ github.run_id }}"
+        Write-Host "Status: ${{ job.status }}"
+        
+        if (Test-Path "TestResults") {
+          $resultFiles = Get-ChildItem "TestResults" -File
+          Write-Host "Test artifacts: $($resultFiles.Count) files uploaded"
+        }
+        
+        Write-Host "✓ Enhanced agentic test execution completed"
