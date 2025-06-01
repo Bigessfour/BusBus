@@ -1,3 +1,4 @@
+// --- PATCHED: Move new tests into the class, after existing tests ---
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using BusBus.Models;
 using BusBus.Services;
@@ -10,9 +11,45 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BusBus.Tests.Services
 {
     [TestClass]
+
     public class RouteServiceTests : TestBase
     {
         private IRouteService _routeService;
+
+        [TestCategory("Unit")]
+        [TestMethod]
+        public async Task UpdateRouteAsync_ExistingRoute_UpdatesSuccessfully()
+        {
+            // Arrange - create a route
+            var route = CreateTestRoute("Route to Update");
+            var createdRoute = await _routeService.CreateRouteAsync(route);
+            createdRoute.Name = "Updated Route Name";
+            createdRoute.AMRiders = 99;
+
+            // Act
+            var updatedRoute = await _routeService.UpdateRouteAsync(createdRoute);
+
+            // Assert
+            Assert.IsNotNull(updatedRoute);
+            Assert.AreEqual("Updated Route Name", updatedRoute.Name);
+            Assert.AreEqual(99, updatedRoute.AMRiders);
+        }
+
+        [TestCategory("Unit")]
+        [TestMethod]
+        public async Task DeleteRouteAsync_ExistingRoute_DeletesSuccessfully()
+        {
+            // Arrange - create a route
+            var route = CreateTestRoute("Route to Delete");
+            var createdRoute = await _routeService.CreateRouteAsync(route);
+
+            // Act
+            await _routeService.DeleteRouteAsync(createdRoute.Id);
+            var deletedRoute = await _routeService.GetRouteByIdAsync(createdRoute.Id);
+
+            // Assert
+            Assert.IsNull(deletedRoute);
+        }
 
         [TestInitialize]
         public override async Task SetUp()
@@ -246,31 +283,7 @@ namespace BusBus.Tests.Services
             Assert.AreEqual(createdRoute.Id, updatedRoute.Id);
         }
 
-        [TestCategory("Unit")]
-        [TestMethod]
-        public async Task DeleteRouteAsync_ExistingRoute_DeletesSuccessfully()
-        {
-            // Arrange - Create a route first
-            var route = new Route
-            {
-                Id = Guid.NewGuid(),
-                Name = "Route to Delete",
-                RouteID = 7,
-                RouteName = "Route to Delete",
-                IsActive = true,
-                CreatedDate = DateTime.UtcNow,
-                ModifiedDate = DateTime.UtcNow,
-                CreatedBy = "TestUser"
-            };
-            var createdRoute = await _routeService.CreateRouteAsync(route);
 
-            // Act
-            await _routeService.DeleteRouteAsync(createdRoute.Id);
-
-            // Assert - Try to retrieve the deleted route
-            var deletedRoute = await _routeService.GetRouteByIdAsync(createdRoute.Id);
-            Assert.IsNull(deletedRoute);
-        }
 
         [TestCategory("Unit")]
         [TestMethod]
@@ -560,7 +573,8 @@ namespace BusBus.Tests.Services
 
             // Assert
             Assert.AreEqual("[]", result.StopsJson);
-        }        [TestMethod]
+        }
+        [TestMethod]
         [TestCategory(TestCategories.Service)]
         [TestCategory(TestCategories.Performance)]
         public async Task GetRoutesByDateAsync_WithSpecificDate_ShouldReturnFilteredRoutes()
@@ -629,7 +643,7 @@ namespace BusBus.Tests.Services
             Assert.AreEqual(9999, result.AMStartingMileage);
             Assert.AreEqual(9999, result.AMEndingMileage);
             Assert.AreEqual(9999, result.PMStartMileage);
-            Assert.AreEqual(9999, result.PMEndingMileage);            Assert.AreEqual(99, result.AMRiders);
+            Assert.AreEqual(9999, result.PMEndingMileage); Assert.AreEqual(99, result.AMRiders);
             Assert.AreEqual(99, result.PMRiders);
             Assert.IsTrue(result.StopsJson.Contains("Updated Stop"));
             // ModifiedDate should be updated or at least not be default
@@ -701,7 +715,8 @@ namespace BusBus.Tests.Services
                 Assert.IsNotNull(retrieved);
                 Assert.AreEqual(created.Name, retrieved.Name);
             }
-        }        [TestMethod]
+        }
+        [TestMethod]
         [TestCategory(TestCategories.Service)]
         [TestCategory(TestCategories.Database)]
         public async Task SeedSampleDataAsync_ShouldCreateSampleData()

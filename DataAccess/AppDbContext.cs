@@ -52,9 +52,15 @@ namespace BusBus.DataAccess
                 entity.Property(e => e.LastName).IsRequired();
                 entity.Property(e => e.PersonalDetailsJson).HasColumnName("PersonalDetails");
 
+                // Configure PerformanceScore decimal precision to prevent truncation
+                entity.Property(e => e.PerformanceScore)
+                    .HasPrecision(5, 2) // 5 total digits, 2 after decimal (e.g., 999.99)
+                    .HasDefaultValue(0.0m);
+
+                // Don't ignore the Name property since it exists in the database as a NOT NULL column
+                entity.Property(e => e.Name).IsRequired();
+
                 // Ignore calculated/computed properties that are not stored in database
-                entity.Ignore(e => e.PerformanceScore); // This is a calculated property
-                entity.Ignore(e => e.Name); // This is a calculated property (FirstName + LastName)
                 entity.Ignore(e => e.YearsOfService); // This is a calculated property
                 entity.Ignore(e => e.NeedsPerformanceReview); // This is a calculated property
 
@@ -73,6 +79,9 @@ namespace BusBus.DataAccess
                 entity.Property(e => e.Capacity);
                 entity.Property(e => e.IsActive);
 
+                // Don't ignore BusNumber since it exists in the database as a NOT NULL column
+                entity.Property(e => e.BusNumber).IsRequired();
+
                 // Fix the decimal precision warning
                 entity.Property(e => e.Mileage).HasColumnType("decimal(10,1)");
 
@@ -81,7 +90,6 @@ namespace BusBus.DataAccess
                 entity.Ignore(e => e.VehicleAge); // This is a calculated property
                 entity.Ignore(e => e.IsOld); // This is a calculated property
                 entity.Ignore(e => e.LocationDescription); // This is a calculated property
-                entity.Ignore(e => e.BusNumber); // This is an alias property
 
                 // Ignore the non-column properties that are JSON deserialized
                 entity.Ignore(e => e.MaintenanceHistory);

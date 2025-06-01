@@ -285,7 +285,7 @@ namespace BusBus.UI
             };
         }
 
-        public async Task LoadDataAsync()
+        public virtual async Task LoadDataAsync()
         {
             try
             {

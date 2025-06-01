@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <RunConfiguration>
+    <!-- CRITICAL: Prevent infinite hangs -->
+    <TestSessionTimeout>300000</TestSessionTimeout> <!-- 5 minutes total -->
+    <ResultsDirectory>.\TestResults</ResultsDirectory>
+    <MaxCpuCount>1</MaxCpuCount> <!-- Prevent process spawning -->
+    <DisableAppDomain>true</DisableAppDomain>
+    <DisableParallelization>false</DisableParallelization>
+  </RunConfiguration>
+
+  <MSTest>
+    <Parallelize>
+      <Workers>1</Workers> <!-- Limit to 1 worker to prevent resource conflicts -->
+      <Scope>ClassLevel</Scope>
+    </Parallelize>
+    <TestTimeout>30000</TestTimeout> <!-- 30 second timeout per test -->
+    <DeploymentEnabled>false</DeploymentEnabled>
+  </MSTest>
+
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0" assemblyQualifiedName="Microsoft.VisualStudio.Coverage.DynamicCoverageDataCollector, Microsoft.VisualStudio.TraceCollector, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*CPPUnitTestFramework.*</ModulePath>
+                <ModulePath>.*testhost.*</ModulePath>
+                <ModulePath>.*Microsoft\.TestPlatform.*</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

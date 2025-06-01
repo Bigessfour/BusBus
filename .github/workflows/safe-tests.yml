@@ -1,0 +1,83 @@
+name: Safe Test Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter (optional)'
+        required: false
+        default: ''
+      timeout_minutes:
+        description: 'Timeout in minutes'
+        required: false
+        default: '10'
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  safe-tests:
+    runs-on: self-hosted
+    timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes || '10') }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Kill any existing processes
+      shell: powershell
+      run: |
+        Write-Host "Killing any existing test processes..."
+        Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+
+    - name: Restore dependencies
+      run: dotnet restore BusBus.sln
+
+    - name: Build solution
+      run: dotnet build BusBus.sln --no-restore --configuration Release
+
+    - name: Run tests with timeout protection
+      shell: powershell
+      timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes || '8') }}
+      run: |
+        $ErrorActionPreference = "Continue"
+
+        # Set test filter if provided
+        $testFilter = "${{ github.event.inputs.test_filter }}"
+        $filterArg = if ($testFilter) { "--filter `"$testFilter`"" } else { "" }
+
+        Write-Host "Running tests with 8-minute timeout protection..."
+        Write-Host "Filter: $filterArg"
+
+        # Start test process with timeout
+        $timeoutSeconds = 480  # 8 minutes
+        $testProcess = Start-Process -FilePath "dotnet" -ArgumentList "test BusBus.sln --logger:`"console;verbosity=normal`" --no-build $filterArg" -PassThru -NoNewWindow
+
+        $completed = $testProcess.WaitForExit($timeoutSeconds * 1000)
+
+        if (-not $completed) {
+            Write-Host "Tests exceeded timeout of $timeoutSeconds seconds. Killing process..." -ForegroundColor Red
+            $testProcess.Kill($true)  # Kill process tree
+            Start-Sleep -Seconds 3
+
+            # Emergency cleanup
+            Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
+            exit 1
+        }
+
+        exit $testProcess.ExitCode
+
+    - name: Cleanup processes
+      if: always()
+      shell: powershell
+      run: |
+        Write-Host "Final cleanup of any remaining processes..."
+        Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue

@@ -59,8 +59,22 @@ namespace BusBus.Utils
         /// </summary>
         public static void Initialize(ILogger logger)
         {
-            _logger = logger;
+            Initialize(logger, true);
         }
+
+        /// <summary>
+        /// Initialize the ThreadSafeUI helper with verbosity control
+        /// </summary>
+        /// <param name="logger">The logger to use</param>
+        /// <param name="verbose">Whether to log verbose UI thread operations</param>
+        public static void Initialize(ILogger logger, bool verbose)
+        {
+            _logger = logger;
+            _verbose = verbose;
+        }
+
+        // Track verbosity setting
+        private static bool _verbose = true;
 
         /// <summary>
         /// Invoke an action on the UI thread if needed

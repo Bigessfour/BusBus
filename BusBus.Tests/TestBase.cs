@@ -14,12 +14,15 @@ using BusBus.Services;
 using BusBus.Models;
 using BusBus.Tests.Infrastructure;
 using System.Collections.Generic;
+using System.Threading;
+using System.Diagnostics;
 
 namespace BusBus.Tests
-{
-    /// <summary>
-    /// Base class for all tests providing common setup, dependency injection, and cleanup
-    /// </summary>
+{    /// <summary>
+     /// Base class for all tests providing common setup, dependency injection, and cleanup
+     /// CRITICAL: All tests have 30-second timeout to prevent infinite hangs
+     /// </summary>
+    [TestClass]
     public abstract class TestBase : IDisposable
     {
         protected ServiceProvider ServiceProvider { get; private set; }
@@ -27,10 +30,20 @@ namespace BusBus.Tests
         protected IConfiguration Configuration { get; private set; }
         protected ILogger Logger { get; private set; }
 
-        private bool _disposed;        /// <summary>
-                                       /// Sets up the test environment with dependency injection, database, and logging
-                                       /// </summary>
+        // CRITICAL: Cancellation token for emergency test termination
+        protected CancellationTokenSource TestCancellationTokenSource { get; private set; }
+        protected CancellationToken TestCancellationToken => TestCancellationTokenSource.Token;
+
+        // CRITICAL: Stopwatch to monitor test execution time
+        protected Stopwatch TestStopwatch { get; private set; }
+
+        private bool _disposed;
+        private readonly object _disposeLock = new object();        /// <summary>
+                                                                    /// Sets up the test environment with dependency injection, database, and logging
+                                                                    /// CRITICAL: 30-second timeout to prevent infinite hangs
+                                                                    /// </summary>
         [TestInitialize]
+        [Timeout(30000)] // CRITICAL: 30-second timeout for test setup
         public virtual async Task SetUp()
         {
             // Configure test services
@@ -49,10 +62,14 @@ namespace BusBus.Tests
             await SeedTestDataAsync();
 
             Logger.LogInformation("Test setup completed for {TestClass}", GetType().Name);
-        }        /// <summary>
-                 /// Cleans up resources after each test
-                 /// </summary>
+        }
+
+        /// <summary>
+        /// Cleans up resources after each test
+        /// CRITICAL: 30-second timeout to prevent infinite hangs during cleanup
+        /// </summary>
         [TestCleanup]
+        [Timeout(30000)] // CRITICAL: 30-second timeout for test cleanup
         public virtual void TearDown()
         {
             try
@@ -217,9 +234,7 @@ namespace BusBus.Tests
                     RowVersion = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }
                 };
                 DbContext.Drivers.Add(driver);
-            }
-
-            // Create test vehicle with known ID if it doesn't exist
+            }            // Create test vehicle with known ID if it doesn't exist
             var testVehicleId = new Guid("33333333-3333-3333-3333-333333333333");
             if (!DbContext.Vehicles.Any(v => v.Id == testVehicleId))
             {
@@ -236,17 +251,15 @@ namespace BusBus.Tests
                     MakeModel = "Test Make Test Model",
                     CreatedDate = DateTime.UtcNow,
                     ModifiedDate = DateTime.UtcNow,
-                    RowVersion = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }
                 };
                 DbContext.Vehicles.Add(vehicle);
             }
 
             await DbContext.SaveChangesAsync();
-            Logger.LogInformation("Basic test data seeded for {TestClass}", GetType().Name);
         }
 
         /// <summary>
-        /// Cleans up test data after test execution
+        /// Clean up test data after each test
         /// </summary>
         protected virtual void CleanupTestData()
         {
@@ -262,9 +275,9 @@ namespace BusBus.Tests
             {
                 Logger?.LogError(ex, "Error cleaning up test data for {TestClass}", GetType().Name);
             }
-        }        /// <summary>
-                 /// Creates a test route with default values for testing
-                 /// </summary>
+        }/// <summary>
+         /// Creates a test route with default values for testing
+         /// </summary>
         protected static Route CreateTestRoute(string nameSuffix = null)
         {
             var suffix = nameSuffix ?? Guid.NewGuid().ToString("N")[..8];

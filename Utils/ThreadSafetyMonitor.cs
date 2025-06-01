@@ -21,14 +21,26 @@ namespace BusBus.Utils
         private static ILogger? _logger; // Changed to ILogger
         private static bool _isEnabled;
         private static int _uiThreadId = -1;
+        private static bool _verbose = true;
 
         /// <summary>
         /// Initialize the thread safety monitor
         /// </summary>
         public static void Initialize(ILogger logger) // Changed to ILogger
         {
+            Initialize(logger, true);
+        }
+
+        /// <summary>
+        /// Initialize the thread safety monitor with verbosity control
+        /// </summary>
+        /// <param name="logger">The logger to use</param>
+        /// <param name="verbose">Whether to log verbose thread information</param>
+        public static void Initialize(ILogger logger, bool verbose) // Added verbosity parameter
+        {
             _logger = logger;
             _isEnabled = true;
+            _verbose = verbose;
 
             // Remember UI thread ID
             _uiThreadId = Environment.CurrentManagedThreadId; // CA1840
@@ -36,12 +48,13 @@ namespace BusBus.Utils
             // Register this thread
             RegisterThread("UI Thread", true);
 
-            _logger?.LogInitialized(_uiThreadId, null);
-        }
-
-        /// <summary>
-        /// Register a thread with the monitor
-        /// </summary>
+            if (_verbose)
+            {
+                _logger?.LogInitialized(_uiThreadId, null);
+            }
+        }        /// <summary>
+                 /// Register a thread with the monitor
+                 /// </summary>
         public static void RegisterThread(string purpose, bool isUiThread = false)
         {
             if (!_isEnabled || _logger == null) return;
@@ -57,7 +70,11 @@ namespace BusBus.Utils
 
             _activeThreads.TryAdd(threadId, threadInfo);
 
-            _logger.LogThreadRegistered(threadId, purpose, isUiThread, null);
+            // Only log thread registration if verbose mode is enabled
+            if (_verbose)
+            {
+                _logger.LogThreadRegistered(threadId, purpose, isUiThread, null);
+            }
         }
 
         /// <summary>

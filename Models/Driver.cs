@@ -48,7 +48,8 @@ namespace BusBus.Models
 
         public string? PhoneNumber { get; set; }
 
-        public string? Email { get; set; }        public string LicenseNumber { get; set; } = string.Empty;        /// <summary>
+        public string? Email { get; set; }
+        public string LicenseNumber { get; set; } = string.Empty;        /// <summary>
                                                                          /// Type of license held by the driver (CDL or Passenger)
                                                                          /// </summary>
         public string LicenseType { get; set; } = "CDL";
@@ -72,19 +73,21 @@ namespace BusBus.Models
         /// Indicates if the driver needs a performance review
         /// </summary>
         public bool NeedsPerformanceReview => LastPerformanceReview == null ||
-                                             (DateTime.UtcNow - LastPerformanceReview.Value).TotalDays > 365;
+                                             (DateTime.UtcNow - LastPerformanceReview.Value).TotalDays > 365;        /// <summary>
+                                                                                                                     /// Gets the years of service for the driver
+                                                                                                                     /// </summary>
+        public int YearsOfService => (int)((DateTime.UtcNow - HireDate).TotalDays / 365.25); private decimal _performanceScore = 0.0m;
 
         /// <summary>
-        /// Gets the years of service for the driver
+        /// Gets or sets the overall performance score for the driver
+        /// If no value is set, calculates from PerformanceMetrics
         /// </summary>
-        public int YearsOfService => (int)((DateTime.UtcNow - HireDate).TotalDays / 365.25);
-
-        /// <summary>
-        /// Gets the overall performance score for the driver
-        /// </summary>
-        public double PerformanceScore => (PerformanceMetrics.SafetyScore +
-                                          PerformanceMetrics.PunctualityScore +
-                                          PerformanceMetrics.CustomerServiceScore) / 3.0;
+        public decimal PerformanceScore
+        {
+            get => _performanceScore > 0 ? _performanceScore :
+                   (decimal)((PerformanceMetrics.SafetyScore + PerformanceMetrics.PunctualityScore + PerformanceMetrics.CustomerServiceScore) / 3.0);
+            set => _performanceScore = value;
+        }
 
         public DateTime HireDate { get; set; }
         public DateTime? LastPerformanceReview { get; set; }
@@ -121,7 +124,8 @@ namespace BusBus.Models
             get => string.IsNullOrEmpty(_personalDetails) ? new PersonalDetails() :
                    JsonSerializer.Deserialize<PersonalDetails>(_personalDetails) ?? new PersonalDetails();
             set => _personalDetails = JsonSerializer.Serialize(value);
-        }        private string _performanceMetrics = string.Empty;
+        }
+        private string _performanceMetrics = string.Empty;
         public string PerformanceMetricsJson
         {
             get => _performanceMetrics;
