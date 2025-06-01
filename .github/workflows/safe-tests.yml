@@ -11,20 +11,26 @@ on:
         description: 'Job timeout in minutes (default 15)'
         required: false
         default: '15'
-      enable_sonarqube:
-        description: 'Enable SonarQube analysis'
-        required: false
-        default: false
-        type: boolean
       parallel_tests:
         description: 'Enable parallel test execution'
         required: false
         default: true
         type: boolean
+      debug_mode:
+        description: 'Enable debug mode with more verbose output'
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [ main, develop, maximize-dashboard ]
   pull_request:
     branches: [ main ]
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   enhanced-agentic-tests:
@@ -58,32 +64,55 @@ jobs:
         Write-Host "Runner: ${{ runner.name }}"
         Write-Host "Repository: ${{ github.repository }}"
         Write-Host "Commit: ${{ github.sha }}"
-        
+
         Write-Host "`n=== Resource Assessment ==="
+
         if ($IsLinux -or $IsMacOS) {
-          $memory = free -m 2>/dev/null | grep "Mem:" | awk '{print $2 " MB total, " $7 " MB available"}'
-          $disk = df -h . 2>/dev/null | tail -1 | awk '{print $2 " total, " $4 " available"}'
-          Write-Host "Memory: $memory"
-          Write-Host "Disk: $disk"
-          
+          # Linux/macOS specific resource check
+          $memoryInfo = & bash -c "free -m 2>/dev/null | grep 'Mem:' | awk '{print \$2 \" MB total, \" \$7 \" MB available\"}'"
+          Write-Host "Memory: $memoryInfo"
+
+          $diskInfo = & bash -c "df -h . 2>/dev/null | tail -1 | awk '{print \$2 \" total, \" \$4 \" available\"}'"
+          Write-Host "Disk: $diskInfo"
+
           # Check if we have sufficient resources
-          $availMem = free -m 2>/dev/null | grep "Mem:" | awk '{print $7}'
+          $availMem = & bash -c "free -m 2>/dev/null | grep 'Mem:' | awk '{print \$7}'"
           if ([int]$availMem -lt 1024) {
-            Write-Warning "Low memory detected: $availMem MB available. Tests may be unreliable."
+            Write-Warning "Low memory detected: ${availMem} MB available. Tests may be unreliable."
           }
         } else {
+          # Windows specific resource check
           $memory = Get-ComputerInfo | Select-Object TotalPhysicalMemory, AvailablePhysicalMemory -ErrorAction SilentlyContinue
           $disk = Get-WmiObject -Class Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} | Select-Object DeviceID, Size, FreeSpace -ErrorAction SilentlyContinue
-          Write-Host "Memory: $($memory.TotalPhysicalMemory / 1GB) GB total, $($memory.AvailablePhysicalMemory / 1GB) GB available"
+
+          if ($memory) {
+            Write-Host "Memory: $([math]::Round($memory.TotalPhysicalMemory / 1GB, 2)) GB total, $([math]::Round($memory.AvailablePhysicalMemory / 1GB, 2)) GB available"
+          } else {
+            Write-Warning "Unable to retrieve memory information"
+          }
+
           Write-Host "Disk space:"
-          $disk | ForEach-Object { Write-Host "  $($_.DeviceID) $([math]::Round($_.Size / 1GB, 2)) GB total, $([math]::Round($_.FreeSpace / 1GB, 2)) GB free" }
+          if ($disk) {
+            $disk | ForEach-Object {
+              Write-Host "  $($_.DeviceID) $([math]::Round($_.Size / 1GB, 2)) GB total, $([math]::Round($_.FreeSpace / 1GB, 2)) GB free"
+            }
+          } else {
+            Write-Warning "Unable to retrieve disk information"
+          }
+
+          # Check if we have sufficient resources
+          if ($memory -and ($memory.AvailablePhysicalMemory / 1GB) -lt 1) {
+            Write-Warning "Low memory detected: $([math]::Round($memory.AvailablePhysicalMemory / 1GB, 2)) GB available. Tests may be unreliable."
+          }
         }
-        
-        # CPU info
+
+        # CPU info - same for all platforms
         $cpuCount = [Environment]::ProcessorCount
         Write-Host "CPU cores: $cpuCount"
         if ($cpuCount -ge 4) {
           Write-Host "✓ Sufficient cores for parallel testing"
+        } else {
+          Write-Host "⚠️ Limited CPU resources: $cpuCount cores (4+ recommended)"
         }
 
     - name: Pre-Execution Cleanup
@@ -92,15 +121,15 @@ jobs:
         Write-Host "=== Pre-Execution Cleanup ==="
         $retryCount = 0
         $maxRetries = 2
-        
+
         do {
           if ($retryCount -gt 0) {
             Write-Host "Retry attempt $retryCount..."
             Start-Sleep -Seconds 5
           }
-          
+
           if ($IsLinux -or $IsMacOS) {
-            $processes = pkill -9 -f "dotnet|testhost|vstest" 2>/dev/null || $true
+            & bash -c "pkill -9 -f 'dotnet|testhost|vstest' 2>/dev/null || true"
             Write-Host "Terminated Linux/Mac test processes"
           } else {
             $processes = Get-Process | Where-Object {$_.ProcessName -match "(dotnet|testhost|vstest)"} -ErrorAction SilentlyContinue
@@ -119,7 +148,7 @@ jobs:
       run: |
         Write-Host "=== Dependency Restoration ==="
         $startTime = Get-Date
-        
+
         try {
           Write-Host "Restoring dependencies for BusBus.sln..."
           dotnet restore BusBus.sln --verbosity normal
@@ -130,22 +159,22 @@ jobs:
           Write-Warning "Restore failed: $($_.Exception.Message)"
           Write-Host "Retrying after 5 seconds..."
           Start-Sleep -Seconds 5
-          
+
           dotnet restore BusBus.sln --verbosity normal --force
           if ($LASTEXITCODE -ne 0) {
             throw "Dependency restore failed after retry"
           }
         }
-        
+
         $duration = (Get-Date) - $startTime
-        Write-Host "✓ Dependencies restored in $($duration.TotalSeconds) seconds"
+        Write-Host "✓ Dependencies restored in $([math]::Round($duration.TotalSeconds, 2)) seconds"
 
     - name: Build Solution with Analysis
       shell: pwsh
       run: |
         Write-Host "=== Solution Build ==="
         $startTime = Get-Date
-        
+
         dotnet build BusBus.sln --no-restore --configuration Release --verbosity normal
         if ($LASTEXITCODE -ne 0) {
           Write-Error "Build failed. Common issues to check:"
@@ -154,39 +183,15 @@ jobs:
           Write-Error "- Target framework compatibility"
           throw "Build failed"
         }
-        
-        $duration = (Get-Date) - $startTime
-        Write-Host "✓ Solution built successfully in $($duration.TotalSeconds) seconds"
 
-    - name: SonarQube Analysis
-      if: ${{ github.event.inputs.enable_sonarqube == 'true' || github.event.inputs.enable_sonarqube == true }}
-      shell: pwsh
-      run: |
-        Write-Host "=== SonarQube Analysis ==="
-        try {
-          # Check if SonarQube scanner is available
-          $scannerPath = Get-Command "dotnet-sonarscanner" -ErrorAction SilentlyContinue
-          if (-not $scannerPath) {
-            Write-Warning "SonarQube scanner not found. Installing..."
-            dotnet tool install --global dotnet-sonarscanner --version 5.0.4
-          }
-          
-          # Run SonarQube analysis (placeholder - requires actual SonarQube configuration)
-          Write-Host "Starting SonarQube analysis..."
-          # dotnet sonarscanner begin /k:"BusBus" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-          # dotnet build BusBus.sln --no-restore
-          # dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-          Write-Host "✓ SonarQube analysis completed (placeholder)"
-        } catch {
-          Write-Warning "SonarQube analysis failed: $($_.Exception.Message)"
-          Write-Warning "Continuing with tests to avoid blocking CI..."
-        }
+        $duration = (Get-Date) - $startTime
+        Write-Host "✓ Solution built successfully in $([math]::Round($duration.TotalSeconds, 2)) seconds"
 
     - name: Execute Tests with Adaptive Intelligence
       shell: pwsh
       run: |
         Write-Host "=== Intelligent Test Execution ==="
-        
+
         # Configure test arguments
         $testArgs = @("test", "BusBus.sln")
         $testArgs += "--no-build"
@@ -195,38 +200,43 @@ jobs:
         $testArgs += "--logger", "console;verbosity=normal"
         $testArgs += "--blame-hang-timeout", "5m"
         $testArgs += "--results-directory", "TestResults"
-        
+
         # Add test filter if specified
         if ("${{ github.event.inputs.test_filter }}" -ne "") {
           $testArgs += "--filter", "${{ github.event.inputs.test_filter }}"
           Write-Host "Applied test filter: ${{ github.event.inputs.test_filter }}"
         }
-        
+
         # Enable parallel execution if requested and sufficient resources
         $cpuCount = [Environment]::ProcessorCount
-        if (("${{ github.event.inputs.parallel_tests }}" -eq "true" -or ${{ github.event.inputs.parallel_tests }} -eq $true) -and $cpuCount -ge 4) {
+
+        if ("${{ github.event.inputs.parallel_tests }}" -eq "true" -and $cpuCount -ge 4) {
           $testArgs += "--parallel"
           Write-Host "✓ Parallel test execution enabled ($cpuCount cores available)"
+        } elseif ("${{ github.event.inputs.parallel_tests }}" -eq "true") {
+          Write-Host "⚠️ Insufficient cores for parallel execution ($cpuCount available, 4+ recommended)"
+        } else {
+          Write-Host "Parallel execution disabled by user configuration"
         }
-        
+
         # Calculate timeout with buffer
         $baseTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes || 15 }}"
         $timeoutSeconds = $baseTimeoutMinutes * 60 - 120  # 2 min buffer for cleanup
         Write-Host "Test timeout: $timeoutSeconds seconds (base: $baseTimeoutMinutes minutes)"
-        
+
         # Adaptive retry logic
         $attempt = 1
         $maxAttempts = 3
         $success = $false
-        
+
         while ($attempt -le $maxAttempts -and -not $success) {
           Write-Host "`n--- Test Attempt $attempt of $maxAttempts ---"
           $testStartTime = Get-Date
-          
+
           try {
             # Create test results directory
             New-Item -ItemType Directory -Path "TestResults" -Force | Out-Null
-            
+
             # Start test execution with timeout
             $job = Start-Job -ScriptBlock {
               param($args)
@@ -234,18 +244,18 @@ jobs:
               & dotnet @args
               return $LASTEXITCODE
             } -ArgumentList $testArgs
-            
+
             # Wait for completion or timeout
             $completed = Wait-Job $job -Timeout $timeoutSeconds
-            
+
             if ($completed) {
               $exitCode = Receive-Job $job
               Remove-Job $job
-              
+
               if ($exitCode -eq 0) {
                 $success = $true
                 $duration = (Get-Date) - $testStartTime
-                Write-Host "✓ Tests completed successfully in $($duration.TotalMinutes.ToString('F2')) minutes"
+                Write-Host "✓ Tests completed successfully in $([math]::Round($duration.TotalMinutes, 2)) minutes"
                 break
               } else {
                 Write-Warning "Tests failed with exit code: $exitCode"
@@ -254,7 +264,7 @@ jobs:
               Write-Warning "Tests timed out after $timeoutSeconds seconds"
               Stop-Job $job -ErrorAction SilentlyContinue
               Remove-Job $job -ErrorAction SilentlyContinue
-              
+
               # Increase timeout for next attempt
               $timeoutSeconds += 120
               Write-Host "Increasing timeout to $timeoutSeconds seconds for next attempt"
@@ -262,21 +272,21 @@ jobs:
           } catch {
             Write-Error "Test execution error: $($_.Exception.Message)"
           }
-          
+
           # Cleanup between attempts
           if ($attempt -lt $maxAttempts) {
             Write-Host "Cleaning up before retry..."
             if ($IsLinux -or $IsMacOS) {
-              pkill -9 -f "dotnet|testhost|vstest" 2>/dev/null || $true
+              & bash -c "pkill -9 -f 'dotnet|testhost|vstest' 2>/dev/null || true"
             } else {
               Get-Process | Where-Object {$_.ProcessName -match "(dotnet|testhost|vstest)"} | Stop-Process -Force -ErrorAction SilentlyContinue
             }
             Start-Sleep -Seconds 5
           }
-          
+
           $attempt++
         }
-        
+
         if (-not $success) {
           Write-Error "All test attempts failed after $maxAttempts tries"
           exit 1
@@ -287,49 +297,106 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "=== Test Results Analysis ==="
-        
-        $trxFiles = Get-ChildItem -Path "TestResults" -Filter "*.trx" -ErrorAction SilentlyContinue
-        if ($trxFiles) {
+
+        # Add more robust error handling
+        try {
+          $trxFiles = Get-ChildItem -Path "TestResults" -Filter "*.trx" -ErrorAction Stop
+          if ($trxFiles.Count -eq 0) {
+            Write-Warning "No TRX files found in TestResults directory"
+            return
+          }
+
           Write-Host "Found $($trxFiles.Count) TRX result file(s)"
-          
+          $totalTests = 0
+          $totalPassed = 0
+          $totalFailed = 0
+          $failedTestsList = @()
+
           foreach ($trxFile in $trxFiles) {
             Write-Host "Analyzing: $($trxFile.Name)"
-            
-            # Parse TRX for basic stats (simplified XML parsing)
-            $content = Get-Content $trxFile.FullName -Raw
-            if ($content -match 'total="(\d+)".*passed="(\d+)".*failed="(\d+)"') {
-              $total = $matches[1]
-              $passed = $matches[2]
-              $failed = $matches[3]
-              
-              Write-Host "  Total: $total, Passed: $passed, Failed: $failed"
-              
-              if ([int]$failed -gt 0) {
-                Write-Warning "  ⚠️  $failed test(s) failed"
-                
-                # Extract failed test names (simplified)
-                $failedTests = [regex]::Matches($content, 'testName="([^"]+)"[^>]*outcome="Failed"')
-                if ($failedTests.Count -gt 0) {
-                  Write-Host "  Failed tests:"
-                  $failedTests | ForEach-Object { Write-Host "    - $($_.Groups[1].Value)" }
+
+            try {
+              # Use XML parsing for more reliable results
+              [xml]$trxXml = Get-Content $trxFile.FullName -ErrorAction Stop
+              $counters = $trxXml.TestRun.ResultSummary.Counters
+
+              if ($counters) {
+                $total = [int]$counters.total
+                $passed = [int]$counters.passed
+                $failed = [int]$counters.failed
+
+                $totalTests += $total
+                $totalPassed += $passed
+                $totalFailed += $failed
+
+                Write-Host "  Total: $total, Passed: $passed, Failed: $failed"
+
+                if ($failed -gt 0) {
+                  Write-Warning "  ⚠️  $failed test(s) failed"
+
+                  # Extract failed test details
+                  $results = $trxXml.TestRun.Results.UnitTestResult | Where-Object { $_.outcome -eq "Failed" }
+                  foreach ($result in $results) {
+                    $testName = $result.testName
+                    $errorMessage = $result.Output.ErrorInfo.Message
+                    $failedTestsList += "${testName} - ${errorMessage}"
+                    Write-Host "    - $testName" -ForegroundColor Red
+
+                    # Only show first 300 chars of error message to avoid flooding the log
+                    if ($errorMessage -and $errorMessage.Length -gt 0) {
+                      $shortMessage = if ($errorMessage.Length -gt 300) { $errorMessage.Substring(0, 300) + "..." } else { $errorMessage }
+                      Write-Host "      Error: $shortMessage" -ForegroundColor Yellow
+                    }
+                  }
+                } else {
+                  Write-Host "  ✓ All tests passed" -ForegroundColor Green
                 }
               } else {
-                Write-Host "  ✓ All tests passed"
+                Write-Warning "  Could not find test counters in TRX file"
               }
+            } catch {
+              Write-Error "Error parsing TRX file $($trxFile.Name): $_"
             }
           }
-        } else {
-          Write-Warning "No TRX files found in TestResults directory"
+
+          # Summary across all TRX files
+          Write-Host "`n=== Test Summary ==="
+          Write-Host "Total Tests: $totalTests"
+          Write-Host "Passed: $totalPassed"
+          Write-Host "Failed: $totalFailed"
+
+          # Create summary file for easier review
+          if ($totalTests -gt 0) {
+            $summaryContent = "# Test Run Summary`r`n"
+            $summaryContent += "- **Total Tests:** $totalTests`r`n"
+            $summaryContent += "- **Passed:** $totalPassed`r`n"
+            $summaryContent += "- **Failed:** $totalFailed`r`n"
+            $summaryContent += "- **Pass Rate:** $([math]::Round(($totalPassed / $totalTests) * 100, 2))%`r`n`r`n"
+            $summaryContent += "## Failed Tests`r`n"
+
+            if ($totalFailed -gt 0) {
+              foreach ($failedTest in $failedTestsList) {
+                $summaryContent += "- $failedTest`r`n"
+              }
+            } else {
+              $summaryContent += "- None! All tests passed.`r`n"
+            }
+            $summaryContent | Out-File -FilePath "TestResults/summary.md" -Encoding utf8
+            Write-Host "Created test summary at TestResults/summary.md"
+          }
+        } catch {
+          Write-Error "Error analyzing test results: $_"
         }
 
     - name: Upload Test Results
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: test-results-${{ github.run_number }}
+        name: test-results-${{ github.run_number }}-${{ github.run_attempt }}
         path: |
           TestResults/*.trx
           TestResults/*.xml
+          TestResults/summary.md
         retention-days: 30
 
     - name: Update GitHub Status
@@ -337,21 +404,22 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "=== GitHub Status Update ==="
-        
+
         # Determine overall status
-        $status = if (${{ job.status }} -eq "success") { "success" } else { "failure" }
-        $description = if ($status -eq "success") { 
-          "All tests passed successfully" 
-        } else { 
-          "Tests failed - check artifacts for details" 
+        $jobStatus = "${{ job.status }}"
+        $status = if ($jobStatus -eq "success") { "success" } else { "failure" }
+        $description = if ($status -eq "success") {
+          "All tests passed successfully"
+        } else {
+          "Tests failed - check artifacts for details"
         }
-        
+
         Write-Host "Workflow status: $status"
         Write-Host "Description: $description"
-        
+
         # GitHub automatically updates commit status based on workflow result
         # Additional custom status updates could be added here using GitHub API
-        
+
         Write-Host "✓ Status will be updated automatically by GitHub Actions"
 
     - name: Final Cleanup and Summary
@@ -359,16 +427,16 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "=== Final Cleanup ==="
-        
+
         # Cleanup processes
         if ($IsLinux -or $IsMacOS) {
-          pkill -9 -f "dotnet|testhost|vstest" 2>/dev/null || $true
+          & bash -c "pkill -9 -f 'dotnet|testhost|vstest' 2>/dev/null || true"
           Write-Host "Cleaned up Linux/Mac processes"
         } else {
           Get-Process | Where-Object {$_.ProcessName -match "(dotnet|testhost|vstest)"} | Stop-Process -Force -ErrorAction SilentlyContinue
           Write-Host "Cleaned up Windows processes"
         }
-        
+
         Write-Host "`n=== Execution Summary ==="
         Write-Host "Repository: ${{ github.repository }}"
         Write-Host "Branch: ${{ github.ref_name }}"
@@ -376,10 +444,58 @@ jobs:
         Write-Host "Workflow: ${{ github.workflow }}"
         Write-Host "Run ID: ${{ github.run_id }}"
         Write-Host "Status: ${{ job.status }}"
-        
+
         if (Test-Path "TestResults") {
           $resultFiles = Get-ChildItem "TestResults" -File
           Write-Host "Test artifacts: $($resultFiles.Count) files uploaded"
         }
-        
+
         Write-Host "✓ Enhanced agentic test execution completed"
+
+    - name: Debug Mode Information
+      if: github.event.inputs.debug_mode == 'true'
+      shell: pwsh
+      run: |
+        Write-Host "=== DEBUG MODE ENABLED ==="
+        Write-Host "This step provides detailed information to help troubleshoot workflow issues"
+
+        Write-Host "`n--- GitHub Context ---"
+        Write-Host "GITHUB_WORKFLOW: $env:GITHUB_WORKFLOW"
+        Write-Host "GITHUB_RUN_ID: $env:GITHUB_RUN_ID"
+        Write-Host "GITHUB_RUN_NUMBER: $env:GITHUB_RUN_NUMBER"
+        Write-Host "GITHUB_ACTION: $env:GITHUB_ACTION"
+        Write-Host "GITHUB_ACTOR: $env:GITHUB_ACTOR"
+        Write-Host "GITHUB_REPOSITORY: $env:GITHUB_REPOSITORY"
+        Write-Host "GITHUB_EVENT_NAME: $env:GITHUB_EVENT_NAME"
+        Write-Host "GITHUB_WORKSPACE: $env:GITHUB_WORKSPACE"
+        Write-Host "GITHUB_SHA: $env:GITHUB_SHA"
+        Write-Host "GITHUB_REF: $env:GITHUB_REF"
+        Write-Host "GITHUB_REF_NAME: $env:GITHUB_REF_NAME"
+
+        Write-Host "`n--- Runner Information ---"
+        Write-Host "Runner OS: $env:RUNNER_OS"
+        Write-Host "Runner Name: $env:RUNNER_NAME"
+        Write-Host "Runner Temp: $env:RUNNER_TEMP"
+        Write-Host "Runner Tool Cache: $env:RUNNER_TOOL_CACHE"
+
+        Write-Host "`n--- Network Information ---"
+        if ($IsWindows) {
+          ipconfig
+          Write-Host "`nDNS Settings:"
+          Get-DnsClientServerAddress -AddressFamily IPv4 | Format-Table
+        } else {
+          ifconfig
+          Write-Host "`nDNS Settings:"
+          cat /etc/resolv.conf
+        }
+
+        Write-Host "`n--- .NET Information ---"
+        dotnet --info
+
+        Write-Host "`n--- Environment Variables ---"
+        Get-ChildItem env: | Sort-Object Name | Format-Table -AutoSize
+        Write-Host "`n--- .NET Information ---"
+        dotnet --info
+
+        Write-Host "`n--- Environment Variables ---"
+        Get-ChildItem env: | Sort-Object Name | Format-Table -AutoSize
