@@ -50,16 +50,14 @@ namespace BusBus.UI
 
         public override string ViewName => "dashboard";
 
-        public override string Title => "Dashboard Overview";
-
-        protected override void InitializeView()
+        public override string Title => "Dashboard Overview"; protected override void InitializeView()
         {
             base.InitializeView();
 
             LogInitializing(_logger, null);
 
-            // Set the form properties
-            Size = new Size(800, 600);
+            // Set the control properties
+            MinimumSize = new Size(800, 600);
             BackColor = BusBus.UI.Core.ThemeManager.CurrentTheme.MainBackground; CreateWelcomeSection();
             CreateStatsSection();
             CreateSummarySection();

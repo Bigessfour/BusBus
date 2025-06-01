@@ -74,12 +74,29 @@ namespace BusBus.Utils
         /// </summary>
         public static void Initialize(ILogger logger)
         {
+            Initialize(logger, true);
+        }
+
+        /// <summary>
+        /// Initialize the resource tracker with optional verbosity control
+        /// </summary>
+        /// <param name="logger">The logger to use</param>
+        /// <param name="verbose">Whether to log verbose initialization and tracking messages</param>
+        public static void Initialize(ILogger logger, bool verbose)
+        {
             ArgumentNullException.ThrowIfNull(logger);
             _logger = logger;
             _isEnabled = true;
+            _verbose = verbose;
 
-            _logResourceTrackerInitialized(_logger, null);
+            if (_verbose)
+            {
+                _logResourceTrackerInitialized(_logger, null);
+            }
         }
+
+        // Track verbosity setting
+        private static bool _verbose = true;
 
         /// <summary>
         /// Track a disposable resource
@@ -109,11 +126,10 @@ namespace BusBus.Utils
                 Description = description,
                 CreatedAt = DateTime.Now,
                 StackTrace = stack.ToString()
-            };
+            }; _resources.TryAdd(id, trackedResource);
 
-            _resources.TryAdd(id, trackedResource);
-
-            if (_logger != null)
+            // Only log resource tracking if verbose mode is enabled
+            if (_logger != null && _verbose)
             {
                 _logResourceTrackedDebug(_logger, resourceType, description, id, null);
             }

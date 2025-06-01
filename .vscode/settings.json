@@ -9,9 +9,9 @@
 
     // Testing settings - Enhanced
     "dotnet-test-explorer.testProjectPath": "**/*Tests.csproj",
-    "dotnet-test-explorer.enableCodeCoverage": true,
-    "dotnet-test-explorer.codeCoverageRunSettings": "CodeCoverage.runsettings",
-    "dotnet.unitTests.runSettingsPath": "./coverlet.runsettings",
+    "dotnet-test-explorer.enableCodeCoverage": false,
+    "dotnet-test-explorer.codeCoverageRunSettings": "",
+    "dotnet.unitTests.runSettingsPath": "",
 
     // Editor settings - Enhanced for better development experience
     "editor.formatOnSave": true,

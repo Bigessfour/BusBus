@@ -16,21 +16,19 @@ namespace BusBus.UI.Forms
     /// </summary>
     public class TransportFormView : HighQualityFormTemplate
     {
-        private new readonly ILogger<TransportFormView> _logger;
-
-        public override string ViewName => "transport";
-        public override string Title => "Transport Management";
+        private new readonly ILogger<TransportFormView> _logger; public string ViewName => "transport";
+        public string Title => "Transport Management";
 
         public TransportFormView(IServiceProvider serviceProvider)
             : base(serviceProvider)
         {
             _logger = serviceProvider.GetRequiredService<ILogger<TransportFormView>>();
-            InitializeView();
+            InitializeForm();
         }
 
-        protected override void InitializeView()
+        protected void InitializeView()
         {
-            base.InitializeView();
+            InitializeForm();
 
             // Configure main layout
             _mainLayout.RowCount = 3;
@@ -269,14 +267,13 @@ namespace BusBus.UI.Forms
             layout.Controls.Add(labelControl, 0, row);
             layout.Controls.Add(valueControl, 1, row);
         }
-
-        protected override async Task OnActivateAsync(CancellationToken cancellationToken)
+        protected async Task OnActivateAsync(CancellationToken cancellationToken)
         {
             // No need for async operations in this sample
             await Task.CompletedTask;
         }
 
-        protected override async Task OnDeactivateAsync()
+        protected async Task OnDeactivateAsync()
         {
             // No need for async operations in this sample
             await Task.CompletedTask;

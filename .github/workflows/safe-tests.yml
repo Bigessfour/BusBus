@@ -1,0 +1,104 @@
+name: Safe Test Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter (e.g., "TestCategory=MyCategory")'
+        required: false
+        default: ''
+      timeout_minutes:
+        description: 'Job timeout in minutes (default 10)'
+        required: false
+        default: '10' # Default is a string, GitHub Actions handles conversion for timeout-minutes
+
+jobs:
+  safe-tests:
+    runs-on: self-hosted # Ensure your self-hosted runner is available and correctly tagged
+    timeout-minutes: ${{ github.event.inputs.timeout_minutes }} # Job-level timeout
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # Adjust if you use a different .NET version
+
+    - name: Kill any existing processes before tests
+      shell: powershell
+      run: |
+        Write-Host "Attempting to kill existing test-related processes..."
+        Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Write-Host "Process kill attempt finished. Waiting a moment..."
+        Start-Sleep -Seconds 3
+
+    - name: Restore .NET dependencies
+      run: dotnet restore BusBus.sln # Assuming BusBus.sln is at the root
+
+    - name: Build solution
+      run: dotnet build BusBus.sln --no-restore --configuration Release
+
+    - name: Run tests with script-level timeout
+      shell: powershell
+      run: |
+        $ErrorActionPreference = "Stop" # Stop script on first error for clarity, can be "Continue"
+
+        $testFilterInput = "${{ github.event.inputs.test_filter }}"
+        $filterArg = ""
+        if ($null -ne $testFilterInput -and $testFilterInput.Trim() -ne "") {
+          $filterArg = "--filter `"$($testFilterInput.Replace('"', '\"'))`"" # Basic escaping for filter
+        }
+
+        # Calculate script's internal timeout to be less than the job's timeout
+        $jobTimeoutMinutes = 10 # Default if input is invalid
+        if ($env:INPUT_TIMEOUT_MINUTES -match '^\d+$') { # Check if env var from input is a number
+            $jobTimeoutMinutes = [int]$env:INPUT_TIMEOUT_MINUTES
+        } elseif ("${{ github.event.inputs.timeout_minutes }}" -match '^\d+$') {
+            $jobTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes }}"
+        }
+        
+        $scriptInternalTimeoutMinutes = $jobTimeoutMinutes - 2 # Allow 2 minutes for job overhead/cleanup
+        if ($scriptInternalTimeoutMinutes -lt 1) {
+            $scriptInternalTimeoutMinutes = 1 # Minimum 1 minute for the script's test execution part
+        }
+        $scriptInternalTimeoutSeconds = $scriptInternalTimeoutMinutes * 60
+
+        Write-Host "Running tests. Job timeout: $jobTimeoutMinutes min. Script internal timeout for test process: $scriptInternalTimeoutMinutes min."
+        Write-Host "Test Filter Argument: $filterArg"
+        $FullCommand = "dotnet test BusBus.sln --logger:`"console;verbosity=normal`" --no-build $filterArg"
+        Write-Host "Executing: $FullCommand"
+
+        $testProcess = Start-Process -FilePath "dotnet" -ArgumentList "test BusBus.sln --logger:`"console;verbosity=normal`" --no-build $filterArg" -PassThru -NoNewWindow
+
+        Write-Host "Test process started with PID: $($testProcess.Id). Waiting for exit or timeout ($scriptInternalTimeoutSeconds seconds)..."
+
+        $completed = $testProcess.WaitForExit($scriptInternalTimeoutSeconds * 1000) # Convert to milliseconds
+
+        if (-not $completed) {
+            Write-Host "ERROR: Tests exceeded script's internal timeout of $scriptInternalTimeoutMinutes minutes. Killing process $($testProcess.Id)..." -ForegroundColor Red
+            try {
+                Stop-Process -Id $testProcess.Id -Force -ErrorAction Stop
+                Write-Host "Process $($testProcess.Id) killed."
+            } catch {
+                Write-Host "ERROR: Failed to kill process $($testProcess.Id). Details: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            # Emergency cleanup for any orphaned testhosts or dotnet processes
+            Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            exit 1 # Indicate failure due to timeout
+        } else {
+            Write-Host "Test process $($testProcess.Id) completed with Exit Code: $($testProcess.ExitCode)."
+            if ($testProcess.ExitCode -ne 0) {
+                Write-Host "Tests failed with Exit Code: $($testProcess.ExitCode)." -ForegroundColor Red
+            }
+            exit $testProcess.ExitCode # Propagate the test process's exit code to the step
+        }
+
+    - name: Final Cleanup Processes (always runs)
+      if: always() # Ensures this step runs even if previous steps fail or are cancelled
+      shell: powershell
+      run: |
+        Write-Host "Performing final cleanup of any remaining test-related processes..."
+        Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Write-Host "Final cleanup attempt finished."

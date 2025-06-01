@@ -8,10 +8,9 @@
             "request": "launch",
             "preLaunchTask": "build BusBus solution",
             "program": "${workspaceFolder}/bin/Debug/net8.0-windows/BusBus.exe",
-            "args": [],
-            "cwd": "${workspaceFolder}",
+            "args": [],            "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "justMyCode": true,
             "suppressJITOptimizations": true,
             "symbolOptions": {

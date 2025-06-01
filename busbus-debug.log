@@ -1,0 +1,743 @@
+06:28:05.288 [INFORMATION] [Program] 🔍 [DEBUG-TEST] BusBus Application Starting - PID: 18556
+06:28:05.518 [INFORMATION] [object] 🔍 [DEBUG-TEST] BusBus Application Starting - Check Debug Console & Terminal!
+06:28:05.526 [WARNING] [object] ⚠️ [DEBUG-TEST] This is a WARNING level test log
+06:28:05.527 [ERROR] [object] ❌ [DEBUG-TEST] This is an ERROR level test log (not a real error)
+06:28:05.528 [DEBUG] [object] 🔧 [DEBUG-LEVEL] Debug level log - should appear in Debug Console
+06:28:05.529 [CRITICAL] [object] 🚨 [CRITICAL-TEST] Critical level test log
+06:28:05.530 [INFORMATION] [TestCategory] 🧪 [TEST-CATEGORY] Logger with specific category
+06:28:05.545 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 3, BusBus instances: 1, Current PID: 18556
+06:28:05.550 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+06:28:05.675 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 1 | Purpose: UI Thread | IsUI: True
+06:28:05.678 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 1
+06:28:05.681 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+06:28:05.682 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+06:28:05.683 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+06:28:05.684 [INFORMATION] [object] ProcessMonitor initialized
+06:28:05.685 [INFORMATION] [object] Application startup initialized
+06:28:06.119 [WARNING] [Validation] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+06:28:06.193 [WARNING] [Validation] No store type was specified for the decimal property 'PerformanceScore' on entity type 'Driver'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+06:28:06.514 [INFORMATION] [Command] Executed DbCommand (26ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+06:28:06.687 [INFORMATION] [Command] Executed DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+06:28:06.723 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 18556
+06:28:06.729 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+06:28:06.730 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 18556, Thread: 10
+06:28:06.738 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+06:28:06.750 [INFORMATION] [Dashboard] Navigating to view: dashboard
+06:28:06.753 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+06:28:06.755 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+06:28:06.902 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+06:28:06.903 [DEBUG] [Dashboard] Created new view: dashboard in 149ms
+06:28:06.904 [DEBUG] [Dashboard] View cache count: 1
+06:28:06.904 [ERROR] [Dashboard] Critical error: Content panel is not initialized when navigating to 'dashboard'.
+06:28:06.906 [INFORMATION] [Command] Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+06:28:06.906 [INFORMATION] [Dashboard] Status: Critical error: Content panel is not initialized when navigating to 'dashboard'. [Error]
+06:28:07.113 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+06:28:15.370 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 18556, Thread: 10
+06:28:15.371 [INFORMATION] [Dashboard] Dashboard disposing resources
+06:28:15.373 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+06:28:15.373 [DEBUG] [Dashboard] CancellationTokenSource disposed
+06:28:15.375 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+06:28:15.376 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+06:28:15.383 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 3, BusBus instances: 1, Current PID: 18556
+06:28:15.387 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 115MB, Threads: 17
+06:28:15.490 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup
+06:28:15.513 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 11940
+06:28:15.530 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 8172
+06:28:15.548 [ERROR] [ProcessMonitor] Error accessing process 10096 - process may have exited
+System.InvalidOperationException: Cannot be used to terminate a process tree containing the calling process.
+   at System.Diagnostics.Process.Kill(Boolean entireProcessTree)
+   at BusBus.Utils.ProcessMonitor.Cleanup() in C:\Users\steve.mckitrick\Desktop\BusBus\Utils\ProcessMonitor.cs:line 177
+06:28:15.549 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete
+06:28:15.550 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 18556, Thread: 10
+06:28:15.550 [INFORMATION] [Dashboard] Dashboard disposing resources
+06:28:15.551 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+06:28:15.551 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+06:28:15.552 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+06:28:15.558 [INFORMATION] [Dashboard] Dashboard resources disposed
+06:28:15.585 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+06:28:15.590 [INFORMATION] [Dashboard] Dashboard resources disposed
+06:28:15.592 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+06:28:15.592 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup
+06:28:15.603 [ERROR] [ProcessMonitor] Error accessing process 10096 - process may have exited
+System.InvalidOperationException: Cannot be used to terminate a process tree containing the calling process.
+   at System.Diagnostics.Process.Kill(Boolean entireProcessTree)
+   at BusBus.Utils.ProcessMonitor.Cleanup() in C:\Users\steve.mckitrick\Desktop\BusBus\Utils\ProcessMonitor.cs:line 177
+06:28:15.604 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete
+06:33:32.398 [INFORMATION] [Program] 🔍 [DEBUG-TEST] BusBus Application Starting - PID: 9180
+06:33:32.605 [INFORMATION] [object] 🔍 [DEBUG-TEST] BusBus Application Starting - Check Debug Console & Terminal!
+06:33:32.613 [WARNING] [object] ⚠️ [DEBUG-TEST] This is a WARNING level test log
+06:33:32.613 [ERROR] [object] ❌ [DEBUG-TEST] This is an ERROR level test log (not a real error)
+06:33:32.614 [DEBUG] [object] 🔧 [DEBUG-LEVEL] Debug level log - should appear in Debug Console
+06:33:32.615 [CRITICAL] [object] 🚨 [CRITICAL-TEST] Critical level test log
+06:33:32.615 [INFORMATION] [TestCategory] 🧪 [TEST-CATEGORY] Logger with specific category
+06:33:32.626 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 4, BusBus instances: 1, Current PID: 9180
+06:33:32.631 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+06:33:32.637 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 1 | Purpose: UI Thread | IsUI: True
+06:33:32.639 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 1
+06:33:32.642 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+06:33:32.643 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+06:33:32.644 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+06:33:32.645 [INFORMATION] [object] ProcessMonitor initialized
+06:33:32.646 [INFORMATION] [object] Application startup initialized
+06:33:33.140 [WARNING] [Validation] No store type was specified for the decimal property 'PerformanceScore' on entity type 'Driver'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+06:33:33.419 [INFORMATION] [Command] Executed DbCommand (21ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+06:33:33.579 [INFORMATION] [Command] Executed DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+06:33:33.613 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 9180
+06:33:33.618 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+06:33:33.619 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 9180, Thread: 8
+06:33:33.627 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+06:33:33.638 [INFORMATION] [Dashboard] Navigating to view: dashboard
+06:33:33.640 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+06:33:33.642 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+06:33:33.785 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+06:33:33.786 [DEBUG] [Dashboard] Created new view: dashboard in 145ms
+06:33:33.787 [DEBUG] [Dashboard] View cache count: 1
+06:33:33.788 [ERROR] [Dashboard] Critical error: Content panel is not initialized when navigating to 'dashboard'.
+06:33:33.788 [INFORMATION] [Command] Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+06:33:33.789 [INFORMATION] [Dashboard] Status: Critical error: Content panel is not initialized when navigating to 'dashboard'. [Error]
+06:33:33.948 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+06:33:36.208 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 9180, Thread: 8
+06:33:36.209 [INFORMATION] [Dashboard] Dashboard disposing resources
+06:33:36.211 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+06:33:36.212 [DEBUG] [Dashboard] CancellationTokenSource disposed
+06:33:36.213 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+06:33:36.214 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+06:33:36.223 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 1, Current PID: 9180
+06:33:36.227 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 114MB, Threads: 16
+06:33:36.331 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup
+06:33:36.352 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 18816
+06:33:36.374 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 16392
+06:33:36.390 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 6292
+06:33:36.408 [ERROR] [ProcessMonitor] Error accessing process 10352 - process may have exited
+System.InvalidOperationException: Cannot be used to terminate a process tree containing the calling process.
+   at System.Diagnostics.Process.Kill(Boolean entireProcessTree)
+   at BusBus.Utils.ProcessMonitor.Cleanup() in C:\Users\steve.mckitrick\Desktop\BusBus\Utils\ProcessMonitor.cs:line 177
+06:33:36.409 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete
+06:33:36.410 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+06:33:36.420 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+06:33:36.423 [INFORMATION] [Dashboard] Dashboard resources disposed
+06:33:36.449 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+06:33:36.451 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup
+06:33:36.464 [ERROR] [ProcessMonitor] Error accessing process 10352 - process may have exited
+System.InvalidOperationException: Cannot be used to terminate a process tree containing the calling process.
+   at System.Diagnostics.Process.Kill(Boolean entireProcessTree)
+   at BusBus.Utils.ProcessMonitor.Cleanup() in C:\Users\steve.mckitrick\Desktop\BusBus\Utils\ProcessMonitor.cs:line 177
+06:33:36.465 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete
+06:39:17.199 [INFORMATION] [Program] 🔍 [DEBUG-TEST] BusBus Application Starting - PID: 11668
+06:39:17.381 [INFORMATION] [object] 🔍 [DEBUG-TEST] BusBus Application Starting - Check Debug Console & Terminal!
+06:39:17.389 [WARNING] [object] ⚠️ [DEBUG-TEST] This is a WARNING level test log
+06:39:17.390 [ERROR] [object] ❌ [DEBUG-TEST] This is an ERROR level test log (not a real error)
+06:39:17.391 [DEBUG] [object] 🔧 [DEBUG-LEVEL] Debug level log - should appear in Debug Console
+06:39:17.392 [CRITICAL] [object] 🚨 [CRITICAL-TEST] Critical level test log
+06:39:17.393 [INFORMATION] [TestCategory] 🧪 [TEST-CATEGORY] Logger with specific category
+06:39:17.404 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 4, BusBus instances: 0, Current PID: 11668
+06:39:17.409 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 55MB, Threads: 9
+06:39:17.416 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 4 | Purpose: UI Thread | IsUI: True
+06:39:17.419 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 4
+06:39:17.422 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+06:39:17.424 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+06:39:17.425 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+06:39:17.426 [INFORMATION] [object] ProcessMonitor initialized
+06:39:17.427 [INFORMATION] [object] Application startup initialized
+06:39:17.857 [WARNING] [Validation] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+06:39:18.199 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+06:39:18.359 [INFORMATION] [Command] Executed DbCommand (21ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+06:39:18.395 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 11668
+06:39:18.400 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+06:39:18.401 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 11668, Thread: 10
+06:39:18.410 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+06:39:18.424 [INFORMATION] [Dashboard] Navigating to view: dashboard
+06:39:18.426 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+06:39:18.429 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+06:39:18.579 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+06:39:18.581 [DEBUG] [Dashboard] Created new view: dashboard in 153ms
+06:39:18.582 [DEBUG] [Dashboard] View cache count: 1
+06:39:18.583 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+06:39:18.584 [DEBUG] [Dashboard] Creating content panel
+06:39:18.585 [INFORMATION] [Command] Executed DbCommand (9ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+06:39:18.586 [DEBUG] [Dashboard] Content panel created successfully
+06:39:18.589 [INFORMATION] [Dashboard] Content panel successfully recreated
+06:39:18.599 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+06:39:18.773 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+06:39:18.776 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+06:39:18.782 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 187ms
+06:39:18.796 [ERROR] [Dashboard] Error managing view controls for dashboard
+System.ArgumentException: Top-level control cannot be added to a control.
+   at System.Windows.Forms.Control.ControlCollection.Add(Control value)
+   at BusBus.UI.Dashboard.NavigateToAsync(String viewName, Object parameter) in C:\Users\steve.mckitrick\Desktop\BusBus\UI\Dashboard.cs:line 463
+06:39:18.797 [ERROR] [Dashboard] Error navigating to dashboard
+System.ArgumentException: Top-level control cannot be added to a control.
+   at System.Windows.Forms.Control.ControlCollection.Add(Control value)
+   at BusBus.UI.Dashboard.NavigateToAsync(String viewName, Object parameter) in C:\Users\steve.mckitrick\Desktop\BusBus\UI\Dashboard.cs:line 463
+06:39:18.799 [INFORMATION] [Dashboard] Status: Error loading dashboard: Top-level control cannot be added to a control. [Error]
+06:39:23.882 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 11668, Thread: 10
+06:39:23.883 [INFORMATION] [Dashboard] Dashboard disposing resources
+06:39:23.885 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+06:39:23.885 [DEBUG] [Dashboard] CancellationTokenSource disposed
+06:39:23.887 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+06:39:23.888 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+06:39:23.897 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 0, Current PID: 11668
+06:39:23.901 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 120MB, Threads: 17
+06:39:24.006 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup
+06:39:24.011 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 17456
+06:39:24.013 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 12748
+06:39:24.014 [INFORMATION] [ProcessMonitor] Forcefully terminated related dotnet process: 10412
+06:39:24.015 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete
+06:39:24.016 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+06:57:08.624 [INFORMATION] [Program] BusBus Application Starting - PID: 720
+06:57:08.867 [INFORMATION] [object] BusBus Application Starting - PID: 720
+06:57:08.886 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 6, BusBus instances: 1, Current PID: 720
+06:57:08.891 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+06:57:08.898 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 1 | Purpose: UI Thread | IsUI: True
+06:57:08.900 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 1
+06:57:08.904 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+06:57:08.906 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+06:57:08.907 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+06:57:08.907 [INFORMATION] [object] ProcessMonitor initialized
+06:57:08.909 [INFORMATION] [object] Application startup initialized
+06:57:09.680 [INFORMATION] [Command] Executed DbCommand (25ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:03:34.363 [INFORMATION] [Program] BusBus Application Starting - PID: 16448
+07:03:34.609 [INFORMATION] [object] BusBus Application Starting - PID: 16448
+07:03:34.634 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 6, BusBus instances: 1, Current PID: 16448
+07:03:34.639 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+07:03:34.646 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 1 | Purpose: UI Thread | IsUI: True
+07:03:34.649 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 1
+07:03:34.653 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+07:03:34.655 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:03:34.656 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:03:34.657 [INFORMATION] [object] ProcessMonitor initialized
+07:03:34.658 [INFORMATION] [object] Application startup initialized
+07:03:35.458 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:15:06.909 [INFORMATION] [Program] BusBus Application Starting - PID: 12024
+07:15:07.110 [INFORMATION] [object] BusBus Application Starting - PID: 12024
+07:15:07.130 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 4, BusBus instances: 1, Current PID: 12024
+07:15:07.136 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+07:15:07.143 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 1 | Purpose: UI Thread | IsUI: True
+07:15:07.146 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 1
+07:15:07.149 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+07:15:07.150 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:15:07.151 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:15:07.151 [INFORMATION] [object] ProcessMonitor initialized
+07:15:07.152 [INFORMATION] [object] Application startup initialized
+07:15:07.918 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:15:08.085 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+07:15:08.119 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 12024
+07:15:08.123 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+07:15:08.124 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 12024, Thread: 8
+07:15:08.132 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+07:15:08.143 [INFORMATION] [Dashboard] Navigating to view: dashboard
+07:15:08.146 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+07:15:08.148 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+07:15:08.164 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:15:08.284 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+07:15:08.285 [DEBUG] [Dashboard] Created new view: dashboard in 138ms
+07:15:08.286 [DEBUG] [Dashboard] View cache count: 1
+07:15:08.287 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+07:15:08.287 [INFORMATION] [Command] Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:15:08.287 [DEBUG] [Dashboard] Creating content panel
+07:15:08.289 [DEBUG] [Dashboard] Content panel created successfully
+07:15:08.290 [INFORMATION] [Dashboard] Content panel successfully recreated
+07:15:08.292 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:15:08.300 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:15:08.332 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:15:08.335 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:15:08.336 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:15:08.337 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:15:08.341 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 46ms
+07:15:08.362 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+07:15:08.374 [ERROR] [Dashboard] Error navigating to dashboard
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at BusBus.UI.Dashboard.UpdateNavigationButtons(String activeView) in C:\Users\steve.mckitrick\Desktop\BusBus\UI\Dashboard.cs:line 586
+   at BusBus.UI.Dashboard.NavigateToAsync(String viewName, Object parameter) in C:\Users\steve.mckitrick\Desktop\BusBus\UI\Dashboard.cs:line 491
+07:15:08.376 [INFORMATION] [Dashboard] Status: Error loading dashboard: Object reference not set to an instance of an object. [Error]
+07:15:11.939 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 12024, Thread: 8
+07:15:11.940 [INFORMATION] [Dashboard] Dashboard disposing resources
+07:15:11.942 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+07:15:11.942 [DEBUG] [Dashboard] CancellationTokenSource disposed
+07:15:11.955 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+07:15:11.955 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+07:15:11.964 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 1, Current PID: 12024
+07:15:11.968 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 115MB, Threads: 20
+07:15:12.083 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:15:12.084 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:15:12.085 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+07:15:12.097 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+07:15:12.100 [INFORMATION] [Dashboard] Dashboard resources disposed
+07:15:12.119 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+07:15:12.121 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:15:12.122 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:16:47.512 [INFORMATION] [Program] BusBus Application Starting - PID: 20908
+07:16:47.675 [INFORMATION] [object] BusBus Application Starting - PID: 20908
+07:16:47.694 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 5, BusBus instances: 0, Current PID: 20908
+07:16:47.699 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 55MB, Threads: 9
+07:16:47.706 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 4 | Purpose: UI Thread | IsUI: True
+07:16:47.708 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 4
+07:16:47.711 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+07:16:47.713 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:16:47.715 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:16:47.715 [INFORMATION] [object] ProcessMonitor initialized
+07:16:47.716 [INFORMATION] [object] Application startup initialized
+07:16:48.106 [WARNING] [Validation] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+07:16:48.439 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:16:48.618 [INFORMATION] [Command] Executed DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+07:16:48.657 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 20908
+07:16:48.663 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+07:16:48.664 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 20908, Thread: 7
+07:16:48.671 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+07:16:48.688 [INFORMATION] [Dashboard] Navigating to view: dashboard
+07:16:48.690 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+07:16:48.693 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+07:16:48.710 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:16:48.832 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+07:16:48.833 [DEBUG] [Dashboard] Created new view: dashboard in 142ms
+07:16:48.834 [DEBUG] [Dashboard] View cache count: 1
+07:16:48.834 [INFORMATION] [Command] Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:16:48.835 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+07:16:48.838 [DEBUG] [Dashboard] Creating content panel
+07:16:48.839 [DEBUG] [Dashboard] Content panel created successfully
+07:16:48.841 [INFORMATION] [Dashboard] Content panel successfully recreated
+07:16:48.843 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:16:48.852 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:16:48.885 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:16:48.887 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:16:48.893 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 46ms
+07:16:48.913 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+07:16:48.914 [WARNING] [Dashboard] UpdateNavigationButtons called before _sidePanel is initialized
+07:16:48.917 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+07:16:48.919 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:16:48.919 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:16:51.348 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 20908, Thread: 7
+07:16:51.349 [INFORMATION] [Dashboard] Dashboard disposing resources
+07:16:51.351 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+07:16:51.351 [DEBUG] [Dashboard] CancellationTokenSource disposed
+07:16:51.362 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+07:16:51.363 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+07:16:51.371 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 5, BusBus instances: 0, Current PID: 20908
+07:16:51.376 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 117MB, Threads: 20
+07:16:51.478 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:16:51.480 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:16:51.481 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+07:16:51.497 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+07:16:51.502 [INFORMATION] [Dashboard] Dashboard resources disposed
+07:16:51.521 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+07:16:51.523 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:16:51.524 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:16:53.009 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:16:53.011 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:19:21.892 [INFORMATION] [Program] BusBus Application Starting - PID: 17096
+07:19:22.059 [INFORMATION] [object] BusBus Application Starting - PID: 17096
+07:19:22.077 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 5, BusBus instances: 0, Current PID: 17096
+07:19:22.083 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 55MB, Threads: 9
+07:19:22.089 [DEBUG] [object] [THREAD-MONITOR] Thread registered: 4 | Purpose: UI Thread | IsUI: True
+07:19:22.092 [INFORMATION] [object] [THREAD-MONITOR] Initialized with UI thread ID: 4
+07:19:22.095 [INFORMATION] [object] [RESOURCE-TRACKER] Initialized
+07:19:22.097 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:19:22.098 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:19:22.099 [INFORMATION] [object] ProcessMonitor initialized
+07:19:22.100 [INFORMATION] [object] Application startup initialized
+07:19:22.496 [WARNING] [Validation] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+07:19:22.838 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:19:22.991 [INFORMATION] [Command] Executed DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+07:19:23.024 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 17096
+07:19:23.028 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+07:19:23.029 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 17096, Thread: 9
+07:19:23.036 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+07:19:23.049 [INFORMATION] [Dashboard] Navigating to view: dashboard
+07:19:23.051 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+07:19:23.053 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+07:19:23.069 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:19:23.189 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+07:19:23.190 [DEBUG] [Dashboard] Created new view: dashboard in 139ms
+07:19:23.191 [DEBUG] [Dashboard] View cache count: 1
+07:19:23.192 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+07:19:23.193 [DEBUG] [Dashboard] Creating content panel
+07:19:23.193 [INFORMATION] [Command] Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:19:23.194 [DEBUG] [Dashboard] Content panel created successfully
+07:19:23.197 [INFORMATION] [Dashboard] Content panel successfully recreated
+07:19:23.199 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:19:23.209 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:19:23.249 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:19:23.252 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:19:23.253 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:19:23.254 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:19:23.260 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 57ms
+07:19:23.283 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+07:19:23.284 [DEBUG] [Dashboard] UpdateNavigationButtons called before _sidePanel is fully initialized, skipping update
+07:19:23.287 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+07:19:27.814 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 17096, Thread: 9
+07:19:27.815 [INFORMATION] [Dashboard] Dashboard disposing resources
+07:19:27.817 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+07:19:27.818 [DEBUG] [Dashboard] CancellationTokenSource disposed
+07:19:27.828 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+07:19:27.829 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+07:19:27.838 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 5, BusBus instances: 0, Current PID: 17096
+07:19:27.842 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 116MB, Threads: 20
+07:19:27.954 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:19:27.955 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:19:27.956 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+07:19:27.970 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+07:19:27.975 [INFORMATION] [Dashboard] Dashboard resources disposed
+07:19:27.998 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+07:19:28.000 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:19:28.002 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:19:29.655 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:19:29.656 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:35:04.019 [INFORMATION] [Program] BusBus Application Starting - PID: 12716
+07:35:04.224 [INFORMATION] [object] BusBus Application Starting - PID: 12716
+07:35:04.244 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 6, BusBus instances: 1, Current PID: 12716
+07:35:04.250 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+07:35:04.254 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:35:04.256 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:35:04.258 [INFORMATION] [object] ProcessMonitor initialized
+07:35:04.263 [INFORMATION] [object] Application startup initialized
+07:35:05.060 [INFORMATION] [Command] Executed DbCommand (28ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:59:09.812 [INFORMATION] [Program] BusBus Application Starting - PID: 19072
+07:59:10.012 [INFORMATION] [object] BusBus Application Starting - PID: 19072
+07:59:10.031 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 4, BusBus instances: 1, Current PID: 19072
+07:59:10.036 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+07:59:10.040 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:59:10.041 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:59:10.042 [INFORMATION] [object] ProcessMonitor initialized
+07:59:10.045 [INFORMATION] [object] Application startup initialized
+07:59:10.820 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:59:10.977 [INFORMATION] [Command] Executed DbCommand (20ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+07:59:11.010 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 19072
+07:59:11.015 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+07:59:11.015 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 19072, Thread: 9
+07:59:11.023 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+07:59:11.034 [INFORMATION] [Dashboard] Navigating to view: dashboard
+07:59:11.037 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+07:59:11.039 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+07:59:11.056 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:59:11.178 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+07:59:11.179 [DEBUG] [Dashboard] Created new view: dashboard in 141ms
+07:59:11.180 [DEBUG] [Dashboard] View cache count: 1
+07:59:11.180 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+07:59:11.181 [DEBUG] [Dashboard] Creating content panel
+07:59:11.182 [DEBUG] [Dashboard] Content panel created successfully
+07:59:11.182 [INFORMATION] [Command] Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:59:11.184 [INFORMATION] [Dashboard] Content panel successfully recreated
+07:59:11.186 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:59:11.194 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:59:11.230 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:59:11.233 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:59:11.239 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 49ms
+07:59:11.263 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+07:59:11.265 [DEBUG] [Dashboard] UpdateNavigationButtons called before _sidePanel is fully initialized, skipping update
+07:59:11.269 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+07:59:11.271 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:59:11.271 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:59:19.082 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 19072, Thread: 9
+07:59:19.083 [INFORMATION] [Dashboard] Dashboard disposing resources
+07:59:19.085 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+07:59:19.086 [DEBUG] [Dashboard] CancellationTokenSource disposed
+07:59:19.096 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+07:59:19.097 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+07:59:19.106 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 1, Current PID: 19072
+07:59:19.110 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 114MB, Threads: 19
+07:59:19.226 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:59:19.227 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:59:19.228 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+07:59:19.240 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+07:59:19.243 [INFORMATION] [Dashboard] Dashboard resources disposed
+07:59:19.262 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+07:59:19.264 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:59:19.265 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:59:37.998 [INFORMATION] [Program] BusBus Application Starting - PID: 12392
+07:59:38.401 [INFORMATION] [object] BusBus Application Starting - PID: 12392
+07:59:38.428 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 3, BusBus instances: 1, Current PID: 12392
+07:59:38.434 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 48MB, Threads: 9
+07:59:38.439 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+07:59:38.441 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+07:59:38.443 [INFORMATION] [object] ProcessMonitor initialized
+07:59:38.447 [INFORMATION] [object] Application startup initialized
+07:59:39.075 [WARNING] [Validation] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+07:59:39.606 [INFORMATION] [Command] Executed DbCommand (25ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+07:59:39.826 [INFORMATION] [Command] Executed DbCommand (24ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+07:59:39.885 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 12392
+07:59:39.900 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+07:59:39.902 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 12392, Thread: 13
+07:59:39.913 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+07:59:39.939 [INFORMATION] [Dashboard] Navigating to view: dashboard
+07:59:39.944 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+07:59:39.948 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+07:59:39.970 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:59:40.098 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+07:59:40.100 [INFORMATION] [Command] Executed DbCommand (8ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:59:40.102 [DEBUG] [Dashboard] Created new view: dashboard in 155ms
+07:59:40.104 [DEBUG] [Dashboard] View cache count: 1
+07:59:40.107 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+07:59:40.110 [DEBUG] [Dashboard] Creating content panel
+07:59:40.113 [DEBUG] [Dashboard] Content panel created successfully
+07:59:40.117 [INFORMATION] [Dashboard] Content panel successfully recreated
+07:59:40.122 [INFORMATION] [RouteService] Executing optimized route query with related data
+07:59:40.145 [INFORMATION] [Command] Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+07:59:40.176 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:59:40.181 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:59:40.190 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 63ms
+07:59:40.214 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+07:59:40.217 [DEBUG] [Dashboard] UpdateNavigationButtons called before _sidePanel is fully initialized, skipping update
+07:59:40.223 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+07:59:40.226 [INFORMATION] [RouteService] Retrieved 4 routes from database
+07:59:40.229 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+07:59:42.791 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 12392, Thread: 13
+07:59:42.793 [INFORMATION] [Dashboard] Dashboard disposing resources
+07:59:42.796 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+07:59:42.799 [DEBUG] [Dashboard] CancellationTokenSource disposed
+07:59:42.813 [DEBUG] [Dashboard] Disposed view: DashboardOverviewView
+07:59:42.815 [INFORMATION] [Dashboard] Notifying Program class about dashboard disposal
+07:59:42.826 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 3, BusBus instances: 1, Current PID: 12392
+07:59:42.832 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 121MB, Threads: 21
+07:59:42.939 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:59:42.942 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+07:59:42.945 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+07:59:42.962 [DEBUG] [Dashboard] Successfully notified Program about dashboard disposal
+07:59:42.967 [INFORMATION] [Dashboard] Dashboard resources disposed
+07:59:42.990 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+07:59:42.994 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+07:59:42.998 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+08:10:52.670 [INFORMATION] [Program] BusBus Application Starting - PID: 21000
+08:10:52.897 [INFORMATION] [object] BusBus Application Starting - PID: 21000
+08:10:52.916 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 3, BusBus instances: 1, Current PID: 21000
+08:10:52.921 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+08:10:52.925 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+08:10:52.926 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+08:10:52.926 [INFORMATION] [object] ProcessMonitor initialized
+08:10:52.929 [INFORMATION] [object] Application startup initialized
+08:10:53.723 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+08:10:53.876 [INFORMATION] [Command] Executed DbCommand (16ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+08:10:53.908 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 21000
+08:10:53.913 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+08:10:53.913 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 21000, Thread: 9
+08:10:53.921 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+08:10:53.932 [INFORMATION] [Dashboard] Navigating to view: dashboard
+08:10:53.934 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+08:10:53.936 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+08:10:53.953 [INFORMATION] [RouteService] Executing optimized route query with related data
+08:10:54.071 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+08:10:54.072 [DEBUG] [Dashboard] Created new view: dashboard in 137ms
+08:10:54.073 [DEBUG] [Dashboard] View cache count: 1
+08:10:54.074 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+08:10:54.074 [DEBUG] [Dashboard] Creating content panel
+08:10:54.075 [DEBUG] [Dashboard] Content panel created successfully
+08:10:54.075 [INFORMATION] [Command] Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+08:10:54.077 [INFORMATION] [Dashboard] Content panel successfully recreated
+08:10:54.079 [INFORMATION] [RouteService] Executing optimized route query with related data
+08:10:54.086 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+08:10:54.121 [INFORMATION] [RouteService] Retrieved 4 routes from database
+08:10:54.124 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+08:10:54.125 [INFORMATION] [RouteService] Retrieved 4 routes from database
+08:10:54.126 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+08:10:54.131 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 48ms
+08:10:54.154 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+08:10:54.156 [DEBUG] [Dashboard] UpdateNavigationButtons called before _sidePanel is fully initialized, skipping update
+08:10:54.159 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+08:11:03.772 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 21000, Thread: 9
+08:11:03.774 [INFORMATION] [Dashboard] Dashboard disposing resources
+08:11:03.775 [DEBUG] [Dashboard] Unsubscribed from BusBus.UI.Core.ThemeManager.ThemeChanged
+08:11:03.777 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+08:11:03.777 [DEBUG] [Dashboard] CancellationTokenSource cancellation requested.
+08:11:03.778 [DEBUG] [Dashboard] CancellationTokenSource disposed
+08:11:03.790 [DEBUG] [Dashboard] Disposed cached view: DashboardOverviewView
+08:11:03.798 [INFORMATION] [Dashboard] Dashboard resources disposed
+08:11:03.814 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+08:11:03.816 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+08:11:03.818 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+08:11:03.830 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 3, BusBus instances: 1, Current PID: 21000
+08:11:03.835 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 115MB, Threads: 21
+08:11:03.951 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+08:21:01.275 [INFORMATION] [Program] BusBus Application Starting - PID: 7952
+08:21:01.487 [INFORMATION] [object] BusBus Application Starting - PID: 7952
+08:21:01.506 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 4, BusBus instances: 1, Current PID: 7952
+08:21:01.511 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+08:21:01.515 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+08:21:01.516 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+08:21:01.517 [INFORMATION] [object] ProcessMonitor initialized
+08:21:01.520 [INFORMATION] [object] Application startup initialized
+08:21:02.310 [INFORMATION] [Command] Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+08:21:02.465 [INFORMATION] [Command] Executed DbCommand (18ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+08:21:02.497 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 7952
+08:21:02.503 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+08:21:02.504 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 7952, Thread: 9
+08:21:02.511 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+08:21:02.523 [INFORMATION] [Dashboard] Navigating to view: dashboard
+08:21:02.525 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+08:21:02.527 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+08:21:02.544 [INFORMATION] [RouteService] Executing optimized route query with related data
+08:21:02.663 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+08:21:02.664 [DEBUG] [Dashboard] Created new view: dashboard in 138ms
+08:21:02.665 [DEBUG] [Dashboard] View cache count: 1
+08:21:02.666 [WARNING] [Dashboard] Content panel is null, attempting to recreate
+08:21:02.666 [DEBUG] [Dashboard] Creating content panel
+08:21:02.667 [INFORMATION] [Command] Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+08:21:02.667 [DEBUG] [Dashboard] Content panel created successfully
+08:21:02.669 [INFORMATION] [Dashboard] Content panel successfully recreated
+08:21:02.671 [INFORMATION] [RouteService] Executing optimized route query with related data
+08:21:02.679 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+08:21:02.716 [INFORMATION] [RouteService] Retrieved 4 routes from database
+08:21:02.719 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+08:21:02.721 [INFORMATION] [RouteService] Retrieved 4 routes from database
+08:21:02.721 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+08:21:02.726 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 52ms
+08:21:02.750 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+08:21:02.753 [DEBUG] [Dashboard] UpdateNavigationButtons called before _sidePanel is fully initialized, skipping update
+08:21:02.756 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+08:21:17.488 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard disposing - PID: 7952, Thread: 9
+08:21:17.490 [INFORMATION] [Dashboard] Dashboard disposing resources
+08:21:17.491 [DEBUG] [Dashboard] Unsubscribed from BusBus.UI.Core.ThemeManager.ThemeChanged
+08:21:17.492 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed
+08:21:17.493 [DEBUG] [Dashboard] CancellationTokenSource cancellation requested.
+08:21:17.494 [DEBUG] [Dashboard] CancellationTokenSource disposed
+08:21:17.506 [DEBUG] [Dashboard] Disposed cached view: DashboardOverviewView
+08:21:17.513 [INFORMATION] [Dashboard] Dashboard resources disposed
+08:21:17.528 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+08:21:17.530 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+08:21:17.531 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+08:21:17.540 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 1, Current PID: 7952
+08:21:17.546 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 117MB, Threads: 21
+08:21:17.650 [DEBUG] [Dashboard] Dispose called again, skipping due to guard

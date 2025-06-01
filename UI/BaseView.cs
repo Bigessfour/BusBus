@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace BusBus.UI
 {
-    public abstract class BaseView : Form, IView
+    public abstract class BaseView : UserControl, IView
     {
         protected CancellationTokenSource? _viewCancellationTokenSource;
 

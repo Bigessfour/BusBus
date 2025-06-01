@@ -11,12 +11,11 @@ using BusBus.UI.Core;
 using BusBus.Utils;
 
 namespace BusBus.UI.Templates
-{
-    /// <summary>
-    /// High-quality form template with optimized text rendering and layout capabilities.
-    /// Use this as a base for new forms that require excellent display quality and text readability.
-    /// </summary>
-    public abstract class HighQualityFormTemplate : BaseView
+{    /// <summary>
+     /// High-quality form template with optimized text rendering and layout capabilities.
+     /// Use this as a base for new forms that require excellent display quality and text readability.
+     /// </summary>
+    public abstract class HighQualityFormTemplate : Form
     {
         protected readonly IServiceProvider _serviceProvider;
         protected readonly ILogger<HighQualityFormTemplate> _logger;
@@ -24,7 +23,7 @@ namespace BusBus.UI.Templates
         protected bool _useGlassmorphism = true;
         protected bool _highAccessibilityMode = false;
 
-        /// <summary>
+        /// <summary>        /// <summary>
         /// Creates a new high-quality form with optimized text rendering
         /// </summary>
         /// <param name="serviceProvider">Service provider for dependency injection</param>
@@ -34,21 +33,20 @@ namespace BusBus.UI.Templates
             _logger = serviceProvider.GetRequiredService<ILogger<HighQualityFormTemplate>>();
             _mainLayout = new TableLayoutPanel();
 
+            // Log form template creation for lifecycle tracking
+            _logger.LogInformation("[LIFECYCLE] HighQualityFormTemplate created - Type: {FormType}, PID: {ProcessId}",
+                GetType().Name, Environment.ProcessId);
+
             // Enable high DPI support
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             AutoScaleMode = AutoScaleMode.Dpi;
 
             // Don't call InitializeView here - derived classes will call it
-        }
-
-        /// <summary>
-        /// Initializes the view with high-quality text rendering and layout
-        /// </summary>
-        protected override void InitializeView()
+        }        /// <summary>
+                 /// Initializes the form with high-quality text rendering and layout
+                 /// </summary>
+        protected virtual void InitializeForm()
         {
-            base.InitializeView();
-
-
             // For Form, Dock is not needed. If you want to maximize, use:
             // this.WindowState = FormWindowState.Maximized; // Optional
 

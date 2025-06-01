@@ -1,4 +1,3 @@
-
 #pragma warning disable CA1848 // Use LoggerMessage delegates for logging performance
 // Enable nullable reference types for this file
 #nullable enable
@@ -12,6 +11,7 @@ using BusBus.Utils;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +32,41 @@ namespace BusBus
         private static readonly int[] SqlRetryErrorNumbers = new[] { 1205, 10054 };
         private static readonly List<Task> _backgroundTasks = new List<Task>();
         private static readonly CancellationTokenSource _appCancellationTokenSource = new CancellationTokenSource();
-        private static IServiceProvider? _serviceProvider; public static void AddBackgroundTask(Task task)
+        private static IServiceProvider? _serviceProvider;
+
+        // Track whether sensitive data logging warning has been shown to prevent repetitive messages
+        private static bool _sensitiveDataLoggingWarned = false;
+
+        /// <summary>
+        /// Log the number of active .NET instances for lifecycle tracking
+        /// </summary>
+        private static void LogInstanceCount(ILogger logger, string context = "")
+        {
+            try
+            {
+                var dotnetProcesses = Process.GetProcessesByName("dotnet");
+                var currentProcess = Process.GetCurrentProcess();
+                var busbusProcesses = Process.GetProcessesByName("BusBus");
+
+                logger.LogInformation("[LIFECYCLE] {Context} - Active .NET instances: {DotNetCount}, BusBus instances: {BusBusCount}, Current PID: {CurrentPID}",
+                    context, dotnetProcesses.Length, busbusProcesses.Length, currentProcess.Id);
+
+                // Log memory usage for this process
+                var memoryMB = currentProcess.WorkingSet64 / 1024 / 1024;
+                logger.LogInformation("[LIFECYCLE] {Context} - Memory usage: {MemoryMB}MB, Threads: {ThreadCount}",
+                    context, memoryMB, currentProcess.Threads.Count);
+
+                // Dispose processes to avoid resource leaks
+                foreach (var process in dotnetProcesses) process.Dispose();
+                foreach (var process in busbusProcesses) process.Dispose();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[LIFECYCLE] Failed to log instance count for context: {Context}", context);
+            }
+        }
+
+        public static void AddBackgroundTask(Task task)
         {
             if (task == null)
                 return;
@@ -83,10 +117,24 @@ namespace BusBus
             Console.WriteLine($"[Program] Added background task. Total tasks: {_backgroundTasks.Count}");
         }        /// <summary>
                  /// The main entry point for the application.
-                 /// </summary>        [STAThread]
+                 /// </summary>
+        [STAThread]
         static async Task Main(string[] args)
         {
-            Console.WriteLine("[Program] Application starting...");            // Add a console handler for Ctrl+C to ensure clean shutdown
+            // Immediate log file test - create log file right away
+            var debugLogPath = Path.Combine(Directory.GetCurrentDirectory(), "busbus-debug.log");
+            try
+            {
+                var startMessage = $"{DateTime.Now:HH:mm:ss.fff} [INFORMATION] [Program] BusBus Application Starting - PID: {Process.GetCurrentProcess().Id}{Environment.NewLine}";
+                File.AppendAllText(debugLogPath, startMessage);
+                Console.WriteLine($"[Program] Debug log created at: {debugLogPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Program] Failed to create debug log: {ex.Message}");
+            }
+
+            Console.WriteLine("[Program] Application starting...");// Add a console handler for Ctrl+C to ensure clean shutdown
             Console.CancelKeyPress += (sender, e) =>
             {
                 Console.WriteLine("[Program] Console cancel key pressed - initiating emergency shutdown");
@@ -115,10 +163,43 @@ namespace BusBus
             _serviceProvider = services.BuildServiceProvider();            // Initialize logging and debug utilities
             var logger = _serviceProvider.GetRequiredService<ILogger<object>>();
             Utils.LoggingManager.Initialize(_serviceProvider.GetRequiredService<ILoggerFactory>());
-            Utils.ServiceScopeExtensions.SetLogger(logger);            // Initialize thread safety monitoring
-            Utils.ThreadSafetyMonitor.Initialize(logger);
-            Utils.ThreadSafeUI.Initialize(logger);
-            Utils.ResourceTracker.Initialize(logger);
+            Utils.ServiceScopeExtensions.SetLogger(logger); logger.LogInformation("BusBus Application Starting - PID: {ProcessId}", Process.GetCurrentProcess().Id);
+
+            // Output visibility verification messages
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Console.WriteLine("📍 OUTPUT VERIFICATION GUIDE:");
+            Console.WriteLine("• Console.WriteLine → Terminal (integratedTerminal)");
+            Console.WriteLine("• Debug.WriteLine → Debug Console in VS Code");
+            Console.WriteLine("• logger.Log* → Both Terminal and Debug Console");
+            Console.WriteLine("• Trace.WriteLine → Output Panel > Debug channel");
+            Console.WriteLine("═══════════════════════════════════════════════════════════");            // Log initial instance count for lifecycle tracking
+            LogInstanceCount(logger, "Application Startup");
+
+            // Validate lifecycle logging functionality (for testing)
+            if (Environment.GetEnvironmentVariable("BUSBUS_TEST_LIFECYCLE") == "true")
+            {
+                TestLifecycleLogging.ValidateInstanceTracking();
+            }
+
+            // Determine if verbose debug output should be enabled
+            bool verboseDebugOutput = Environment.GetEnvironmentVariable("BUSBUS_VERBOSE_DEBUG") == "true" ||
+                                     Array.Exists(args, arg => arg == "--verbose-debug");
+
+            // Initialize thread safety monitoring with reduced verbosity
+            if (verboseDebugOutput)
+            {
+                // Initialize with full verbosity for debugging
+                Utils.ThreadSafetyMonitor.Initialize(logger);
+                Utils.ThreadSafeUI.Initialize(logger);
+                Utils.ResourceTracker.Initialize(logger);
+            }
+            else
+            {
+                // Initialize with reduced verbosity for normal operation
+                Utils.ThreadSafetyMonitor.Initialize(logger, false);
+                Utils.ThreadSafeUI.Initialize(logger, false);
+                Utils.ResourceTracker.Initialize(logger, false);
+            }
 
             // Initialize process monitoring
             try
@@ -171,32 +252,40 @@ namespace BusBus
                     LaunchResourceMonitoringConsole();
                     return;
                 }
-            }
+            }            // Skip theme initialization for CLI tasks like Entity Framework commands
+            bool isCliTask = args.Any(arg => arg.Contains("ef") || arg.Contains("migrations") || arg.Contains("update-database"));
 
-            // Initialize theme system with dark theme for testing
-            Console.WriteLine("[Program] Initializing theme system...");
-            try
+            if (!isCliTask)
             {
-                // Default to dark theme unless explicitly requested otherwise
-                bool startWithLightTheme = cmdLineArgs.Length > 1 && cmdLineArgs[1].Equals("--light", StringComparison.OrdinalIgnoreCase);
+                // Initialize theme system with dark theme for testing
+                Console.WriteLine("[Program] Initializing theme system...");
+                try
+                {
+                    // Default to dark theme unless explicitly requested otherwise
+                    bool startWithLightTheme = cmdLineArgs.Length > 1 && cmdLineArgs[1].Equals("--light", StringComparison.OrdinalIgnoreCase);
 
-                if (startWithLightTheme)
-                {
-                    Console.WriteLine("[Program] Starting with light theme...");
-                    BusBus.UI.Core.ThemeManager.SwitchTheme("Light");
+                    if (startWithLightTheme)
+                    {
+                        Console.WriteLine("[Program] Starting with light theme...");
+                        BusBus.UI.Core.ThemeManager.SwitchTheme("Light");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[Program] Starting with dark theme (default)...");
+                        BusBus.UI.Core.ThemeManager.SwitchTheme("Dark");
+                    }
+                    Console.WriteLine($"[Program] Current theme: {BusBus.UI.Core.ThemeManager.CurrentTheme.Name}");
+                    Console.WriteLine($"[Program] Available themes: {string.Join(", ", BusBus.UI.Core.ThemeManager.AvailableThemes)}");
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("[Program] Starting with dark theme (default)...");
-                    BusBus.UI.Core.ThemeManager.SwitchTheme("Dark");
+                    Console.WriteLine($"[Program] Error initializing theme: {ex.Message}");
                 }
-                Console.WriteLine($"[Program] Current theme: {BusBus.UI.Core.ThemeManager.CurrentTheme.Name}");
-                Console.WriteLine($"[Program] Available themes: {string.Join(", ", BusBus.UI.Core.ThemeManager.AvailableThemes)}");
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"[Program] Error initializing theme: {ex.Message}");
-            }            // Setup application exit handler (nullable EventHandler)
+                Console.WriteLine("[Program] Skipping theme initialization for CLI task");
+            }// Setup application exit handler (nullable EventHandler)
             EventHandler? applicationExitHandler = null;
             applicationExitHandler = (sender, e) =>
             {
@@ -438,9 +527,7 @@ namespace BusBus
                 ShutdownApplication();
             }
         }
-        private static bool _isShuttingDown = false;
-
-        public static void ShutdownApplication()
+        private static bool _isShuttingDown = false; public static void ShutdownApplication()
         {
             // Avoid multiple shutdown attempts
             if (_isShuttingDown)
@@ -451,6 +538,20 @@ namespace BusBus
 
             _isShuttingDown = true;
             Console.WriteLine("[Program] Starting application shutdown");
+
+            // Log shutdown instance count for lifecycle tracking
+            try
+            {
+                var logger = _serviceProvider?.GetService<ILogger<object>>();
+                if (logger != null)
+                {
+                    LogInstanceCount(logger, "Application Shutdown");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Program] Error logging shutdown instance count: {ex.Message}");
+            }
 
             // Set up a very aggressive safety timer to force exit if shutdown takes too long
             var safetyTimer = new System.Timers.Timer(1000); // 1 second max (reduced from 2)
@@ -683,12 +784,18 @@ namespace BusBus
                     options.TimestampFormat = "HH:mm:ss.fff ";
                     options.UseUtcTimestamp = false;
                 });
-                builder.AddDebug();                // Set minimum level based on environment
+                builder.AddDebug();                // Add file logging to capture all logs to busbus-debug.log
+                var logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "busbus-debug.log");
+                Console.WriteLine($"Creating debug log at: {logFilePath}");
+                builder.AddProvider(new BusBus.Utils.FileLoggerProvider(logFilePath));
+
+                // Set minimum level based on environment
                 var isDevelopment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Development";
                 var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
                 Console.WriteLine($"Environment: {env}");
+                Console.WriteLine($"Debug log file: {logFilePath}");
                 builder.SetMinimumLevel(isDevelopment ? LogLevel.Debug : LogLevel.Information);
-            });            // Add DbContext with SQL Server and retry on transient failures
+            });// Add DbContext with SQL Server and retry on transient failures
             services.AddDbContext<AppDbContext>(options =>
             {
                 var dbOptions = options.UseSqlServer(
@@ -707,6 +814,13 @@ namespace BusBus
                 {
                     Console.WriteLine("Enabling sensitive data logging for development");
                     dbOptions.EnableSensitiveDataLogging();
+
+                    // Log this setting only once to avoid repetitive warnings
+                    if (!_sensitiveDataLoggingWarned)
+                    {
+                        Console.WriteLine("Note: Sensitive data logging is enabled - disable in production");
+                        _sensitiveDataLoggingWarned = true;
+                    }
                 }
                 else
                 {
