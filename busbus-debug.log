@@ -741,3 +741,178 @@ LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
 08:21:17.540 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 1, Current PID: 7952
 08:21:17.546 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 117MB, Threads: 21
 08:21:17.650 [DEBUG] [Dashboard] Dispose called again, skipping due to guard
+08:46:46.105 [INFORMATION] [Program] BusBus Application Starting - PID: 4920
+08:46:46.291 [INFORMATION] [object] BusBus Application Starting - PID: 4920
+08:46:46.309 [INFORMATION] [object] [LIFECYCLE] Application Startup - Active .NET instances: 4, BusBus instances: 1, Current PID: 4920
+08:46:46.315 [INFORMATION] [object] [LIFECYCLE] Application Startup - Memory usage: 46MB, Threads: 8
+08:46:46.319 [INFORMATION] [ProcessMonitor] ProcessMonitor initialized
+08:46:46.320 [INFORMATION] [ProcessMonitor] Exit handlers registered successfully
+08:46:46.321 [INFORMATION] [object] ProcessMonitor initialized
+08:46:46.323 [INFORMATION] [object] Application startup initialized
+08:46:47.100 [INFORMATION] [Command] Executed DbCommand (21ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT 1
+08:46:47.272 [INFORMATION] [Command] Executed DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Routes] AS [r]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+08:46:47.318 [INFORMATION] [HighQualityFormTemplate] [LIFECYCLE] HighQualityFormTemplate created - Type: Dashboard, PID: 4920
+08:46:47.327 [DEBUG] [Dashboard] [DEBUG] Dashboard constructor called. serviceProvider: Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope, routeService: BusBus.Services.RouteService, logger: Microsoft.Extensions.Logging.Logger`1[BusBus.UI.Dashboard]
+08:46:47.327 [INFORMATION] [Dashboard] [LIFECYCLE] Dashboard created - PID: 4920, Thread: 8
+08:46:47.336 [INFORMATION] [Dashboard] Dashboard initialized successfully with performance monitoring enabled
+08:46:47.347 [DEBUG] [Dashboard] Dashboard state loaded. Theme: Dark, LastView: dashboard
+08:46:47.350 [INFORMATION] [Dashboard] Navigating to view: dashboard
+08:46:47.351 [WARNING] [Dashboard] One or more panels (content, side, header) are null. Reinitializing layout.
+08:46:47.352 [DEBUG] [Dashboard] Starting SetupLayout
+08:46:47.460 [DEBUG] [Dashboard] Creating content panel
+08:46:47.462 [DEBUG] [Dashboard] Content panel created successfully
+08:46:47.661 [DEBUG] [Dashboard] SetupLayout completed
+08:46:47.666 [DEBUG] [Dashboard] GetOrCreateView called for: dashboard
+08:46:47.668 [DEBUG] [DashboardOverviewView] Initializing Dashboard Overview View
+08:46:47.674 [INFORMATION] [RouteService] Executing optimized route query with related data
+08:46:47.798 [INFORMATION] [DashboardOverviewView] Dashboard Overview View initialized successfully
+08:46:47.799 [DEBUG] [Dashboard] Created new view: dashboard in 131ms
+08:46:47.800 [DEBUG] [Dashboard] View cache count: 1
+08:46:47.802 [INFORMATION] [RouteService] Executing optimized route query with related data
+08:46:47.802 [INFORMATION] [Command] Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+08:46:47.810 [INFORMATION] [Command] Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Routes] AS [r]
+LEFT JOIN [Drivers] AS [d] ON [r].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [r].[VehicleId] = [v].[Id]
+08:46:47.831 [INFORMATION] [RouteService] Retrieved 4 routes from database
+08:46:47.833 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+08:46:47.834 [INFORMATION] [RouteService] Retrieved 4 routes from database
+08:46:47.834 [DEBUG] [DashboardOverviewView] Dashboard overview stats loaded successfully
+08:46:47.839 [DEBUG] [Dashboard] Navigation to 'dashboard' completed in 34ms
+08:46:47.857 [DEBUG] [Dashboard] Successfully added view control for: dashboard
+08:46:47.861 [INFORMATION] [Dashboard] Status: Dashboard Overview loaded [Success]
+08:46:51.179 [INFORMATION] [Dashboard] Navigating to view: routes
+08:46:51.184 [DEBUG] [Dashboard] GetOrCreateView called for: routes
+08:46:51.194 [DEBUG] [Dashboard] Created new view: routes in 9ms
+08:46:51.195 [DEBUG] [Dashboard] View cache count: 2
+08:46:51.199 [INFORMATION] [Dashboard] Status: Loading routes... [Info]
+08:46:51.229 [INFORMATION] [Command] Executed DbCommand (14ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status]
+FROM [Drivers] AS [d]
+ORDER BY [d].[LastName]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:51.257 [INFORMATION] [Command] Executed DbCommand (2ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Vehicles] AS [v]
+ORDER BY [v].[Number]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:51.279 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT COUNT(*)
+FROM [Routes] AS [r]
+08:46:51.308 [INFORMATION] [Command] Executed DbCommand (4ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [t].[Id], [t].[AMEndingMileage], [t].[AMRiders], [t].[AMStartingMileage], [t].[CreatedBy], [t].[CreatedDate], [t].[Distance], [t].[DriverId], [t].[EndLocation], [t].[IsActive], [t].[ModifiedDate], [t].[Name], [t].[PMEndingMileage], [t].[PMRiders], [t].[PMStartMileage], [t].[RouteCode], [t].[RouteDate], [t].[RouteID], [t].[RouteName], [t].[RowVersion], [t].[ScheduleJson], [t].[ScheduledTime], [t].[StartLocation], [t].[StopsJson], [t].[VehicleId], [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status], [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM (
+    SELECT [r].[Id], [r].[AMEndingMileage], [r].[AMRiders], [r].[AMStartingMileage], [r].[CreatedBy], [r].[CreatedDate], [r].[Distance], [r].[DriverId], [r].[EndLocation], [r].[IsActive], [r].[ModifiedDate], [r].[Name], [r].[PMEndingMileage], [r].[PMRiders], [r].[PMStartMileage], [r].[RouteCode], [r].[RouteDate], [r].[RouteID], [r].[RouteName], [r].[RowVersion], [r].[ScheduleJson], [r].[ScheduledTime], [r].[StartLocation], [r].[StopsJson], [r].[VehicleId]
+    FROM [Routes] AS [r]
+    ORDER BY [r].[RouteDate] DESC
+    OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+) AS [t]
+LEFT JOIN [Drivers] AS [d] ON [t].[DriverId] = [d].[Id]
+LEFT JOIN [Vehicles] AS [v] ON [t].[VehicleId] = [v].[Id]
+ORDER BY [t].[RouteDate] DESC
+08:46:51.424 [INFORMATION] [Dashboard] Status: Loaded 4 routes [Success]
+08:46:51.425 [DEBUG] [Dashboard] Navigation to 'routes' completed in 227ms
+08:46:51.440 [DEBUG] [Dashboard] Successfully added view control for: routes
+08:46:51.442 [INFORMATION] [Dashboard] Status: Routes loaded [Success]
+08:46:51.970 [INFORMATION] [Dashboard] Navigating to view: drivers
+08:46:51.973 [DEBUG] [Dashboard] GetOrCreateView called for: drivers
+08:46:51.974 [DEBUG] [DriverListView] DriverListView constructor called
+08:46:51.975 [DEBUG] [Dashboard] Created new view: drivers in 1ms
+08:46:51.975 [DEBUG] [Dashboard] View cache count: 3
+08:46:51.983 [INFORMATION] [Dashboard] Status: Loading drivers... [Info]
+08:46:51.990 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT COUNT(*)
+FROM [Drivers] AS [d]
+08:46:51.990 [INFORMATION] [Dashboard] Status: Loading drivers... [Info]
+08:46:51.994 [INFORMATION] [Command] Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT COUNT(*)
+FROM [Drivers] AS [d]
+08:46:51.999 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status]
+FROM [Drivers] AS [d]
+ORDER BY [d].[LastName]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:52.004 [INFORMATION] [Dashboard] Status: Loaded 10 drivers [Info]
+08:46:52.005 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status]
+FROM [Drivers] AS [d]
+ORDER BY [d].[LastName]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:52.016 [INFORMATION] [Dashboard] Status: Loaded 10 drivers [Info]
+08:46:52.017 [DEBUG] [Dashboard] Navigation to 'drivers' completed in 40ms
+08:46:52.030 [INFORMATION] [Dashboard] Status: Loading drivers... [Info]
+08:46:52.032 [INFORMATION] [Command] Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT COUNT(*)
+FROM [Drivers] AS [d]
+08:46:52.039 [DEBUG] [Dashboard] Successfully added view control for: drivers
+08:46:52.041 [INFORMATION] [Dashboard] Status: Driver Management loaded [Success]
+08:46:52.054 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [d].[Id], [d].[ContactInfo], [d].[CreatedBy], [d].[CreatedDate], [d].[DriverID], [d].[DriverName], [d].[Email], [d].[EmergencyContactJson], [d].[FirstName], [d].[HireDate], [d].[IsActive], [d].[LastName], [d].[LastPerformanceReview], [d].[LicenseNumber], [d].[LicenseType], [d].[ModifiedDate], [d].[Name], [d].[PerformanceMetricsJson], [d].[PerformanceScore], [d].[PersonalDetails], [d].[PhoneNumber], [d].[RowVersion], [d].[SalaryGrade], [d].[Status]
+FROM [Drivers] AS [d]
+ORDER BY [d].[LastName]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:52.117 [INFORMATION] [Dashboard] Status: Loaded 10 drivers [Info]
+08:46:52.785 [INFORMATION] [Dashboard] Navigating to view: vehicles
+08:46:52.787 [DEBUG] [Dashboard] GetOrCreateView called for: vehicles
+08:46:52.789 [DEBUG] [VehicleListView] VehicleListView constructor called
+08:46:52.789 [DEBUG] [Dashboard] Created new view: vehicles in 1ms
+08:46:52.790 [DEBUG] [Dashboard] View cache count: 4
+08:46:52.801 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT COUNT(*)
+FROM [Vehicles] AS [v]
+08:46:52.801 [INFORMATION] [Command] Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='300']
+SELECT COUNT(*)
+FROM [Vehicles] AS [v]
+08:46:52.815 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Vehicles] AS [v]
+ORDER BY [v].[Number]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:52.815 [INFORMATION] [Command] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (DbType = Int32), @__p_1='?' (DbType = Int32)], CommandType='Text', CommandTimeout='300']
+SELECT [v].[Id], [v].[BusNumber], [v].[Capacity], [v].[CreatedDate], [v].[FuelType], [v].[IsActive], [v].[IsMaintenanceRequired], [v].[LastLocationUpdate], [v].[LastMaintenanceDate], [v].[Latitude], [v].[LicensePlate], [v].[Longitude], [v].[MaintenanceDue], [v].[MaintenanceHistoryJson], [v].[MakeModel], [v].[Mileage], [v].[Model], [v].[ModifiedDate], [v].[Name], [v].[NextMaintenanceDate], [v].[Number], [v].[RowVersion], [v].[SpecificationsJson], [v].[Status], [v].[VehicleCode], [v].[VehicleGuid], [v].[VehicleId], [v].[Year]
+FROM [Vehicles] AS [v]
+ORDER BY [v].[Number]
+OFFSET @__p_0 ROWS FETCH NEXT @__p_1 ROWS ONLY
+08:46:52.818 [DEBUG] [Dashboard] Navigation to 'vehicles' completed in 26ms
+08:46:52.836 [DEBUG] [Dashboard] Successfully added view control for: vehicles
+08:46:52.838 [INFORMATION] [Dashboard] Status: Vehicle Management loaded [Success]
+08:46:53.704 [INFORMATION] [Dashboard] Navigating to view: reports
+08:46:53.708 [DEBUG] [Dashboard] GetOrCreateView called for: reports
+08:46:53.709 [DEBUG] [Dashboard] Created new view: reports in 0ms
+08:46:53.710 [DEBUG] [Dashboard] View cache count: 5
+08:46:53.711 [DEBUG] [Dashboard] Navigation to 'reports' completed in 0ms
+08:46:53.713 [DEBUG] [Dashboard] Successfully added view control for: reports
+08:46:53.714 [INFORMATION] [Dashboard] Status: Reports loaded [Success]
+08:46:54.338 [INFORMATION] [Dashboard] Navigating to view: settings
+08:46:54.341 [DEBUG] [Dashboard] GetOrCreateView called for: settings
+08:46:54.389 [DEBUG] [Dashboard] Created new view: settings in 46ms
+08:46:54.390 [DEBUG] [Dashboard] View cache count: 6
+08:46:54.391 [DEBUG] [Dashboard] Navigation to 'settings' completed in 0ms
+08:46:54.400 [DEBUG] [Dashboard] Successfully added view control for: settings
+08:46:54.402 [INFORMATION] [Dashboard] Status: Settings loaded [Success]
+08:46:56.503 [DEBUG] [Dashboard] [LIFECYCLE] Dashboard.Dispose(true) - Disposing managed resources.
+08:46:56.504 [DEBUG] [Dashboard] Unsubscribed from _performanceMonitorTimer.Tick.
+08:46:56.505 [DEBUG] [Dashboard] Performance monitor timer stopped and disposed.
+08:46:56.506 [DEBUG] [Dashboard] Cancellation requested via CancellationTokenSource in Dashboard.Dispose.
+08:46:56.507 [DEBUG] [Dashboard] CancellationTokenSource disposed in Dashboard.Dispose.
+08:46:56.508 [DEBUG] [Dashboard] Unsubscribed from ThemeManager.ThemeChanged.
+08:46:56.508 [DEBUG] [Dashboard] Unsubscribed from this.Load.
+08:46:56.509 [DEBUG] [Dashboard] Dashboard-level event handlers unsubscription attempted.
+08:46:56.510 [DEBUG] [Dashboard] Setting _disposed = true and calling base.Dispose(True).
+08:46:56.541 [INFORMATION] [ProcessMonitor] Application.ApplicationExit event triggered
+08:46:56.543 [INFORMATION] [ProcessMonitor] ProcessMonitor running cleanup (essential resources only)
+08:46:56.544 [INFORMATION] [ProcessMonitor] ProcessMonitor cleanup complete - database connections and UI resources disposed
+08:46:56.554 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Active .NET instances: 4, BusBus instances: 1, Current PID: 4920
+08:46:56.559 [INFORMATION] [object] [LIFECYCLE] Application Shutdown - Memory usage: 136MB, Threads: 23

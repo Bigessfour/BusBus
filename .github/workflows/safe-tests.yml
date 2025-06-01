@@ -39,9 +39,11 @@ jobs:
         Start-Sleep -Seconds 3
 
     - name: Restore .NET dependencies
+      shell: powershell # Explicitly set shell
       run: dotnet restore BusBus.sln # Assuming BusBus.sln is at the root
 
     - name: Build solution
+      shell: powershell # Explicitly set shell
       run: dotnet build BusBus.sln --no-restore --configuration Release
 
     - name: Run tests with script-level timeout

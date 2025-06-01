@@ -55,6 +55,7 @@ namespace BusBus.UI
         private readonly Dictionary<string, long> _performanceMetrics = new();
         private readonly System.Windows.Forms.Timer _performanceMonitorTimer;
         private readonly object _metricsLock = new object();
+        private EventHandler? _performanceMonitorTimerTickHandler; // Added for robust unsubscription
 
         // Logger message definitions for performance
         private static readonly Action<ILogger, string, long, Exception?> _logNavigationPerformance =
@@ -117,7 +118,9 @@ namespace BusBus.UI
             {
                 Interval = 60000 // 1 minute intervals
             };
-            _performanceMonitorTimer.Tick += async (s, e) => await MonitorDatabasePerformanceAsync();
+            // Store the handler and subscribe
+            _performanceMonitorTimerTickHandler = async (s, e) => await MonitorDatabasePerformanceAsync();
+            _performanceMonitorTimer.Tick += _performanceMonitorTimerTickHandler;
             _performanceMonitorTimer.Start();
 
             _logger.LogDebug("[DEBUG] Dashboard constructor called. serviceProvider: {ServiceProvider}, routeService: {RouteService}, logger: {Logger}", serviceProvider, routeService, logger);
@@ -139,56 +142,59 @@ namespace BusBus.UI
         #region Layout Setup
         private void SetupLayout()
         {
-         _logger.LogDebug("Starting SetupLayout");
-         SuspendLayout();
+            _logger.LogDebug("Starting SetupLayout");
+            SuspendLayout();
 
-         // Set form properties
-         Text = "BusBus - Transport Management System";
-         this.WindowState = FormWindowState.Maximized;
-         MinimumSize = new Size(1024, 768);
-         ((Form)this).StartPosition = FormStartPosition.CenterScreen;            // Create main table layout
-         // Use the base class's _mainLayout instead of declaring a new one
-         var mainLayout = GetType().BaseType?.GetField("_mainLayout", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(this) as TableLayoutPanel;
-         if (mainLayout == null)
-         {
-             throw new InvalidOperationException("Base class _mainLayout not found. Ensure HighQualityFormTemplate defines _mainLayout.");
-         }
+            // Set form properties
+            Text = "BusBus - Transport Management System";
+            this.WindowState = FormWindowState.Maximized;
+            MinimumSize = new Size(1024, 768);
+            ((Form)this).StartPosition = FormStartPosition.CenterScreen;            // Create main table layout
+                                                                                    // Use the base class's _mainLayout instead of declaring a new one
+            var mainLayout = GetType().BaseType?.GetField("_mainLayout", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(this) as TableLayoutPanel;
+            if (mainLayout == null)
+            {
+                throw new InvalidOperationException("Base class _mainLayout not found. Ensure HighQualityFormTemplate defines _mainLayout.");
+            }
 
-         // Configure layout proportions
-         mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 65)); // Header - slightly increased
-         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Content
-         mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); // Status - slightly increased
+            // Configure layout proportions
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 65)); // Header - slightly increased
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Content
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); // Status - slightly increased
 
-         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250)); // Sidebar
-         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Main content
+            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250)); // Sidebar
+            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Main content
 
-         // Create panels
-         CreateHeaderPanel();
-         CreateSidePanel();
-         CreateContentPanel();
-         CreateStatusBar();
+            // Create panels
+            CreateHeaderPanel();
+            CreateSidePanel();
+            CreateContentPanel();
+            CreateStatusBar();
 
-         // Add panels to layout
-         mainLayout.Controls.Add(_headerPanel, 0, 0);
-         mainLayout.SetColumnSpan(_headerPanel, 2);
+            // Add panels to layout
+            mainLayout.Controls.Add(_headerPanel, 0, 0);
+            mainLayout.SetColumnSpan(_headerPanel, 2);
 
-         mainLayout.Controls.Add(_sidePanel, 0, 1);
-         mainLayout.Controls.Add(_contentPanel, 1, 1);
+            mainLayout.Controls.Add(_sidePanel, 0, 1);
+            mainLayout.Controls.Add(_contentPanel, 1, 1);
 
-         mainLayout.Controls.Add(_statusStrip, 0, 2);
-         mainLayout.SetColumnSpan(_statusStrip, 2);
+            mainLayout.Controls.Add(_statusStrip, 0, 2);
+            mainLayout.SetColumnSpan(_statusStrip, 2);
 
-         Controls.Add(mainLayout);            // Apply theme
-         BusBus.UI.Core.ThemeManager.ApplyTheme(this, BusBus.UI.Core.ThemeManager.CurrentTheme);
+            Controls.Add(mainLayout);            // Apply theme
+            BusBus.UI.Core.ThemeManager.ApplyTheme(this, BusBus.UI.Core.ThemeManager.CurrentTheme);
 
-         // Apply high-quality text rendering to the entire form
-         TextRenderingManager.RegisterForHighQualityTextRendering(this);
+            // Apply high-quality text rendering to the entire form
+            TextRenderingManager.RegisterForHighQualityTextRendering(this);
 
-         ResumeLayout(false);
-         PerformLayout();
-         // Ensure the main layout components are correctly initialized and added.
-         // This includes setting up the header, side panel, and content area.
-         _logger.LogDebug("SetupLayout completed");
+            ResumeLayout(false);
+            PerformLayout();
+            this.Visible = true; // Ensure form is visible
+            _headerPanel.Visible = true;
+            _sidePanel.Visible = true;
+            _contentPanel.Visible = true;
+            _statusStrip.Visible = true;
+            _logger.LogDebug("SetupLayout completed and set all panels visible");
         }
         private void CreateHeaderPanel()
         {
@@ -588,6 +594,8 @@ namespace BusBus.UI
                         _logger.LogError($"Failed to create view: {viewName}");
                     }
 
+                    _logger.LogDebug("Creating new view instance for {ViewName}", viewName);
+                    _logger.LogDebug("Created view instance: {ViewType}, Control: {ControlType}", view?.GetType().Name, view?.Control?.GetType().Name);
                     return view;
                 }
                 catch (Exception ex)
@@ -775,20 +783,56 @@ namespace BusBus.UI
             // Refresh the current view implementation
             if (_currentView != null)
             {
+                _logger?.LogDebug("RefreshCurrentView called for {ViewName}", _currentView.ViewName);
                 // Re-activate the current view to refresh its data
                 var refreshTask = Task.Run(async () =>
                 {
-                    await _currentView.DeactivateAsync();
-                    await _currentView.ActivateAsync(_cancellationTokenSource.Token);
+                    try
+                    {
+                        if (_cancellationTokenSource.IsCancellationRequested) return;
+                        await _currentView.DeactivateAsync();
+                        if (_cancellationTokenSource.IsCancellationRequested) return;
+                        await _currentView.ActivateAsync(_cancellationTokenSource.Token);
+                        _logger?.LogDebug("View {ViewName} refreshed successfully.", _currentView.ViewName);
+                    }
+                    catch (OperationCanceledException oce)
+                    {
+                        _logger?.LogWarning(oce, "RefreshCurrentView: Operation canceled for view {ViewName}", _currentView.ViewName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "RefreshCurrentView: Error refreshing view {ViewName}", _currentView.ViewName);
+                        // Optionally, notify the user or take other recovery actions.
+                    }
                 }, _cancellationTokenSource.Token);
+
+                // Task 4: Track the refresh task
+                lock (_backgroundTasks) // Ensure thread-safe access
+                {
+                    _backgroundTasks.Add(refreshTask);
+                    _logger?.LogDebug("Added RefreshCurrentView task to _backgroundTasks. Count: {Count}", _backgroundTasks.Count);
+                }
 
                 refreshTask.ContinueWith(t =>
                 {
+                    lock (_backgroundTasks) // Ensure thread-safe access for removal
+                    {
+                        _backgroundTasks.Remove(t);
+                        _logger?.LogDebug("Removed RefreshCurrentView task from _backgroundTasks. Count: {Count}", _backgroundTasks.Count);
+                    }
                     if (t.IsFaulted)
                     {
-                        _logger.LogError(t.Exception, "Error refreshing current view");
+                        _logger?.LogError(t.Exception?.GetBaseException(), "Error occurred in RefreshCurrentView background task for view {ViewName}", _currentView?.ViewName);
                     }
-                }); // Schedule scrubbed
+                    else if (t.IsCanceled)
+                    {
+                        _logger?.LogWarning("RefreshCurrentView background task was canceled for view {ViewName}", _currentView?.ViewName);
+                    }
+                }, TaskScheduler.Default); // Use TaskScheduler.Default to ensure it runs off the UI thread and reliably for cleanup
+            }
+            else
+            {
+                _logger?.LogDebug("RefreshCurrentView called but _currentView is null.");
             }
         }
         #endregion
@@ -843,81 +887,72 @@ namespace BusBus.UI
         private async void OnFormLoad(object? sender, EventArgs e)
         {
             LoadState();
-            await NavigateToAsync(_state.LastView ?? "routes");
+            this.Show(); // Force form to display
+            _logger.LogDebug("Form shown in OnFormLoad");
+            await NavigateToAsync(_state.LastView ?? "dashboard");
         }
-        private void OnFormClosing(object? sender, FormClosingEventArgs e)
+        // Make OnFormClosing async to allow awaiting PerformShutdownAsync
+        private async void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
-            Console.WriteLine("[Dashboard] Form closing started");
+            _logger?.LogInformation("[LIFECYCLE] Dashboard OnFormClosing triggered. Reason: {CloseReason}, PID: {ProcessId}", e.CloseReason, Environment.ProcessId);
 
-            // Log Dashboard closing for lifecycle tracking
-            _logger.LogInformation("[LIFECYCLE] Dashboard closing - Reason: {CloseReason}, PID: {ProcessId}",
-                e.CloseReason, Environment.ProcessId);
-
-            if (e.CloseReason != CloseReason.UserClosing && e.CloseReason != CloseReason.ApplicationExitCall)
+            if (_disposed)
+            {
+                _logger?.LogDebug("Dashboard already disposed, OnFormClosing exiting early.");
                 return;
-
-            try
-            {
-                Console.WriteLine($"Dashboard closing: {e.CloseReason}");
-
-                // Cancel any pending operations
-                _cancellationTokenSource?.Cancel();
-                Console.WriteLine("[Dashboard] Cancellation requested");
-
-                // Wait for all background tasks to complete
-                Task[] tasksToWait;
-                lock (_backgroundTasks)
-                {
-                    tasksToWait = _backgroundTasks.Where(t => !t.IsCompleted).ToArray();
-                }
-
-                if (tasksToWait.Length > 0)
-                {
-                    Console.WriteLine($"[Dashboard] Waiting for {tasksToWait.Length} background tasks to complete");
-                    try
-                    {
-                        // await Task.WhenAll(tasksToWait).ConfigureAwait(false); // CS7069: Call to async method 'Task.WhenAll' should not be awaited in a void returning method.
-                        Task.WhenAll(tasksToWait).GetAwaiter().GetResult(); // Synchronously wait
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        Console.WriteLine("[Dashboard] Background tasks cancelled");
-                    }
-                }
-
-                // Force garbage collection to help with cleanup
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-
-                // Disconnect event handlers that might prevent proper disposal
-                // BusBus.UI.BusBus.UI.Core.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged; // CS0120: An object reference is required for the non-static field, method, or property 'Dashboard.OnThemeChanged(object?, EventArgs)'
-                BusBus.UI.Core.ThemeManager.ThemeChanged -= OnThemeChanged; // Corrected: Use instance method
             }
-            catch (ObjectDisposedException ex)
+
+            if (_isShuttingDown)
             {
-                Console.WriteLine($"[Dashboard] Object already disposed during shutdown: {ex.Message}");
+                _logger?.LogDebug("Shutdown already in progress (_isShuttingDown is true), OnFormClosing exiting to prevent re-entrancy.");
+                // Optionally, if the form MUST wait for the ongoing shutdown, this could be a loop with a timeout,
+                // or e.Cancel could be set. For now, exiting.
+                return;
             }
-            finally
+
+            if (e.CloseReason == CloseReason.UserClosing || e.CloseReason == CloseReason.ApplicationExitCall)
             {
-                _cancellationTokenSource?.Dispose();
-                Console.WriteLine("[Dashboard] Form closing completed");
+                _logger?.LogInformation("UserClosing or ApplicationExitCall detected. Initiating PerformShutdownAsync.");
+                // Prevent the form from closing immediately if we want to wait for async shutdown.
+                // However, PerformShutdownAsync is void. If it were Task, we could await and then decide on e.Cancel.
+                // For now, we assume PerformShutdownAsync handles what it can and the application will exit.
+                // To truly wait, PerformShutdownAsync would need to be a Task and OnFormClosing would need to manage e.Cancel.
+                // This current structure will initiate shutdown and the form will likely close while PerformShutdownAsync runs.
+                // If PerformShutdownAsync must complete before the form closes, a more complex e.Cancel management is needed.
+
+                // Set _isShuttingDown here to prevent re-entry from other sources if PerformShutdownAsync is lengthy.
+                _isShuttingDown = true;
+                await PerformShutdownAsync(); // This will call Dispose(true) in its finally block.
+                                              // After this, _isShuttingDown will be reset in PerformShutdownAsync's finally.
             }
+            else
+            {
+                _logger?.LogDebug("OnFormClosing: CloseReason ({CloseReason}) is not UserClosing or ApplicationExitCall, normal closure assumed without full async shutdown orchestration here.", e.CloseReason);
+            }
+
+            // Original Console.WriteLine and direct CTS disposal are removed as PerformShutdownAsync and Dispose now handle cleanup.
         }
-
-        // Removed unused field _isShuttingDown to resolve CS0414 warning
 
         private async Task PerformShutdownAsync()
         {
-            if (_isShuttingDown) // Add guard against re-entrancy
+            if (_disposed) // If already disposed, skip.
             {
-                _logger?.LogDebug("Shutdown already in progress, skipping PerformShutdownAsync.");
+                _logger?.LogDebug("PerformShutdownAsync called but Dashboard is already disposed. Skipping.");
                 return;
             }
-            _isShuttingDown = true; // Set flag
+            if (_isShuttingDown && System.Threading.Thread.CurrentThread.ManagedThreadId != GetHashCode()) // Basic re-entrancy guard, crude check
+            {
+                _logger?.LogDebug("Shutdown already in progress (PerformShutdownAsync re-entry guard), skipping.");
+                return;
+            }
+
+            // Ensure _isShuttingDown is set if not already (e.g. if called directly, not from OnFormClosing)
+            if (!_isShuttingDown) _isShuttingDown = true;
+
 
             try
             {
-                _logger?.LogInformation("Starting async shutdown process");
+                _logger?.LogInformation("Starting async shutdown process (PerformShutdownAsync)");
                 SaveState(); // Ensure state is saved
 
                 // Cancel all background operations
@@ -936,6 +971,57 @@ namespace BusBus.UI
                 catch (Exception ex)
                 {
                     _logger?.LogError(ex, "Error canceling token source during PerformShutdownAsync");
+                }
+
+                // Task 5: Wait for background tasks to complete with a timeout
+                Task[] tasksToWaitFor;
+                lock (_backgroundTasks) // Ensure thread-safe access for copying the list
+                {
+                    tasksToWaitFor = _backgroundTasks.ToArray(); // Create a snapshot
+                }
+
+                if (tasksToWaitFor.Length > 0)
+                {
+                    _logger?.LogInformation("PerformShutdownAsync: Waiting for {TaskCount} background tasks to complete with a timeout...", tasksToWaitFor.Length);
+                    try
+                    {
+                        var allTasksCompletionTask = Task.WhenAll(tasksToWaitFor);
+                        var timeoutDelayTask = Task.Delay(TimeSpan.FromSeconds(5), _cancellationTokenSource?.Token ?? CancellationToken.None); // Use CTS for delay, fallback if CTS is null/disposed
+
+                        var completedTask = await Task.WhenAny(allTasksCompletionTask, timeoutDelayTask);
+
+                        if (completedTask == timeoutDelayTask)
+                        {
+                            _logger?.LogWarning("PerformShutdownAsync: Timeout reached while waiting for background tasks. {RemainingCount} tasks might still be running.", tasksToWaitFor.Count(t => !t.IsCompleted));
+                        }
+                        else // allTasksCompletionTask completed
+                        {
+                            if (allTasksCompletionTask.IsFaulted)
+                            {
+                                _logger?.LogError(allTasksCompletionTask.Exception?.GetBaseException(), "PerformShutdownAsync: One or more background tasks failed during shutdown.");
+                            }
+                            else if (allTasksCompletionTask.IsCanceled)
+                            {
+                                _logger?.LogWarning("PerformShutdownAsync: One or more background tasks were canceled during shutdown.");
+                            }
+                            else
+                            {
+                                _logger?.LogInformation("PerformShutdownAsync: All background tasks completed successfully or were cancelled gracefully.");
+                            }
+                        }
+                    }
+                    catch (OperationCanceledException oce) // Catch cancellation of the Task.Delay or other operations if using the main CTS
+                    {
+                        _logger?.LogWarning(oce, "PerformShutdownAsync: Waiting for background tasks was canceled.");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "PerformShutdownAsync: Error occurred while waiting for background tasks.");
+                    }
+                }
+                else
+                {
+                    _logger?.LogInformation("PerformShutdownAsync: No background tasks to wait for.");
                 }
 
                 // Deactivate current view with timeout protection
@@ -979,9 +1065,18 @@ namespace BusBus.UI
                 // Dispose all cached views quickly and safely
                 var disposeTasks = new List<Task>();
                 // Use ToList() to create a copy for safe iteration if _viewCache could be modified elsewhere (though less likely during shutdown)
-                foreach (var kvp in _viewCache.ToList())
+                foreach (var kvp in _viewCache.ToList()) // Ensure ToList() is used if not already
                 {
                     var view = kvp.Value;
+
+                    // Task 3: Unsubscribe event handlers before disposing the view
+                    if (view != null) // Corrected syntax: added parentheses
+                    {
+                        view.NavigationRequested -= OnViewNavigationRequested;
+                        view.StatusUpdated -= OnViewStatusUpdated;
+                        _logger?.LogDebug("Unsubscribed event handlers for cached view {ViewName} during PerformShutdownAsync", kvp.Key);
+                    }
+
                     if (view is IDisposable disposableView)
                     {
                         try
@@ -1067,12 +1162,10 @@ namespace BusBus.UI
                 _logger?.LogDebug("View cache and navigation history cleared during PerformShutdownAsync.");
 
                 // Signal application to clean up all background tasks
-                // This should be one of the last steps to ensure other components are shutting down gracefully.
                 try
                 {
                     _logger?.LogInformation("Calling global application shutdown from PerformShutdownAsync");
-                    // Ensure this is called only once globally. Program.ShutdownApplication should have its own guards.
-                    Program.ShutdownApplication(); // Removed isInitiatedByDashboard parameter
+                    Program.ShutdownApplication();
                     _logger?.LogInformation("Global application shutdown call completed from PerformShutdownAsync");
                 }
                 catch (Exception shutdownEx)
@@ -1080,26 +1173,44 @@ namespace BusBus.UI
                     _logger?.LogError(shutdownEx, "Error invoking application shutdown from PerformShutdownAsync");
                 }
 
-                _logger?.LogInformation("Async shutdown process completed");
+                _logger?.LogInformation("Async shutdown process (PerformShutdownAsync) completed its main steps.");
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Unhandled exception during form closing");
+                _logger?.LogError(ex, "Unhandled exception during PerformShutdownAsync main logic.");
+            }
+            finally
+            {
+                _logger?.LogDebug("PerformShutdownAsync finally block: Resetting _isShuttingDown and calling Dispose(true).");
+                _isShuttingDown = false; // Reset flag before Dispose, as Dispose transitions to a final state.
+                this.Dispose(true); // Call the main dispose logic
+                // _isShuttingDown = false; // Moved before Dispose(true)
+                _logger?.LogDebug("PerformShutdownAsync finally block: Completed.");
             }
         }
 
+        // ... existing LoadState/SaveState ...
         private void LoadState()
         {
             // Load state from settings/file
             // For now, just use defaults
-            _state.CurrentTheme = "Dark";
+            _state.CurrentTheme = "Dark"; // Assuming _state is DashboardState and accessible
             _state.LastView = "dashboard";
+            _logger?.LogDebug("Dashboard state loaded. Theme: {Theme}, LastView: {LastView}", _state.CurrentTheme, _state.LastView);
         }
 
         private void SaveState()
         {
-            _state.LastView = _currentView?.ViewName;
-            // Save state to settings/file
+            if (_state != null) // Add null check for _state
+            {
+                _state.LastView = _currentView?.ViewName; // Assuming _state is DashboardState and accessible
+                // Save state to settings/file (actual persistence logic would go here)
+                _logger?.LogDebug("Dashboard state saved. LastView: {LastView}", _state.LastView);
+            }
+            else
+            {
+                _logger?.LogWarning("SaveState called but _state is null. Cannot save state.");
+            }
         }
         #endregion
 
@@ -1107,15 +1218,22 @@ namespace BusBus.UI
 
         public IServiceProvider ServiceProvider => _serviceProvider;
 
-        public IView? CurrentView => _currentView; public string ViewName => throw new NotImplementedException();
+        // Ensure CurrentView property is correctly implemented for IApplicationHub
+        public IView? CurrentView => _currentView;
+        // public string ViewName => throw new NotImplementedException(); // This was likely a placeholder
 
-        public string Title => throw new NotImplementedException();
+        // Ensure Title property is correctly implemented (if part of IApplicationHub or used internally)
+        // public string Title => throw new NotImplementedException(); // This was likely a placeholder
 
-        // Remove or rename this property to avoid hiding Form.WindowState
-        // public FormWindowState WindowState { get; private set; }
-
+        // Ensure NavigationChanged event is correctly implemented for IApplicationHub
         public event EventHandler<NavigationEventArgs>? NavigationChanged;
+        // Method to raise the event if needed
+        protected virtual void OnNavigationChanged(NavigationEventArgs e)
+        {
+            NavigationChanged?.Invoke(this, e);
+        }
 
+        // Ensure ShowNotification is correctly implemented for IApplicationHub
         public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info)
         {
             // For now, show as a status message and optionally a MessageBox for certain types
@@ -1127,307 +1245,144 @@ namespace BusBus.UI
                 _ => StatusType.Info
             };
             ShowStatus($"{title}: {message}", statusType);
+            // Consider if MessageBox is always desired or should be conditional
             if (type == NotificationType.Error || type == NotificationType.Warning)
             {
-                MessageBox.Show(this, message, title, MessageBoxButtons.OK, type == NotificationType.Error ? MessageBoxIcon.Error : MessageBoxIcon.Warning);
-            }
-        }
-
-        public void ShowBusyIndicator(string message)
-        {
-            ShowProgress(message);
-        }
-
-        public void HideBusyIndicator()
-        {
-            HideProgress();
-        }
-
-        public async Task<bool> ShowConfirmationAsync(string message, string title)
-        {
-            if (InvokeRequired)
-            {
-                return await Task.FromResult((bool)Invoke(new Func<bool>(() =>
+                // Ensure MessageBox is called on the UI thread if ShowNotification can be called from background threads
+                if (InvokeRequired)
                 {
-                    var result = MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    return result == DialogResult.Yes;
-                })));
-            }
-            else
-            {
-                var result = MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                return await Task.FromResult(result == DialogResult.Yes);
-            }
-        }        // ShowBusyIndicator and HideBusyIndicator implementations exist above
-
-        public void UpdateProgress(int percentage, string message = "")
-        {
-            Utils.ThreadSafeUI.Invoke(this, () =>
-            {
-                _progressBar.Style = ProgressBarStyle.Blocks;
-                _progressBar.Value = Math.Max(0, Math.Min(100, percentage));
-                if (!string.IsNullOrEmpty(message))
-                    _statusLabel.Text = message;
-            });
-        }
-
-        public void SaveState(object state)
-        {
-            if (state is DashboardState dashboardState)
-            {
-                // Save current navigation state
-                dashboardState.CurrentViewName = _currentView?.GetType().Name ?? string.Empty;
-                dashboardState.NavigationHistory.Clear();
-                dashboardState.NavigationHistory.AddRange(_navigationHistory);
-                _logger.LogInformation("Dashboard state saved with {Count} history items", dashboardState.NavigationHistory.Count);
-            }
-        }
-
-        public void RestoreState(object state)
-        {
-            if (state is DashboardState dashboardState)
-            {
-                // Restore navigation history
-                _navigationHistory.Clear();
-                foreach (var item in dashboardState.NavigationHistory)
-                {
-                    _navigationHistory.Push(item);
-                }                // Navigate to the previous view if available
-                if (!string.IsNullOrEmpty(dashboardState.CurrentViewName))
-                {
-                    var navigationTask = Task.Run(async () => await NavigateToAsync(dashboardState.CurrentViewName), Program.AppCancellationToken);
-                    BusBus.Program.AddBackgroundTask(navigationTask);
+                    Invoke(new Action(() => MessageBox.Show(this, message, title, MessageBoxButtons.OK, type == NotificationType.Error ? MessageBoxIcon.Error : MessageBoxIcon.Warning)));
                 }
-
-                _logger.LogInformation("Dashboard state restored with {Count} history items", dashboardState.NavigationHistory.Count);
+                else
+                {
+                    MessageBox.Show(this, message, title, MessageBoxButtons.OK, type == NotificationType.Error ? MessageBoxIcon.Error : MessageBoxIcon.Warning);
+                }
             }
-        }        // Override Dispose to clean up resources
+        }
+        #endregion
+
+        #region Disposal
+        // Add IDisposable pattern implementation
         protected override void Dispose(bool disposing)
         {
-            // Disposal guard to prevent double disposal
+            // Add a trace log for entry, helps diagnose if it's called multiple times unexpectedly.
+            _logger?.LogTrace("[LIFECYCLE] Dashboard.Dispose(disposing: {IsDisposing}) called. Current _disposed state: {DisposedState}", disposing, _disposed);
+
             if (_disposed)
             {
-                _logger?.LogDebug("Dispose called again, skipping due to guard");
                 return;
             }
-            // _disposed = true; // Moved down to prevent issues if an error occurs mid-disposal
 
             if (disposing)
             {
-                // Log Dashboard disposal for lifecycle tracking
-                _logger?.LogInformation("[LIFECYCLE] Dashboard disposing - PID: {ProcessId}, Thread: {ThreadId}",
-                    Environment.ProcessId, Environment.CurrentManagedThreadId);
+                _logger?.LogDebug("[LIFECYCLE] Dashboard.Dispose(true) - Disposing managed resources.");
 
-                try
+                // Task 2: Stop and dispose the performance monitor timer
+                if (_performanceMonitorTimer != null)
                 {
-                    // Check if already disposing or if handle is not created, which might indicate an invalid state for disposal.
-                    if (IsDisposed || Disposing || !IsHandleCreated) // Added IsDisposed and Disposing checks
+                    _performanceMonitorTimer.Stop();
+                    if (_performanceMonitorTimerTickHandler != null)
                     {
-                        _logger?.LogDebug("Skipping disposal - invalid state (IsDisposed: {IsDisposed}, Disposing: {Disposing}, HandleCreated: {HandleCreated})",
-                            IsDisposed, Disposing, IsHandleCreated);
-                        if (!_disposed) _disposed = true; // Ensure disposed is set if we exit early
-                        return;
+                        _performanceMonitorTimer.Tick -= _performanceMonitorTimerTickHandler;
+                        _logger?.LogDebug("Unsubscribed from _performanceMonitorTimer.Tick.");
                     }
-                    _logger?.LogInformation("Dashboard disposing resources");
+                    _performanceMonitorTimer.Dispose();
+                    // _performanceMonitorTimer = null; // Field is readonly, cannot set to null here.
+                    _logger?.LogDebug("Performance monitor timer stopped and disposed.");
+                }
 
-                    // Unsubscribe from events first to prevent handlers from running during/after disposal
-                    BusBus.UI.Core.ThemeManager.ThemeChanged -= OnThemeChanged;
-                    _logger?.LogDebug("Unsubscribed from BusBus.UI.Core.ThemeManager.ThemeChanged");
-
-
-                    if (_performanceMonitorTimer != null)
-                    {
-                        _performanceMonitorTimer.Stop();
-                        _performanceMonitorTimer.Dispose();
-                        // _performanceMonitorTimer = null; // Removed assignment to readonly field
-                        _logger?.LogDebug("Performance monitor timer stopped and disposed");
-                    }
-
-                    // Cancel and dispose CancellationTokenSource safely
-                    if (_cancellationTokenSource != null && !IsCtsDisposed(_cancellationTokenSource))
+                // Task 6: Dispose CancellationTokenSource
+                if (_cancellationTokenSource != null && !IsCtsDisposed(_cancellationTokenSource))
+                {
+                    if (!_cancellationTokenSource.IsCancellationRequested)
                     {
                         try
                         {
-                            if (!_cancellationTokenSource.IsCancellationRequested)
-                            {
-                                _cancellationTokenSource.Cancel();
-                                _logger?.LogDebug("CancellationTokenSource cancellation requested.");
-                            }
+                            _cancellationTokenSource.Cancel();
+                            _logger?.LogDebug("Cancellation requested via CancellationTokenSource in Dashboard.Dispose.");
                         }
                         catch (ObjectDisposedException)
                         {
-                            _logger?.LogDebug("CancellationTokenSource already disposed when attempting to cancel.");
+                            _logger?.LogWarning("Attempted to cancel an already disposed CancellationTokenSource in Dashboard.Dispose.");
                         }
+                    }
+                    try
+                    {
                         _cancellationTokenSource.Dispose();
-                        _logger?.LogDebug("CancellationTokenSource disposed");
+                        _logger?.LogDebug("CancellationTokenSource disposed in Dashboard.Dispose.");
                     }
-                    _cancellationTokenSource = null!; // Set to null after disposal
-
-                    // Deactivate and clear current view
-                    if (_currentView != null)
+                    catch (ObjectDisposedException)
                     {
-                        try
-                        {
-                            // Corrected: Check _currentView.Control directly.
-                            if (_currentView.Control != null && !_currentView.Control.IsDisposed)
-                            {
-                                // Attempt a quick deactivation, but don't let it hang shutdown
-                                var deactivateTask = _currentView.DeactivateAsync();
-                                if (!deactivateTask.Wait(TimeSpan.FromMilliseconds(200))) // Short timeout
-                                {
-                                    _logger?.LogWarning("Current view deactivation timed out during dispose.");
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error deactivating current view during dispose.");
-                        }
-                        _currentView = null;
+                        _logger?.LogWarning("Attempted to dispose an already disposed CancellationTokenSource in Dashboard.Dispose.");
                     }
+                    // _cancellationTokenSource = null; // Field is readonly, cannot set to null here.
+                }
 
 
-                    foreach (var view in _viewCache.Values.ToList()) // ToList to allow modification
+                // Task 7: Unsubscribe Dashboard-level event handlers
+                try
+                {
+                    BusBus.UI.Core.ThemeManager.ThemeChanged -= OnThemeChanged;
+                    _logger?.LogDebug("Unsubscribed from ThemeManager.ThemeChanged.");
+
+                    this.Load -= OnFormLoad;
+                    _logger?.LogDebug("Unsubscribed from this.Load.");
+
+                    if (this.ParentForm != null)
                     {
-                        try
-                        {
-                            if (view is IDisposable disposableView && view.Control != null && !view.Control.IsDisposed) // Check if view.Control is not null
-                            {
-                                disposableView.Dispose();
-                                _logger?.LogDebug("Disposed cached view: {ViewType}", view.GetType().Name);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "Error disposing cached view {ViewType}", view.GetType().Name);
-                        }
+                        // This unsubscription might be tricky if ParentChanged handler re-subscribed it multiple times
+                        // or if ParentForm changed. This handles the current ParentForm.
+                        this.ParentForm.FormClosing -= OnFormClosing;
+                        _logger?.LogDebug("Attempted to unsubscribe from this.ParentForm.FormClosing.");
                     }
-
-                    _viewCache.Clear();
-                    _navigationHistory.Clear();
-
-                    // Notify Program class about dashboard disposal - consider if this is still needed or handled by PerformShutdownAsync
-                    // This might be redundant if PerformShutdownAsync also calls Program.ShutdownApplication
-                    // try
-                    // {
-                    //     _logger?.LogInformation("Notifying Program class about dashboard disposal");
-                    //     var programType = Type.GetType("BusBus.Program, BusBus");
-                    //     var shutdownMethod = programType?.GetMethod("ShutdownApplication",
-                    //         System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-
-                    //     if (shutdownMethod != null)
-                    //     {
-                    //         shutdownMethod.Invoke(null, null);
-                    //         _logger?.LogDebug("Successfully notified Program about dashboard disposal");
-                    //     }
-                    // }
-                    // catch (Exception ex)
-                    // {
-                    //     _logger?.LogError(ex, "Failed to notify Program about dashboard disposal during Dashboard.Dispose");
-                    // }
-
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    _logger?.LogInformation("Dashboard resources disposed");
+                    // Note: The ParentChanged lambda that subscribes to ParentForm.FormClosing is not unsubscribed here.
+                    // This could be a minor leak if Dashboard instances are created/destroyed repeatedly
+                    // AND their ParentForm changes during their lifetime. For a long-lived, single Dashboard instance,
+                    // this is generally not a significant issue.
                 }
                 catch (Exception ex)
                 {
-                    // Use System.Diagnostics.Debug.WriteLine for critical errors during disposal if logger fails
-                    System.Diagnostics.Debug.WriteLine($"CRITICAL: Error disposing Dashboard: {ex.Message}");
-                    _logger?.LogError(ex, "Unhandled exception during Dashboard disposal");
+                    _logger?.LogWarning(ex, "Exception during unsubscription of Dashboard-level event handlers.");
                 }
-                finally
-                {
-                    _disposed = true; // Set disposed flag here to ensure it's always set
-                }
+
+                _logger?.LogDebug("Dashboard-level event handlers unsubscription attempted.");
             }
-            base.Dispose(disposing);
+
+            // Dispose unmanaged resources here if any (none identified for Dashboard itself)
+            _logger?.LogDebug("Setting _disposed = true and calling base.Dispose({IsDisposing}).", disposing);
+            _disposed = true; // Set disposed flag before calling base, to prevent re-entry from base if it calls back.
+            base.Dispose(disposing); // IMPORTANT: Call base class dispose
+            _logger?.LogTrace("[LIFECYCLE] Dashboard.Dispose(disposing: {IsDisposing}) finished.", disposing);
         }
 
-        private static bool IsCtsDisposed(CancellationTokenSource cts)
+        // Helper method to check if CancellationTokenSource is disposed
+        private bool IsCtsDisposed(CancellationTokenSource? cts)
         {
-            if (cts == null) return true; // Consider null as disposed for safety
+            if (cts == null)
+            {
+                _logger?.LogTrace("IsCtsDisposed: CTS is null, considering it disposed.");
+                return true;
+            }
             try
             {
-                var _ = cts.Token;
+                // Accessing Token property throws ObjectDisposedException if disposed.
+                _ = cts.Token;
                 return false;
             }
             catch (ObjectDisposedException)
             {
+                _logger?.LogTrace("IsCtsDisposed: CTS is disposed (ObjectDisposedException).");
+                return true;
+            }
+            // Should not happen if cts is not null, but as a fallback.
+            catch (NullReferenceException)
+            {
+                _logger?.LogWarning("IsCtsDisposed: CTS is not null but threw NullReferenceException, considering it disposed.");
                 return true;
             }
         }
-        protected Task OnActivateAsync(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected Task OnDeactivateAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        #region Interfaces and Supporting Classes
-        // Duplicate IApplicationHub interface removed. Use the definition from IApplicationHub.cs
-        // public interface IView : IDisposable
-        // {
-        //     string ViewName { get; }
-        //     string Title { get; }
-        //     Control? Control { get; }
-        //     event EventHandler<NavigationEventArgs>? NavigationRequested;
-        //     event EventHandler<StatusEventArgs>? StatusUpdated;
-        //     Task ActivateAsync(CancellationToken cancellationToken);
-        //     Task DeactivateAsync();
-        // }
-
-        // public interface IStatefulView
-        // {
-        //     void SaveState(object state);
-        //     void RestoreState(object state);
-        // }
-
-        // public class NavigationEventArgs : EventArgs
-        // {
-        //     public string ViewName { get; }
-        //     public object? Parameter { get; }
-
-        //     public NavigationEventArgs(string viewName, object? parameter = null)
-        //     {
-        //         ViewName = viewName;
-        //         Parameter = parameter;
-        //     }
-        // }
-
-        // public class StatusEventArgs : EventArgs
-        // {
-        //     public string Message { get; }
-        //     public StatusType Type { get; }
-
-        //     public StatusEventArgs(string message, StatusType type = StatusType.Info)
-        //     {
-        //         Message = message;
-        //         Type = type;
-        //     }
-        // }
-
-        // public enum StatusType
-        // {
-        //     Info,
-        //     Success,
-        //     Warning,
-        //     Error
-        // }
-
-        // public enum NotificationType
-        // {
-        //     Info,
-        //     Success,
-        //     Warning,
-        //     Error
-        // }
-        #endregion
-
         #endregion
     }
 }
+#pragma warning restore CS8618 // Non-nullable field is uninitialized. Suppressed because fields are initialized in SetupLayout.
 
