@@ -11,6 +11,10 @@ on:
         description: 'Job timeout in minutes (default 10)'
         required: false
         default: '10' # Default is a string, GitHub Actions handles conversion for timeout-minutes
+  push:
+    branches: [ main, develop, maximize-dashboard ] # <-- ADDED 'maximize-dashboard' HERE
+  pull_request:
+    branches: [ main ]
 
 jobs:
   safe-tests:
@@ -58,7 +62,7 @@ jobs:
         } elseif ("${{ github.event.inputs.timeout_minutes }}" -match '^\d+$') {
             $jobTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes }}"
         }
-        
+
         $scriptInternalTimeoutMinutes = $jobTimeoutMinutes - 2 # Allow 2 minutes for job overhead/cleanup
         if ($scriptInternalTimeoutMinutes -lt 1) {
             $scriptInternalTimeoutMinutes = 1 # Minimum 1 minute for the script's test execution part
