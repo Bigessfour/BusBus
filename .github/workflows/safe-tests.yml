@@ -24,14 +24,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x' # Adjust if you use a different .NET version
 
     - name: Kill any existing processes before tests
-      shell: powershell
+      shell: pwsh
       run: |
         Write-Host "Attempting to kill existing test-related processes..."
         Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -39,15 +39,15 @@ jobs:
         Start-Sleep -Seconds 3
 
     - name: Restore .NET dependencies
-      shell: powershell # Explicitly set shell
+      shell: pwsh # Explicitly set shell
       run: dotnet restore BusBus.sln # Assuming BusBus.sln is at the root
 
     - name: Build solution
-      shell: powershell # Explicitly set shell
+      shell: pwsh # Explicitly set shell
       run: dotnet build BusBus.sln --no-restore --configuration Release
 
     - name: Run tests with script-level timeout
-      shell: powershell
+      shell: pwsh
       run: |
         $ErrorActionPreference = "Stop" # Stop script on first error for clarity, can be "Continue"
 
@@ -95,13 +95,12 @@ jobs:
             Write-Host "Test process $($testProcess.Id) completed with Exit Code: $($testProcess.ExitCode)."
             if ($testProcess.ExitCode -ne 0) {
                 Write-Host "Tests failed with Exit Code: $($testProcess.ExitCode)." -ForegroundColor Red
-            }
-            exit $testProcess.ExitCode # Propagate the test process's exit code to the step
+            }            exit $testProcess.ExitCode # Propagate the test process's exit code to the step
         }
 
     - name: Final Cleanup Processes (always runs)
       if: always() # Ensures this step runs even if previous steps fail or are cancelled
-      shell: powershell
+      shell: pwsh
       run: |
         Write-Host "Performing final cleanup of any remaining test-related processes..."
         Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
