@@ -19,7 +19,7 @@ on:
 jobs:
   safe-tests:
     runs-on: self-hosted # Ensure your self-hosted runner is available and correctly tagged
-    timeout-minutes: ${{ github.event.inputs.timeout_minutes }} # Job-level timeout
+    timeout-minutes: ${{ github.event.inputs.timeout_minutes || 10 }} # Job-level timeout with default
 
     steps:
     - name: Checkout code
@@ -55,14 +55,12 @@ jobs:
         $filterArg = ""
         if ($null -ne $testFilterInput -and $testFilterInput.Trim() -ne "") {
           $filterArg = "--filter `"$($testFilterInput.Replace('"', '\"'))`"" # Basic escaping for filter
-        }
-
-        # Calculate script's internal timeout to be less than the job's timeout
+        }        # Calculate script's internal timeout to be less than the job's timeout
         $jobTimeoutMinutes = 10 # Default if input is invalid
         if ($env:INPUT_TIMEOUT_MINUTES -match '^\d+$') { # Check if env var from input is a number
             $jobTimeoutMinutes = [int]$env:INPUT_TIMEOUT_MINUTES
-        } elseif ("${{ github.event.inputs.timeout_minutes }}" -match '^\d+$') {
-            $jobTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes }}"
+        } elseif ("${{ github.event.inputs.timeout_minutes || 10 }}" -match '^\d+$') {
+            $jobTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes || 10 }}"
         }
 
         $scriptInternalTimeoutMinutes = $jobTimeoutMinutes - 2 # Allow 2 minutes for job overhead/cleanup
