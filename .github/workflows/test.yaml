@@ -11,38 +11,158 @@ env:
   DOTNET_VERSION: '8.0.x'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: ${{ runner.os }}-nuget-
+          cache: true
 
       - name: Restore dependencies
         run: dotnet restore BusBus.sln
 
-      - name: Build
+      - name: Build solution
         run: dotnet build BusBus.sln --configuration Release --no-restore
 
-      # Skip tests disabled
-      - name: Skip tests
-        run: echo "Tests are currently disabled in this workflow"
+      - name: Run tests with coverage
+        id: test-step
+        run: |
+          dotnet test BusBus.sln --no-build --configuration Release `
+            --collect:"XPlat Code Coverage" `
+            --results-directory TestResults `
+            --logger "trx;LogFileName=test-results.trx" `
+            --verbosity normal
+        continue-on-error: true
 
-      # Skipping artifact upload since no tests are run
-      - name: Workflow completed
-        run: echo "Build completed successfully"
+      - name: Process test results
+        id: process-results
+        if: always()
+        shell: pwsh
+        run: |
+          $testResultFiles = Get-ChildItem -Path "TestResults" -Filter "*.trx" -Recurse
+          $totalTests = 0
+          $passedTests = 0
+          $failedTests = 0
+          
+          if ($testResultFiles.Count -eq 0) {
+            Write-Warning "No test result files found."
+            echo "total_tests=0" >> $env:GITHUB_OUTPUT
+            echo "passed_tests=0" >> $env:GITHUB_OUTPUT
+            echo "failed_tests=0" >> $env:GITHUB_OUTPUT
+          } else {
+            foreach ($file in $testResultFiles) {
+              try {
+                [xml]$xml = Get-Content $file.FullName
+                $counters = $xml.TestRun.ResultSummary.Counters
+                $totalTests += [int]$counters.total
+                $passedTests += [int]$counters.passed
+                $failedTests += [int]$counters.failed
+              } catch {
+                Write-Warning "Failed to parse test result file: $($file.FullName)"
+              }
+            }
+            
+            Write-Host "Test Summary: $passedTests passed, $failedTests failed (of $totalTests total)"
+            echo "total_tests=$totalTests" >> $env:GITHUB_OUTPUT
+            echo "passed_tests=$passedTests" >> $env:GITHUB_OUTPUT
+            echo "failed_tests=$failedTests" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Generate coverage report
+        if: always()
+        shell: pwsh
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool --ignore-failed-sources
+          $coverageFiles = Get-ChildItem -Path "TestResults" -Filter "coverage.cobertura.xml" -Recurse
+          
+          if ($coverageFiles.Count -gt 0) {
+            reportgenerator `
+              -reports:TestResults/**/coverage.cobertura.xml `
+              -targetdir:TestResults/CoverageReport `
+              -reporttypes:Html,Cobertura,TextSummary
+              
+            if (Test-Path "TestResults/CoverageReport/Summary.txt") {
+              Write-Host "Coverage Summary:"
+              Get-Content "TestResults/CoverageReport/Summary.txt"
+            }
+          } else {
+            Write-Warning "No coverage files found."
+          }
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          retention-days: 30
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: TestResults/CoverageReport/
+          retention-days: 30
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always()
+        with:
+          files: TestResults/**/*.trx
+          check_name: "Test Results"
+          comment_mode: create new
+          job_summary: true
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: 5monkeys/cobertura-action@master
+        with:
+          path: TestResults/CoverageReport/Cobertura.xml
+          minimum_coverage: 75
+          fail_below_threshold: false
+
+      - name: Report summary
+        if: always()
+        shell: pwsh
+        run: |
+          $summary = @"
+          ### 🧪 Test Results Summary
+          
+          - ✅ **Passed**: ${{ steps.process-results.outputs.passed_tests || 0 }}
+          - ❌ **Failed**: ${{ steps.process-results.outputs.failed_tests || 0 }}
+          - 📊 **Total**: ${{ steps.process-results.outputs.total_tests || 0 }}
+          
+          "@
+          
+          if (Test-Path "TestResults/CoverageReport/Summary.txt") {
+            $summary += "`n### 📈 Code Coverage`n`n"
+            $summary += "``````text`n"
+            $summary += Get-Content "TestResults/CoverageReport/Summary.txt" -Raw
+            $summary += "`n``````"
+          }
+          
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          
+          # Fail the job if tests failed
+          $failedTests = [int]"${{ steps.process-results.outputs.failed_tests || 0 }}"
+          if ($failedTests -gt 0) {
+            Write-Host "::error::$failedTests test(s) failed"
+            exit 1
+          }
