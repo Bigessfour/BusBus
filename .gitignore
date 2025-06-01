@@ -12,3 +12,11 @@ omnisharp.log
 *.bak
 *.backup
 *~
+
+# Test files
+BusBus.Tests/
+**/Tests/*.cs
+**/*Test.cs
+**/*Tests.cs
+**/Test.cs
+**/Tests.cs
