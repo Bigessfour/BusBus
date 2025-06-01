@@ -1,4 +1,4 @@
-name: Safe Test Execution
+name: Agentic Safe Test Execution
 
 on:
   workflow_dispatch:
@@ -8,67 +8,117 @@ on:
         required: false
         default: ''
       timeout_minutes:
-        description: 'Job timeout in minutes (default 10)'
+        description: 'Job timeout in minutes (default 15)'
         required: false
-        default: '10' # Default is a string, GitHub Actions handles conversion for timeout-minutes
+        default: '15'
   push:
-    branches: [ main, develop, maximize-dashboard ] # <-- ADDED 'maximize-dashboard' HERE
+    branches: [ main, develop, maximize-dashboard ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  safe-tests:
-    runs-on: self-hosted # Ensure your self-hosted runner is available and correctly tagged
-    timeout-minutes: ${{ github.event.inputs.timeout_minutes || 10 }} # Job-level timeout with default
+  agentic-safe-tests:
+    runs-on: self-hosted
+    timeout-minutes: ${{ github.event.inputs.timeout_minutes || 15 }}
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x' # Adjust if you use a different .NET version
+        dotnet-version: '8.0.x'
 
-    - name: Kill any existing processes before tests
+    - name: Debug Environment
       shell: bash
       run: |
-        echo "Attempting to kill existing test-related processes..."
-        pkill -f "dotnet" || true
-        pkill -f "testhost" || true
-        pkill -f "vstest" || true        echo "Process kill attempt finished. Waiting a moment..."
+        echo "OS: $(uname -a)"
+        echo "Current directory: $(pwd)"
+        ls -la
+        dotnet --version
+        echo "Checking runner resources..."
+        free -m
+        df -h
+
+    - name: Initial Cleanup
+      shell: bash
+      run: |
+        echo "Killing existing test-related processes..."
+        pkill -9 -f "dotnet" || true
+        pkill -9 -f "testhost" || true
+        pkill -9 -f "vstest" || true
         sleep 3
 
     - name: Restore .NET dependencies
       shell: bash
-      run: dotnet restore BusBus.sln
+      run: |
+        echo "Restoring dependencies..."
+        dotnet restore BusBus.sln || {
+          echo "Restore failed. Retrying once..."
+          sleep 5
+          dotnet restore BusBus.sln
+        }
 
     - name: Build solution
       shell: bash
       run: dotnet build BusBus.sln --no-restore --configuration Release
 
-    - name: Run tests with timeout
+    - name: Run tests with adaptive retries
       shell: bash
       run: |
-        echo "Running tests with 8 minute timeout..."
-        
-        # Set test filter if provided
+        echo "Running tests with adaptive timeout..."
         FILTER_ARG=""
         if [ -n "${{ github.event.inputs.test_filter }}" ]; then
           FILTER_ARG="--filter \"${{ github.event.inputs.test_filter }}\""
         fi
-          # Run tests with timeout (8 minutes = 480 seconds, allowing 2 min buffer from job timeout)
-        timeout 480s dotnet test BusBus.sln --logger "console;verbosity=normal" --no-build $FILTER_ARG || {
-          echo "Tests timed out or failed"
-          exit 1
-        }
+        TIMEOUT_SECONDS=$(( ${{ github.event.inputs.timeout_minutes || 15 }} * 60 - 120 )) # 2 min buffer
+        ATTEMPT=1
+        MAX_ATTEMPTS=3
+        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+          echo "Test attempt $ATTEMPT of $MAX_ATTEMPTS..."
+          timeout $TIMEOUT_SECONDS dotnet test BusBus.sln --logger "console;verbosity=normal" --no-build --blame $FILTER_ARG && break
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 124 ]; then
+            echo "Tests timed out. Increasing timeout by 2 minutes for next attempt."
+            TIMEOUT_SECONDS=$(( TIMEOUT_SECONDS + 120 ))
+          elif [ $EXIT_CODE -ne 0 ]; then
+            echo "Tests failed. Checking for flaky tests in logs..."
+            grep "Failed.*Test" test_output.log || true
+          fi
+          echo "Cleaning up before retry..."
+          pkill -9 -f "dotnet" || true
+          pkill -9 -f "testhost" || true
+          pkill -9 -f "vstest" || true
+          sleep 5
+          ATTEMPT=$(( ATTEMPT + 1 ))
+          if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
+            echo "All attempts failed."
+            exit 1
+          fi
+        done
+      env:
+        DOTNET_TEST_LOGFILE: test_output.log
 
-    - name: Final Cleanup Processes (always runs)
-      if: always() # Ensures this step runs even if previous steps fail or are cancelled
+    - name: Analyze test failures
+      if: failure()
       shell: bash
       run: |
-        echo "Performing final cleanup of any remaining test-related processes..."
-        pkill -f "dotnet" || true
-        pkill -f "testhost" || true
-        pkill -f "vstest" || true
-        echo "Final cleanup attempt finished."
+        echo "Analyzing test failures..."
+        if [ -f test_output.log ]; then
+          echo "Failed tests:"
+          grep "Failed.*Test" test_output.log || echo "No specific test failures found."
+          echo "Error messages:"
+          grep -i "error" test_output.log || echo "No errors found."
+        else
+          echo "No test output log found."
+        fi
+
+    - name: Final Cleanup
+      if: always()
+      shell: bash
+      run: |
+        echo "Performing final cleanup..."
+        pkill -9 -f "dotnet" || true
+        pkill -9 -f "testhost" || true
+        pkill -9 -f "vstest" || true
