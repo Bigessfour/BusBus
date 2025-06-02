@@ -15,7 +15,7 @@ on:
 jobs:
   safe-tests:
     runs-on: self-hosted
-    timeout-minutes: ${{ github.event.inputs.timeout_minutes }}
+    timeout-minutes: ${{ github.event.inputs.timeout_minutes || 10 }}
 
     steps:
     - name: Checkout code
@@ -44,50 +44,38 @@ jobs:
       shell: powershell
       run: |
         $ErrorActionPreference = "Stop"
-
         $testFilterInput = "${{ github.event.inputs.test_filter }}"
         $filterArg = ""
         if ($null -ne $testFilterInput -and $testFilterInput.Trim() -ne "") {
-          $filterArg = "--filter `"$($testFilterInput.Replace('"', '\"'))`""
+          $filterArg = "--filter '$($testFilterInput)'"
         }
-
-        # Calculate script's internal timeout to be less than the job's timeout
+        # Calculate script's internal timeout
         $jobTimeoutMinutes = 10
-        if ($env:INPUT_TIMEOUT_MINUTES -match '^\d+$') {
-            $jobTimeoutMinutes = [int]$env:INPUT_TIMEOUT_MINUTES
-        } elseif ("${{ github.event.inputs.timeout_minutes }}" -match '^\d+$') {
-            $jobTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes }}"
+        if ("${{ github.event.inputs.timeout_minutes }}" -match '^\d+$') {
+          $jobTimeoutMinutes = [int]"${{ github.event.inputs.timeout_minutes }}"
         }
-
         $scriptInternalTimeoutMinutes = $jobTimeoutMinutes - 2
         if ($scriptInternalTimeoutMinutes -lt 1) {
-            $scriptInternalTimeoutMinutes = 1
+          $scriptInternalTimeoutMinutes = 1
         }
         $scriptInternalTimeoutSeconds = $scriptInternalTimeoutMinutes * 60
-
         Write-Host "Running tests. Job timeout: $jobTimeoutMinutes min. Script internal timeout for test process: $scriptInternalTimeoutMinutes min."
         Write-Host "Test Filter Argument: $filterArg"
-
-        $cmd = "dotnet test BusBus.sln --logger:`"console;verbosity=normal`" --no-build $filterArg"
+        $cmd = "dotnet test BusBus.sln --logger:'console;verbosity=normal' --no-build $filterArg"
         Write-Host "Executing: $cmd"
-
         $job = Start-Job -ScriptBlock { param($c) Invoke-Expression $c } -ArgumentList $cmd
         $finished = Wait-Job $job -Timeout $scriptInternalTimeoutSeconds
-
         if (-not $finished) {
           Write-Host "ERROR: Tests exceeded script's internal timeout of $scriptInternalTimeoutMinutes minutes. Stopping job..." -ForegroundColor Red
           Stop-Job $job
           Remove-Job $job
-          # Emergency cleanup for any orphaned testhosts or dotnet processes
           Get-Process -Name "dotnet*","testhost*","vstest*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           exit 1
         }
-
         $output = Receive-Job $job
         Write-Output $output
         $exitCode = (Get-Job $job).ChildJobs[0].JobStateInfo.Reason.ExitCode
         Remove-Job $job
-
         if ($exitCode -ne 0) {
           Write-Host "Tests failed with Exit Code: $exitCode." -ForegroundColor Red
         }
